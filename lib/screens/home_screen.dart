@@ -125,6 +125,7 @@ class _SearchBar extends StatelessWidget {
                   controller: controller,
                   focusNode: focusNode,
                   onChanged: onChanged,
+                  textAlignVertical: TextAlignVertical.center,
                   decoration: InputDecoration(
                     hintText: 'Search',
                     border: InputBorder.none,

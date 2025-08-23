@@ -29,7 +29,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  String _selectedGroup = 'All';
+  String _selectedGroup = 'All (${sampleItems.length})';
   String _searchQuery = '';
   late final TextEditingController _searchController;
   late final FocusNode _searchFocus;

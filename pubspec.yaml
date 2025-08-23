@@ -1,0 +1,15 @@
+name: twofauth
+description: 2FA manager based on 2FAuth web app.
+publish_to: 'none'
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+  flutter: "3.35.1"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.2
+
+flutter:
+  uses-material-design: true

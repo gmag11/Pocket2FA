@@ -11,7 +11,7 @@ class AccountTile extends StatelessWidget {
     final color = Colors.primaries[item.service.length % Colors.primaries.length];
   // debugBoxes removed; restoring production layout
     return SizedBox(
-      height: 72,
+      height: 70,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -49,7 +49,7 @@ class AccountTile extends StatelessWidget {
                       Expanded(
                         child: Text(
                           item.service, 
-                          style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w400)
+                          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w400)
                         ),
                       ),
                     ],
@@ -60,7 +60,7 @@ class AccountTile extends StatelessWidget {
                     padding: const EdgeInsets.only(left: 10.0), // Align with service text
                     child: Text(
                       item.account, 
-                      style: TextStyle(fontSize: 12, color: Colors.grey.shade600)
+                      style: TextStyle(fontSize: 14, color: Colors.grey.shade600)
                     ),
                   ),
                 ],

@@ -179,7 +179,7 @@ class _AccountList extends StatelessWidget {
 
     return ListView.separated(
       itemCount: filtered.length,
-      separatorBuilder: (context, index) => Divider(indent: 72),
+      separatorBuilder: (context, index) => Divider(indent: 20, endIndent: 20,),
       itemBuilder: (context, index) {
         final item = filtered[index];
         return AccountTile(item: item);
@@ -229,7 +229,7 @@ class _BottomBar extends StatelessWidget {
             children: const [
               Icon(Icons.person_outline, size: 18, color: Colors.grey),
               SizedBox(width: 8),
-              Text('gmartin@gmartin.net', style: TextStyle(color: Colors.grey)),
+              Text('user@domain.com', style: TextStyle(color: Colors.grey)),
               SizedBox(width: 6),
               Icon(Icons.more_vert, size: 18, color: Colors.grey),
             ],

@@ -1,22 +1,22 @@
 import 'package:flutter/material.dart';
 
 const List<Map<String, String>> sampleItems = [
-  {'title': 'Amazon', 'subtitle': 'user+amazon@example.com', 'code': '110 254', 'small': '165 719', 'group': 'Personal'},
-  {'title': 'Anydesk', 'subtitle': 'device-iPhone-15', 'code': '630 542', 'small': '492 255', 'group': 'Devices'},
-  {'title': 'Atlassian', 'subtitle': 'user+atlassian@example.com', 'code': '049 996', 'small': '531 958', 'group': 'Work'},
-  {'title': 'Authelia', 'subtitle': 'user_authelia', 'code': '857 740', 'small': '108 089', 'group': 'Personal'},
-  {'title': 'Authentik', 'subtitle': 'admin', 'code': '695 269', 'small': '346 987', 'group': 'Admin'},
-  {'title': 'Authentik', 'subtitle': 'user_auth', 'code': '929 141', 'small': '416 287', 'group': 'Personal'},
-  {'title': 'Autodesk', 'subtitle': 'user+autodesk@example.com', 'code': '921 253', 'small': '239 551', 'group': 'Work'},
-  {'title': 'AWS SSO', 'subtitle': 'user_aws', 'code': '560 595', 'small': '091 891', 'group': 'Work'},
-  {'title': 'BingX', 'subtitle': 'user+bingx@example.com', 'code': '540 784', 'small': '485 662', 'group': 'Personal'},
-  {'title': 'GitHost', 'subtitle': 'devops', 'code': '541 678', 'small': '123 456', 'group': 'Work'},
-  {'title': 'Dropbox', 'subtitle': 'user+dropbox@example.com', 'code': '312 450', 'small': '654 321', 'group': 'Personal'},
-  {'title': 'Google', 'subtitle': 'user+google@example.com', 'code': '782 901', 'small': '888 777', 'group': 'Personal'},
-  {'title': 'Microsoft', 'subtitle': 'user+microsoft@example.com', 'code': '450 120', 'small': '333 222', 'group': 'Work'},
-  {'title': 'Facebook', 'subtitle': 'user+facebook@example.com', 'code': '223 334', 'small': '101 202', 'group': 'Personal'},
-  {'title': 'Twitter', 'subtitle': 'user+twitter@example.com', 'code': '998 001', 'small': '909 808', 'group': 'Personal'},
-  {'title': 'CustomApp', 'subtitle': 'service_account', 'code': '010 203', 'small': '010 011', 'group': 'Admin'},
+  {'service': 'Amazon', 'account': 'user+amazon@example.com', '2fa': '110 254', 'next_2fa': '165 719', 'group': 'Personal'},
+  {'service': 'Anydesk', 'account': 'device-iPhone-15', '2fa': '630 542', 'next_2fa': '492 255', 'group': 'Devices'},
+  {'service': 'Atlassian', 'account': 'user+atlassian@example.com', '2fa': '049 996', 'next_2fa': '531 958', 'group': 'Work'},
+  {'service': 'Authelia', 'account': 'user_authelia', '2fa': '857 740', 'next_2fa': '108 089', 'group': 'Personal'},
+  {'service': 'Authentik', 'account': 'admin', '2fa': '695 269', 'next_2fa': '346 987', 'group': 'Admin'},
+  {'service': 'Authentik', 'account': 'user_auth', '2fa': '929 141', 'next_2fa': '416 287', 'group': 'Personal'},
+  {'service': 'Autodesk', 'account': 'user+autodesk@example.com', '2fa': '921 253', 'next_2fa': '239 551', 'group': 'Work'},
+  {'service': 'AWS SSO', 'account': 'user_aws', '2fa': '560 595', 'next_2fa': '091 891', 'group': 'Work'},
+  {'service': 'BingX', 'account': 'user+bingx@example.com', '2fa': '540 784', 'next_2fa': '485 662', 'group': 'Personal'},
+  {'service': 'GitHost', 'account': 'devops', '2fa': '541 678', 'next_2fa': '123 456', 'group': 'Work'},
+  {'service': 'Dropbox', 'account': 'user+dropbox@example.com', '2fa': '312 450', 'next_2fa': '654 321', 'group': 'Personal'},
+  {'service': 'Google', 'account': 'user+google@example.com', '2fa': '782 901', 'next_2fa': '888 777', 'group': 'Personal'},
+  {'service': 'Microsoft', 'account': 'user+microsoft@example.com', '2fa': '450 120', 'next_2fa': '333 222', 'group': 'Work'},
+  {'service': 'Facebook', 'account': 'user+facebook@example.com', '2fa': '223 334', 'next_2fa': '101 202', 'group': 'Personal'},
+  {'service': 'Twitter', 'account': 'user+twitter@example.com', '2fa': '998 001', 'next_2fa': '909 808', 'group': 'Personal'},
+  {'service': 'CustomApp', 'account': 'service_account', '2fa': '010 203', 'next_2fa': '010 011', 'group': 'Admin'},
 ];
 
 class HomePage extends StatefulWidget {
@@ -139,10 +139,10 @@ class _AccountList extends StatelessWidget {
       itemBuilder: (context, index) {
         final item = filtered[index % filtered.length];
         return _AccountTile(
-          title: item['title']!,
-          subtitle: item['subtitle']!,
-          code: item['code']!,
-          small: item['small'] ?? '',
+          service: item['service']!,
+          account: item['account']!,
+          twoFa: item['2fa']!,
+          nextTwoFa: item['next_2fa'] ?? '',
         );
       },
       separatorBuilder: (_, __) => const Divider(height: 1, indent: 72, endIndent: 12),
@@ -152,12 +152,12 @@ class _AccountList extends StatelessWidget {
 }
 
 class _AccountTile extends StatelessWidget {
-  final String title;
-  final String subtitle;
-  final String code;
-  final String small;
+  final String service;
+  final String account;
+  final String twoFa;
+  final String nextTwoFa;
 
-  const _AccountTile({required this.title, required this.subtitle, required this.code, required this.small});
+  const _AccountTile({required this.service, required this.account, required this.twoFa, required this.nextTwoFa});
 
   @override
   Widget build(BuildContext context) {
@@ -167,16 +167,16 @@ class _AccountTile extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           const SizedBox(width: 12),
-          _IconCircle(label: title),
+          _IconCircle(label: service),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                Text(service, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 6),
-                Text(subtitle, style: TextStyle(color: Colors.grey.shade600)),
+                Text(account, style: TextStyle(color: Colors.grey.shade600)),
               ],
             ),
           ),
@@ -186,12 +186,12 @@ class _AccountTile extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text(code, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
+                Text(twoFa, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 8),
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(small, style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+                    Text(nextTwoFa, style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
                     const SizedBox(width: 8),
                     Row(
                       children: List.generate(10, (i) {

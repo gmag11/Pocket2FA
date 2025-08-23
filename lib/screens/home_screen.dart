@@ -132,15 +132,20 @@ class _AccountTile extends StatelessWidget {
                 Text(code, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 8),
                 Row(
-                  children: List.generate(6, (i) => Container(
-                    width: 6,
-                    height: 6,
-                    margin: const EdgeInsets.symmetric(horizontal: 2),
-                    decoration: BoxDecoration(
-                      color: Colors.green.shade400,
-                      borderRadius: BorderRadius.circular(3),
-                    ),
-                  )),
+                  children: List.generate(10, (i) {
+                    final Color dotColor = i < 6
+                        ? Colors.green.shade400
+                        : (i < 9 ? Colors.amber.shade600 : Colors.red.shade400);
+                    return Container(
+                      width: 5,
+                      height: 5,
+                      margin: const EdgeInsets.symmetric(horizontal: 1.5),
+                      decoration: BoxDecoration(
+                        color: dotColor,
+                        borderRadius: BorderRadius.circular(2.5),
+                      ),
+                    );
+                  }),
                 ),
               ],
             ),
@@ -183,19 +188,19 @@ class _BottomBar extends StatelessWidget {
               ElevatedButton.icon(
                 onPressed: null,
                 icon: const Icon(Icons.add),
-                label: const Text('New'),
                 style: ElevatedButton.styleFrom(
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                   backgroundColor: Colors.indigo,
                 ),
+                label: const Text('New'),
               ),
               const SizedBox(width: 12),
               OutlinedButton(
                 onPressed: null,
-                child: const Text('Manage'),
                 style: OutlinedButton.styleFrom(
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                 ),
+                child: const Text('Manage'),
               ),
             ],
           ),

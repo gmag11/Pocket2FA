@@ -28,6 +28,23 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   String _selectedGroup = 'All';
+  String _searchQuery = '';
+  late final TextEditingController _searchController;
+  late final FocusNode _searchFocus;
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController = TextEditingController();
+    _searchFocus = FocusNode();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _searchFocus.dispose();
+    super.dispose();
+  }
 
   List<String> _groups() {
     final Map<String, int> counts = {};
@@ -57,7 +74,11 @@ class _HomePageState extends State<HomePage> {
             const SizedBox(height: 12),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: _SearchBar(),
+              child: _SearchBar(
+                controller: _searchController,
+                focusNode: _searchFocus,
+                onChanged: (v) => setState(() => _searchQuery = v),
+              ),
             ),
             const SizedBox(height: 8),
             // Group selector
@@ -83,7 +104,7 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
             const SizedBox(height: 8),
-            Expanded(child: _AccountList(selectedGroup: _groupKey(_selectedGroup))),
+            Expanded(child: _AccountList(selectedGroup: _groupKey(_selectedGroup), searchQuery: _searchQuery)),
             const _BottomBar(),
           ],
         ),
@@ -93,7 +114,11 @@ class _HomePageState extends State<HomePage> {
 }
 
 class _SearchBar extends StatelessWidget {
-  const _SearchBar();
+  final TextEditingController? controller;
+  final FocusNode? focusNode;
+  final ValueChanged<String>? onChanged;
+
+  const _SearchBar({this.controller, this.focusNode, this.onChanged});
 
   @override
   Widget build(BuildContext context) {
@@ -110,7 +135,9 @@ class _SearchBar extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: TextField(
-              enabled: false,
+              controller: controller,
+              focusNode: focusNode,
+              onChanged: onChanged,
               decoration: InputDecoration(
                 hintText: 'Search',
                 border: InputBorder.none,
@@ -125,14 +152,24 @@ class _SearchBar extends StatelessWidget {
 
 class _AccountList extends StatelessWidget {
   final String selectedGroup;
+  final String searchQuery;
 
-  const _AccountList({required this.selectedGroup});
+  const _AccountList({required this.selectedGroup, this.searchQuery = ''});
 
   @override
   Widget build(BuildContext context) {
-    final filtered = selectedGroup == 'All' || selectedGroup.isEmpty
-        ? sampleItems
-        : sampleItems.where((i) => (i['group'] ?? '') == selectedGroup).toList();
+  final base = selectedGroup == 'All' || selectedGroup.isEmpty
+    ? sampleItems
+    : sampleItems.where((i) => (i['group'] ?? '') == selectedGroup).toList();
+
+  final query = searchQuery.trim().toLowerCase();
+  final filtered = query.isEmpty
+    ? base
+    : base.where((i) {
+      final s = (i['service'] ?? '').toLowerCase();
+      final a = (i['account'] ?? '').toLowerCase();
+      return s.contains(query) || a.contains(query);
+      }).toList();
 
     return ListView.separated(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),

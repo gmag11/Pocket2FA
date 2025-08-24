@@ -1,7 +1,7 @@
 import '../models/two_factor_item.dart';
 
 final List<TwoFactorItem> sampleItems = [
-  TwoFactorItem(service: 'AmazonAmazonAmazon', account: 'user@example.com', twoFa: '110 254', nextTwoFa: '165 719', group: 'Personal'),
+  TwoFactorItem(service: 'AmazonAmazonAmazon', account: 'user@example.com.example.com.example.com.example.com', twoFa: '110 254', nextTwoFa: '165 719', group: 'Personal'),
   TwoFactorItem(service: 'Anydesk', account: 'device-iPhone-15', twoFa: '630 542', nextTwoFa: '492 255', group: 'Devices'),
   TwoFactorItem(service: 'Atlassian', account: 'user@example.com', twoFa: '049 996', nextTwoFa: '531 958', group: 'Work'),
   TwoFactorItem(service: 'Google', account: 'user@gmail.com', twoFa: '857 740', nextTwoFa: '108 089', group: 'Personal'),

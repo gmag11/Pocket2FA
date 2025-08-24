@@ -226,12 +226,68 @@ class _BottomBar extends StatelessWidget {
           const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
-            children: const [
-              Icon(Icons.person_outline, size: 18, color: Colors.grey),
-              SizedBox(width: 8),
-              Text('user@domain.com', style: TextStyle(color: Colors.grey)),
-              SizedBox(width: 6),
-              Icon(Icons.more_vert, size: 18, color: Colors.grey),
+            children: [
+              InkWell(
+                onTap: () {
+                  showModalBottomSheet<String>(
+                    context: context,
+                    backgroundColor: Colors.white,
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: BorderRadius.vertical(top: Radius.circular(12.0)),
+                    ),
+                    builder: (ctx) {
+                      return SafeArea(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            ListTile(
+                              title: const Text('settings', textAlign: TextAlign.center),
+                              onTap: () => Navigator.of(ctx).pop('settings'),
+                            ),
+                            ListTile(
+                              title: const Text('accounts', textAlign: TextAlign.center),
+                              onTap: () => Navigator.of(ctx).pop('accounts'),
+                            ),
+                            const SizedBox(height: 12),
+                            const Divider(height: 1),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Center(
+                                      child: Text('user@domain.com', style: TextStyle(color: Colors.grey)),
+                                    ),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.close, color: Colors.grey),
+                                    onPressed: () => Navigator.of(ctx).pop(), // close without selecting
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ).then((value) {
+                    if (value != null) {
+                      // handle selection if needed
+                      // print('selected: $value');
+                    }
+                  });
+                },
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: const [
+                    Icon(Icons.person_outline, size: 18, color: Colors.grey),
+                    SizedBox(width: 8),
+                    Text('user@domain.com', style: TextStyle(color: Colors.grey)),
+                    SizedBox(width: 6),
+                    Icon(Icons.more_vert, size: 18, color: Colors.grey),
+                  ],
+                ),
+              ),
             ],
           ),
         ],

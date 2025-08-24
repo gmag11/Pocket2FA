@@ -10,11 +10,14 @@ class AccountTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = Colors.primaries[item.service.length % Colors.primaries.length];
   // debugBoxes removed; restoring production layout
-    return SizedBox(
-      height: 70,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final screenWidth = MediaQuery.of(context).size.width;
+        final tile = SizedBox(
+          height: 70,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
           const SizedBox(width: 12),
           // Service and account column with new layout
           Expanded(
@@ -120,8 +123,21 @@ class AccountTile extends StatelessWidget {
               ),
             ),
           ),
-        ],
-      ),
+            ],
+          ),
+        );
+
+        if (screenWidth > 1200) {
+          return Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 520),
+              child: tile,
+            ),
+          );
+        }
+
+        return tile;
+      },
     );
   }
 }

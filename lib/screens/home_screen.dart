@@ -87,7 +87,23 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
             const SizedBox(height: 8),
-            Expanded(child: _AccountList(selectedGroup: _groupKey(_selectedGroup), searchQuery: _searchQuery)),
+            Expanded(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final screenW = MediaQuery.of(context).size.width;
+                  // For very wide screens center the main content and cap width so columns stay together
+                  if (screenW > 1400) {
+                    return Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 1400),
+                        child: _AccountList(selectedGroup: _groupKey(_selectedGroup), searchQuery: _searchQuery),
+                      ),
+                    );
+                  }
+                  return _AccountList(selectedGroup: _groupKey(_selectedGroup), searchQuery: _searchQuery);
+                },
+              ),
+            ),
             const _BottomBar(),
           ],
         ),
@@ -178,7 +194,14 @@ class _AccountList extends StatelessWidget {
     }
 
     final width = MediaQuery.of(context).size.width;
-    final columns = width > 800 ? 2 : 1;
+    int columns;
+    if (width > 1200) {
+      columns = 3;
+    } else if (width > 1000) {
+      columns = 2;
+    } else {
+      columns = 1;
+    }
 
     if (columns == 1) {
       return ListView.separated(
@@ -191,11 +214,11 @@ class _AccountList extends StatelessWidget {
       );
     }
 
-    // Two-column grid for wide screens
+    // Multi-column grid for wide screens (up to 3 columns)
     return GridView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: columns,
         crossAxisSpacing: 16,
         mainAxisExtent: 92, // enough to contain the 72px tile plus spacing
       ),

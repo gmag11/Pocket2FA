@@ -177,12 +177,37 @@ class _AccountList extends StatelessWidget {
       return const Center(child: Text('No results', style: TextStyle(color: Colors.grey)));
     }
 
-    return ListView.separated(
+    final width = MediaQuery.of(context).size.width;
+    final columns = width > 800 ? 2 : 1;
+
+    if (columns == 1) {
+      return ListView.separated(
+        itemCount: filtered.length,
+        separatorBuilder: (context, index) => Divider(indent: 20, endIndent: 20,),
+        itemBuilder: (context, index) {
+          final item = filtered[index];
+          return AccountTile(item: item);
+        },
+      );
+    }
+
+    // Two-column grid for wide screens
+    return GridView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 16,
+        mainAxisExtent: 92, // enough to contain the 72px tile plus spacing
+      ),
       itemCount: filtered.length,
-      separatorBuilder: (context, index) => Divider(indent: 20, endIndent: 20,),
       itemBuilder: (context, index) {
         final item = filtered[index];
-        return AccountTile(item: item);
+        return Container(
+          decoration: const BoxDecoration(
+            border: Border(bottom: BorderSide(color: Color(0xFFE0E0E0))),
+          ),
+          child: AccountTile(item: item),
+        );
       },
     );
   }

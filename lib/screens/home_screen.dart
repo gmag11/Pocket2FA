@@ -197,7 +197,7 @@ class _AccountList extends StatelessWidget {
     int columns;
     if (width > 1200) {
       columns = 3;
-    } else if (width > 1000) {
+    } else if (width > 800) {
       columns = 2;
     } else {
       columns = 1;

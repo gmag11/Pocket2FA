@@ -51,8 +51,10 @@ class AccountTile extends StatelessWidget {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          item.service, 
-                          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w400)
+                          item.service,
+                          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w400),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
@@ -62,8 +64,10 @@ class AccountTile extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.only(left: 10.0), // Align with service text
                     child: Text(
-                      item.account, 
-                      style: TextStyle(fontSize: 14, color: Colors.grey.shade600)
+                      item.account,
+                      style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],

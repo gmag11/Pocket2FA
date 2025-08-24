@@ -205,17 +205,17 @@ class _BottomBar extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               ElevatedButton.icon(
-                onPressed: null,
-                icon: const Icon(Icons.add),
+                onPressed: () {}, // active but no-op for now
+                icon: const Icon(Icons.qr_code, color: Colors.white),
                 style: ElevatedButton.styleFrom(
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                  backgroundColor: Colors.indigo,
+                  backgroundColor: const Color(0xFF4F63E6), // custom blue to match design
                 ),
-                label: const Text('New'),
+                label: const Text('New', style: TextStyle(color: Colors.white)),
               ),
               const SizedBox(width: 12),
               OutlinedButton(
-                onPressed: null,
+                onPressed: () {}, // active but no-op for now
                 style: OutlinedButton.styleFrom(
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                 ),

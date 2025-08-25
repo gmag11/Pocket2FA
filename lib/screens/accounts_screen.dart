@@ -42,59 +42,35 @@ class _AccountsScreenState extends State<AccountsScreen> {
   }
 
   Future<void> _addServer() async {
-    final nameCtrl = TextEditingController();
-    final urlCtrl = TextEditingController();
-    final apiCtrl = TextEditingController();
-    bool obscureAdd = true;
-    final res = await showDialog<bool>(
-      context: context,
-      builder: (c) => StatefulBuilder(builder: (c2, setStateSB) {
-        return AlertDialog(
-          title: const Text('Add server'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Name')),
-              TextField(controller: urlCtrl, decoration: const InputDecoration(labelText: 'URL')),
-              TextField(
-                controller: apiCtrl,
-                decoration: InputDecoration(
-                  labelText: 'API key',
-                  suffixIcon: IconButton(
-                    icon: Icon(obscureAdd ? Icons.visibility_off : Icons.visibility),
-                    onPressed: () => setStateSB(() => obscureAdd = !obscureAdd),
-                  ),
-                ),
-                obscureText: obscureAdd,
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(onPressed: () => Navigator.of(c).pop(false), child: const Text('Cancel')),
-            ElevatedButton(onPressed: () => Navigator.of(c).pop(true), child: const Text('Add')),
-          ],
-        );
-      }),
-    );
-
-    if (res == true) {
-      final s = ServerConnection(id: DateTime.now().millisecondsSinceEpoch.toString(), name: nameCtrl.text, url: urlCtrl.text, apiKey: apiCtrl.text, accounts: []);
-      setState(() {
-        _servers.add(s);
-      });
+    final result = await _showServerDialog(title: 'Add server');
+    if (result != null) {
+      setState(() => _servers.add(result));
       await _saveServers();
     }
   }
 
   Future<void> _editServer(ServerConnection server, int index) async {
-    final nameCtrl = TextEditingController(text: server.name);
-    final urlCtrl = TextEditingController(text: server.url);
-    final apiCtrl = TextEditingController(text: server.apiKey);
+    final result = await _showServerDialog(title: 'Edit server', initial: server);
+    if (result != null) {
+      setState(() => _servers[index] = result);
+      await _saveServers();
+    }
+  }
+
+  Future<ServerConnection?> _showServerDialog({required String title, ServerConnection? initial}) async {
+    final nameCtrl = TextEditingController(text: initial?.name ?? '');
+    final urlCtrl = TextEditingController(text: initial?.url ?? '');
+    final apiCtrl = TextEditingController(text: initial?.apiKey ?? '');
+    final isEdit = initial != null;
+
     bool obscure = true;
-    bool revealEnabled = false;
-    bool cleared = false;
+    // In Add mode reveal is enabled immediately; in Edit it's disabled until user interacts
+    bool revealEnabled = !isEdit;
+    // For Add we don't want the first-tap clear behavior, so mark cleared=true for Add
+    bool cleared = !isEdit;
     final apiFocus = FocusNode();
-    final res = await showDialog<bool>(
+
+    final res = await showDialog<ServerConnection?>(
       context: context,
       builder: (c) => StatefulBuilder(builder: (c2, setStateSB) {
 
@@ -111,8 +87,8 @@ class _AccountsScreenState extends State<AccountsScreen> {
             ),
             obscureText: obscure,
             onTap: () {
-              // On first tap, clear the field to avoid accidental exposure and enable reveal
-              if (!cleared) {
+              // On first tap in Edit mode, clear the field to avoid accidental exposure and enable reveal
+              if (isEdit && !cleared) {
                 apiCtrl.clear();
                 cleared = true;
                 setStateSB(() => revealEnabled = true);
@@ -127,7 +103,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
         }
 
         return AlertDialog(
-          title: const Text('Edit server'),
+          title: Text(title),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -137,20 +113,18 @@ class _AccountsScreenState extends State<AccountsScreen> {
             ],
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.of(c).pop(false), child: const Text('Cancel')),
-            ElevatedButton(onPressed: () => Navigator.of(c).pop(true), child: const Text('Save')),
+            TextButton(onPressed: () => Navigator.of(c).pop(null), child: const Text('Cancel')),
+            ElevatedButton(onPressed: () {
+              final id = initial?.id ?? DateTime.now().millisecondsSinceEpoch.toString();
+              final accounts = initial?.accounts ?? [];
+              Navigator.of(c).pop(ServerConnection(id: id, name: nameCtrl.text, url: urlCtrl.text, apiKey: apiCtrl.text, accounts: accounts));
+            }, child: Text(isEdit ? 'Save' : 'Add')),
           ],
         );
       }),
     );
 
-    if (res == true) {
-      final updated = ServerConnection(id: server.id, name: nameCtrl.text, url: urlCtrl.text, apiKey: apiCtrl.text, accounts: server.accounts);
-      setState(() {
-        _servers[index] = updated;
-      });
-      await _saveServers();
-    }
+    return res;
   }
 
   Future<void> _deleteServer(ServerConnection s) async {

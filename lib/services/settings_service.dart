@@ -8,7 +8,7 @@ class SettingsService extends ChangeNotifier {
   static const _key = 'otp_format';
   static const _enabledKey = 'otp_format_enabled';
 
-  CodeFormat _format = CodeFormat.compact;
+  CodeFormat _format = CodeFormat.spaced3;
   CodeFormat get format => _format;
 
   bool _enabled = true;
@@ -23,7 +23,7 @@ class SettingsService extends ChangeNotifier {
   Future<void> _load() async {
     if (storage != null) {
       final box = storage!.box;
-      final v = box.get(_key, defaultValue: 'compact') as String;
+  final v = box.get(_key, defaultValue: 'spaced3') as String;
       _format = _fromString(v);
       _enabled = box.get(_enabledKey, defaultValue: true) as bool;
       notifyListeners();
@@ -31,7 +31,7 @@ class SettingsService extends ChangeNotifier {
     }
 
     final prefs = await SharedPreferences.getInstance();
-    final v = prefs.getString(_key) ?? 'compact';
+  final v = prefs.getString(_key) ?? 'spaced3';
     _format = _fromString(v);
     _enabled = prefs.getBool(_enabledKey) ?? true;
     notifyListeners();

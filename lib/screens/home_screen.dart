@@ -6,6 +6,7 @@ import 'accounts_screen.dart';
 import '../data/sample_items.dart';
 import '../models/server_connection.dart';
 import '../models/two_factor_item.dart';
+import '../services/api_service.dart';
 
 class HomePage extends StatefulWidget {
   final SettingsService settings;
@@ -99,6 +100,14 @@ class _HomePageState extends State<HomePage> {
         _selectedGroup = 'All (0)';
       }
     });
+
+    // Configure ApiService for the selected server (if any). Ignore errors here.
+    if (_selectedServerId != null) {
+      try {
+        final srv = _servers.firstWhere((s) => s.id == _selectedServerId);
+        ApiService.instance.setServer(srv);
+      } catch (_) {}
+    }
   }
 
   Future<void> _openServerAccountSelector() async {
@@ -170,6 +179,15 @@ class _HomePageState extends State<HomePage> {
           await storage.box.put('selected', {'serverId': serverId, 'accountIndex': accountIndex});
         } catch (_) {
           // Non-fatal: ignore persistence errors
+        }
+      }
+
+      // Configure ApiService for the newly selected server. Show error if it fails.
+      try {
+        ApiService.instance.setServer(server);
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error configuring API: $e')));
         }
       }
     }

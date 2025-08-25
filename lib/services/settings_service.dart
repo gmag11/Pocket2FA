@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'settings_storage.dart';
 
 enum CodeFormat { compact, spaced3, spaced2 }
 
@@ -13,11 +14,22 @@ class SettingsService extends ChangeNotifier {
   bool _enabled = true;
   bool get enabled => _enabled;
 
-  SettingsService() {
+  final SettingsStorage? storage;
+
+  SettingsService({this.storage}) {
     _load();
   }
 
   Future<void> _load() async {
+    if (storage != null) {
+      final box = storage!.box;
+      final v = box.get(_key, defaultValue: 'compact') as String;
+      _format = _fromString(v);
+      _enabled = box.get(_enabledKey, defaultValue: true) as bool;
+      notifyListeners();
+      return;
+    }
+
     final prefs = await SharedPreferences.getInstance();
     final v = prefs.getString(_key) ?? 'compact';
     _format = _fromString(v);
@@ -26,17 +38,31 @@ class SettingsService extends ChangeNotifier {
   }
 
   Future<void> setFormat(CodeFormat f) async {
-  _format = f;
-  final prefs = await SharedPreferences.getInstance();
-  await prefs.setString(_key, _toString(f));
-  notifyListeners();
+    _format = f;
+    if (storage != null) {
+      final box = storage!.box;
+      await box.put(_key, _toString(f));
+      notifyListeners();
+      return;
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_key, _toString(f));
+    notifyListeners();
   }
 
   Future<void> setEnabled(bool on) async {
-  _enabled = on;
-  final prefs = await SharedPreferences.getInstance();
-  await prefs.setBool(_enabledKey, on);
-  notifyListeners();
+    _enabled = on;
+    if (storage != null) {
+      final box = storage!.box;
+      await box.put(_enabledKey, on);
+      notifyListeners();
+      return;
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_enabledKey, on);
+    notifyListeners();
   }
 
   static String _toString(CodeFormat f) {

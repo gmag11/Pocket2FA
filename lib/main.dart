@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'screens/home_screen.dart';
 import 'services/settings_service.dart';
+import 'services/settings_storage.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -13,7 +14,10 @@ Future<void> main() async {
     DeviceOrientation.landscapeRight,
   ]);
 
-  final settings = SettingsService();
+  final storage = SettingsStorage();
+  await storage.init();
+
+  final settings = SettingsService(storage: storage);
   runApp(TwoFactorAuthApp(settings: settings));
 }
 

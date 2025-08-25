@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'screens/home_screen.dart';
+import 'services/settings_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -12,11 +13,13 @@ Future<void> main() async {
     DeviceOrientation.landscapeRight,
   ]);
 
-  runApp(const TwoFactorAuthApp());
+  final settings = SettingsService();
+  runApp(TwoFactorAuthApp(settings: settings));
 }
 
 class TwoFactorAuthApp extends StatelessWidget {
-  const TwoFactorAuthApp({super.key});
+  final SettingsService settings;
+  const TwoFactorAuthApp({required this.settings, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +29,7 @@ class TwoFactorAuthApp extends StatelessWidget {
         primarySwatch: Colors.indigo,
         scaffoldBackgroundColor: Colors.white,
       ),
-      home: const HomePage(),
+  home: HomePage(settings: settings),
     );
   }
 }

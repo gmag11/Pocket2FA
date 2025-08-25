@@ -1,10 +1,40 @@
 import 'package:flutter/material.dart';
 import '../models/two_factor_item.dart';
+import '../services/settings_service.dart';
 
 class AccountTile extends StatelessWidget {
   final TwoFactorItem item;
+  final SettingsService? settings;
 
-  const AccountTile({required this.item, super.key});
+  const AccountTile({required this.item, this.settings, super.key});
+
+  String _formatCode(String code) {
+    final digits = code.replaceAll(RegExp(r'\s+'), '');
+    // If formatting is disabled, always return compact digits
+    if (settings != null && settings!.enabled == false) return digits;
+
+    final fmt = settings?.format ?? CodeFormat.compact;
+    switch (fmt) {
+      case CodeFormat.spaced3:
+        return _group(digits, [3, 3]);
+      case CodeFormat.spaced2:
+        return _group(digits, [2, 2, 2]);
+      case CodeFormat.compact:
+        return digits;
+    }
+  }
+
+  String _group(String s, List<int> groups) {
+    final parts = <String>[];
+    var i = 0;
+    for (final g in groups) {
+      if (i + g > s.length) break;
+      parts.add(s.substring(i, i + g));
+      i += g;
+    }
+    if (i < s.length) parts.add(s.substring(i));
+    return parts.join(' ');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -75,14 +105,21 @@ class AccountTile extends StatelessWidget {
             ),
           ),
 
-          // Small code column (left of main code) - bottom-right aligned
+      // Small code column (left of main code) - bottom-right aligned
           SizedBox(
             width: 54,
             height: 60,
-            child: Align(
-              alignment: Alignment.bottomRight,
-              child: Text(item.nextTwoFa, style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
-            ),
+              child: Align(
+                alignment: Alignment.bottomRight,
+                child: settings != null
+                    ? AnimatedBuilder(
+                        animation: settings!,
+                        builder: (context, _) {
+                          return Text(_formatCode(item.nextTwoFa), style: TextStyle(fontSize: 12, color: Colors.grey.shade500));
+                        },
+                      )
+                    : Text(_formatCode(item.nextTwoFa), style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+              ),
           ),
 
           const SizedBox(width: 8),
@@ -98,7 +135,14 @@ class AccountTile extends StatelessWidget {
                 children: [
                   Align(
                     alignment: Alignment.centerLeft,
-                    child: Text(item.twoFa, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700)),
+                    child: settings != null
+                        ? AnimatedBuilder(
+                            animation: settings!,
+                            builder: (context, _) {
+                              return Text(_formatCode(item.twoFa), style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700));
+                            },
+                          )
+                        : Text(_formatCode(item.twoFa), style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700)),
                   ),
                   const SizedBox(height: 8),
                   Align(

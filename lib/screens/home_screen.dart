@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import '../widgets/account_tile.dart';
+import '../services/settings_service.dart';
+import 'settings_screen.dart';
 import '../data/sample_items.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  final SettingsService settings;
+  const HomePage({required this.settings, super.key});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -92,19 +95,19 @@ class _HomePageState extends State<HomePage> {
                 builder: (context, constraints) {
                   final screenW = MediaQuery.of(context).size.width;
                   // For very wide screens center the main content and cap width so columns stay together
-                  if (screenW > 1400) {
+          if (screenW > 1400) {
                     return Center(
                       child: ConstrainedBox(
                         constraints: const BoxConstraints(maxWidth: 1400),
-                        child: _AccountList(selectedGroup: _groupKey(_selectedGroup), searchQuery: _searchQuery),
+              child: _AccountList(selectedGroup: _groupKey(_selectedGroup), searchQuery: _searchQuery, settings: widget.settings),
                       ),
                     );
                   }
-                  return _AccountList(selectedGroup: _groupKey(_selectedGroup), searchQuery: _searchQuery);
+            return _AccountList(selectedGroup: _groupKey(_selectedGroup), searchQuery: _searchQuery, settings: widget.settings);
                 },
               ),
             ),
-            const _BottomBar(),
+            _BottomBar(settings: widget.settings),
           ],
         ),
       ),
@@ -171,8 +174,9 @@ class _SearchBar extends StatelessWidget {
 class _AccountList extends StatelessWidget {
   final String selectedGroup;
   final String searchQuery;
+  final SettingsService settings;
 
-  const _AccountList({required this.selectedGroup, required this.searchQuery});
+  const _AccountList({required this.selectedGroup, required this.searchQuery, required this.settings});
 
   @override
   Widget build(BuildContext context) {
@@ -209,7 +213,7 @@ class _AccountList extends StatelessWidget {
         separatorBuilder: (context, index) => Divider(indent: 20, endIndent: 20,),
         itemBuilder: (context, index) {
           final item = filtered[index];
-          return AccountTile(item: item);
+          return AccountTile(item: item, settings: settings);
         },
       );
     }
@@ -229,7 +233,7 @@ class _AccountList extends StatelessWidget {
           decoration: const BoxDecoration(
             border: Border(bottom: BorderSide(color: Color(0xFFE0E0E0))),
           ),
-          child: AccountTile(item: item),
+          child: AccountTile(item: item, settings: settings),
         );
       },
     );
@@ -239,7 +243,8 @@ class _AccountList extends StatelessWidget {
 // _IconCircle removed (now unused after refactor)
 
 class _BottomBar extends StatelessWidget {
-  const _BottomBar();
+  final SettingsService settings;
+  const _BottomBar({required this.settings});
 
   @override
   Widget build(BuildContext context) {
@@ -276,55 +281,59 @@ class _BottomBar extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               InkWell(
-                onTap: () {
-                  showModalBottomSheet<String>(
-                    context: context,
-                    backgroundColor: Colors.white,
-                    shape: const RoundedRectangleBorder(
-                      borderRadius: BorderRadius.vertical(top: Radius.circular(12.0)),
-                    ),
-                    builder: (ctx) {
-                      return SafeArea(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            ListTile(
-                              title: const Text('settings', textAlign: TextAlign.center),
-                              onTap: () => Navigator.of(ctx).pop('settings'),
-                            ),
-                            ListTile(
-                              title: const Text('accounts', textAlign: TextAlign.center),
-                              onTap: () => Navigator.of(ctx).pop('accounts'),
-                            ),
-                            const SizedBox(height: 12),
-                            const Divider(height: 1),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                              child: Row(
+                      onTap: () {
+                        final s = settings;
+                        final nav = Navigator.of(context);
+                        showModalBottomSheet<String>(
+                          context: context,
+                          backgroundColor: Colors.white,
+                          shape: const RoundedRectangleBorder(
+                            borderRadius: BorderRadius.vertical(top: Radius.circular(12.0)),
+                          ),
+                          builder: (ctx) {
+                            return SafeArea(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Expanded(
-                                    child: Center(
-                                      child: Text('user@domain.com', style: TextStyle(color: Colors.grey)),
-                                    ),
+                                  ListTile(
+                                    title: const Text('settings', textAlign: TextAlign.center),
+                                    onTap: () => Navigator.of(ctx).pop('settings'),
                                   ),
-                                  IconButton(
-                                    icon: const Icon(Icons.close, color: Colors.grey),
-                                    onPressed: () => Navigator.of(ctx).pop(), // close without selecting
+                                  ListTile(
+                                    title: const Text('accounts', textAlign: TextAlign.center),
+                                    onTap: () => Navigator.of(ctx).pop('accounts'),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  const Divider(height: 1),
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                                    child: Row(
+                                      children: [
+                                        Expanded(
+                                          child: Center(
+                                            child: Text('user@domain.com', style: TextStyle(color: Colors.grey)),
+                                          ),
+                                        ),
+                                        IconButton(
+                                          icon: const Icon(Icons.close, color: Colors.grey),
+                                          onPressed: () => Navigator.of(ctx).pop(), // close without selecting
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ],
                               ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ).then((value) {
-                    if (value != null) {
-                      // handle selection if needed
-                      // print('selected: $value');
-                    }
-                  });
-                },
+                            );
+                          },
+                        ).then((value) {
+                          if (value != null) {
+                            if (value == 'settings') {
+                              // open full settings screen using captured Navigator
+                              nav.push(MaterialPageRoute(builder: (c) => SettingsScreen(settings: s)));
+                            }
+                          }
+                        });
+                      },
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: const [

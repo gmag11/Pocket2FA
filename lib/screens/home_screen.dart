@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import '../widgets/account_tile.dart';
 import '../services/settings_service.dart';
 import 'settings_screen.dart';
+import 'accounts_screen.dart';
 import '../data/sample_items.dart';
+import '../models/server_connection.dart';
+import '../models/two_factor_item.dart';
 
 class HomePage extends StatefulWidget {
   final SettingsService settings;
@@ -13,16 +16,163 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  String _selectedGroup = 'All (${sampleItems.length})';
+  String _selectedGroup = 'All (0)';
   String _searchQuery = '';
   late final TextEditingController _searchController;
   late final FocusNode _searchFocus;
+  List<ServerConnection> _servers = [];
+  String? _selectedServerId;
+  int? _selectedAccountIndex;
+  List<TwoFactorItem> _currentItems = [];
 
   @override
   void initState() {
     super.initState();
     _searchController = TextEditingController();
     _searchFocus = FocusNode();
+    _loadServers();
+  }
+
+  Future<void> _loadServers() async {
+    final storage = widget.settings.storage;
+    List<ServerConnection> servers = [];
+    String? restoredServerId;
+    int? restoredAccountIndex;
+    if (storage != null) {
+      final box = storage.box;
+      final raw = box.get('servers');
+      if (raw != null) {
+        servers = (raw as List<dynamic>)
+            .map((e) => ServerConnection.fromMap(Map<dynamic, dynamic>.from(e)))
+            .toList();
+      }
+      // Try to restore previously selected server/account
+      final selRaw = box.get('selected');
+      if (selRaw != null) {
+        try {
+          final m = Map<dynamic, dynamic>.from(selRaw);
+          restoredServerId = m['serverId'] as String?;
+          restoredAccountIndex = m['accountIndex'] is int ? m['accountIndex'] as int : (m['accountIndex'] == null ? null : int.tryParse(m['accountIndex'].toString()));
+        } catch (_) {
+          restoredServerId = null;
+          restoredAccountIndex = null;
+        }
+      }
+    }
+    setState(() {
+      _servers = servers;
+      if (_servers.isNotEmpty) {
+        // If we restored a selection and it exists in the servers list, use it; otherwise default to first
+        if (restoredServerId != null) {
+          final idx = _servers.indexWhere((s) => s.id == restoredServerId);
+          if (idx != -1) {
+            final srv = _servers[idx];
+            _selectedServerId = srv.id;
+            _selectedAccountIndex = (restoredAccountIndex != null && srv.accounts.length > restoredAccountIndex) ? restoredAccountIndex : (srv.accounts.isNotEmpty ? 0 : null);
+            // Prefer sample data by URL when available
+            final sample = sampleServers.firstWhere((ss) => ss.url == srv.url, orElse: () => srv);
+            _currentItems = sample.accounts;
+            _selectedGroup = 'All (${_currentItems.length})';
+          } else {
+            // restored server not present anymore, fallback to first
+            final first = _servers[0];
+            _selectedServerId = first.id;
+            // Prefer sample data by URL when available
+            final sampleFirst = sampleServers.firstWhere((ss) => ss.url == first.url, orElse: () => first);
+            _selectedAccountIndex = sampleFirst.accounts.isNotEmpty ? 0 : null;
+            _currentItems = sampleFirst.accounts;
+            _selectedGroup = 'All (${_currentItems.length})';
+          }
+        } else {
+          final first = _servers[0];
+          _selectedServerId = first.id;
+          // Prefer sample data by URL when available for the default server as well
+          final sampleFirst = sampleServers.firstWhere((ss) => ss.url == first.url, orElse: () => first);
+          _selectedAccountIndex = sampleFirst.accounts.isNotEmpty ? 0 : null;
+          _currentItems = sampleFirst.accounts;
+          _selectedGroup = 'All (${_currentItems.length})';
+        }
+      } else {
+        _selectedServerId = null;
+        _selectedAccountIndex = null;
+        _currentItems = [];
+        _selectedGroup = 'All (0)';
+      }
+    });
+  }
+
+  Future<void> _openServerAccountSelector() async {
+    if (_servers.isEmpty) return;
+    final choice = await showModalBottomSheet<Map<String, dynamic>>(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(12))),
+      builder: (c) {
+        // Size the sheet based on number of servers (tile height + header), capped to 80% of screen
+        final mq = MediaQuery.of(c).size;
+        const double tileH = 72.0;
+        const double headerH = 56.0;
+        final desired = headerH + (_servers.length * tileH);
+        final maxH = mq.height * 0.8;
+        final height = desired.clamp(120.0, maxH);
+
+        return SafeArea(
+          child: SizedBox(
+            height: height,
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  child: Align(alignment: Alignment.centerLeft, child: Text('Servers', style: Theme.of(context).textTheme.titleMedium)),
+                ),
+                const Divider(height: 1),
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: _servers.length,
+                    itemBuilder: (ctx, idx) {
+                      final srv = _servers[idx];
+                      final isActive = srv.id == _selectedServerId;
+                      return ListTile(
+                        title: Text('${srv.name} (${Uri.parse(srv.url).host})'),
+                        subtitle: Text(srv.url),
+                        trailing: isActive ? const Icon(Icons.check, color: Colors.green) : null,
+                        onTap: () {
+                          Navigator.of(ctx).pop({'serverId': srv.id, 'accountIndex': null});
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    if (choice != null) {
+      final serverId = choice['serverId'] as String;
+      final accountIndex = choice['accountIndex'] as int?;
+      final server = _servers.firstWhere((s) => s.id == serverId);
+      // Prefer sample data for display when available
+      final sample = sampleServers.firstWhere((ss) => ss.url == server.url, orElse: () => server);
+      setState(() {
+        _selectedServerId = serverId;
+        _selectedAccountIndex = accountIndex;
+        _currentItems = sample.accounts;
+        _selectedGroup = 'All (${_currentItems.length})';
+      });
+
+      // Persist selection
+      final storage = widget.settings.storage;
+      if (storage != null) {
+        try {
+          await storage.box.put('selected', {'serverId': serverId, 'accountIndex': accountIndex});
+        } catch (_) {
+          // Non-fatal: ignore persistence errors
+        }
+      }
+    }
   }
 
   @override
@@ -52,7 +202,7 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final groups = _groups();
+  final groups = _groups();
     return Scaffold(
       body: SafeArea(
         child: Column(
@@ -99,15 +249,30 @@ class _HomePageState extends State<HomePage> {
                     return Center(
                       child: ConstrainedBox(
                         constraints: const BoxConstraints(maxWidth: 1400),
-              child: _AccountList(selectedGroup: _groupKey(_selectedGroup), searchQuery: _searchQuery, settings: widget.settings),
+              child: _AccountList(selectedGroup: _groupKey(_selectedGroup), searchQuery: _searchQuery, settings: widget.settings, items: _currentItems),
                       ),
                     );
                   }
-            return _AccountList(selectedGroup: _groupKey(_selectedGroup), searchQuery: _searchQuery, settings: widget.settings);
+            return _AccountList(selectedGroup: _groupKey(_selectedGroup), searchQuery: _searchQuery, settings: widget.settings, items: _currentItems);
                 },
               ),
             ),
-            _BottomBar(settings: widget.settings),
+            _BottomBar(
+              settings: widget.settings,
+              servers: _servers,
+              selectedServerId: _selectedServerId,
+              selectedAccountIndex: _selectedAccountIndex,
+              onOpenSelector: _openServerAccountSelector,
+              onOpenAccounts: () async {
+                if (widget.settings.storage != null) {
+                  await Navigator.of(context).push(MaterialPageRoute(builder: (c) => AccountsScreen(storage: widget.settings.storage!)));
+                  // After returning from AccountsScreen, reload servers from storage
+                  await _loadServers();
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Storage not available')));
+                }
+              },
+            ),
           ],
         ),
       ),
@@ -175,14 +340,18 @@ class _AccountList extends StatelessWidget {
   final String selectedGroup;
   final String searchQuery;
   final SettingsService settings;
+  final List<TwoFactorItem> items;
 
-  const _AccountList({required this.selectedGroup, required this.searchQuery, required this.settings});
+  const _AccountList({required this.selectedGroup, required this.searchQuery, required this.settings, required this.items});
 
   @override
   Widget build(BuildContext context) {
-    final base = selectedGroup == 'All' || selectedGroup.isEmpty
-        ? sampleItems
-        : sampleItems.where((i) => i.group == selectedGroup).toList();
+  // If no servers/items available, return empty
+  if (items.isEmpty) return const Center(child: Text('No servers registered', style: TextStyle(color: Colors.grey)));
+
+  final base = selectedGroup == 'All' || selectedGroup.isEmpty
+    ? items
+    : items.where((i) => i.group == selectedGroup).toList();
 
     final query = searchQuery.toLowerCase();
     final filtered = query.isEmpty
@@ -244,7 +413,13 @@ class _AccountList extends StatelessWidget {
 
 class _BottomBar extends StatelessWidget {
   final SettingsService settings;
-  const _BottomBar({required this.settings});
+  final List<ServerConnection> servers;
+  final String? selectedServerId;
+  final int? selectedAccountIndex;
+  final VoidCallback onOpenSelector;
+  final VoidCallback? onOpenAccounts;
+
+  const _BottomBar({required this.settings, required this.servers, required this.selectedServerId, required this.selectedAccountIndex, required this.onOpenSelector, this.onOpenAccounts});
 
   @override
   Widget build(BuildContext context) {
@@ -280,11 +455,38 @@ class _BottomBar extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              InkWell(
-                      onTap: () {
-                        final s = settings;
-                        final nav = Navigator.of(context);
-                        showModalBottomSheet<String>(
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  GestureDetector(
+                    onTap: onOpenSelector,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
+                      child: Builder(builder: (ctx) {
+                        // Compute display text from the selected server/account safely
+                        String displayText;
+                        if (servers.isEmpty) {
+                          displayText = 'no-server';
+                        } else {
+                          final srv = selectedServerId != null
+                              ? servers.firstWhere((s) => s.id == selectedServerId, orElse: () => servers.first)
+                              : servers.first;
+                          final acct = (selectedAccountIndex != null && srv.accounts.length > selectedAccountIndex!)
+                              ? srv.accounts[selectedAccountIndex!].account
+                              : 'user@domain.com';
+                          displayText = '$acct - ${Uri.parse(srv.url).host}';
+                        }
+                        return Text(displayText, style: const TextStyle(color: Colors.grey));
+                      }),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  InkWell(
+                    onTap: () {
+                      final s = settings;
+                      final nav = Navigator.of(context);
+                      final messenger = ScaffoldMessenger.of(context);
+                      showModalBottomSheet<String>(
                           context: context,
                           backgroundColor: Colors.white,
                           shape: const RoundedRectangleBorder(
@@ -330,6 +532,18 @@ class _BottomBar extends StatelessWidget {
                             if (value == 'settings') {
                               // open full settings screen using captured Navigator
                               nav.push(MaterialPageRoute(builder: (c) => SettingsScreen(settings: s)));
+                            } else if (value == 'accounts') {
+                              // delegate to the owner (HomePage) to open accounts so it can reload afterwards
+                              if (onOpenAccounts != null) {
+                                onOpenAccounts!();
+                              } else {
+                                // fallback behaviour: try to open directly if storage is available
+                                if (s.storage != null) {
+                                  nav.push(MaterialPageRoute(builder: (c) => AccountsScreen(storage: s.storage!)));
+                                } else {
+                                  messenger.showSnackBar(const SnackBar(content: Text('Storage not available')));
+                                }
+                              }
                             }
                           }
                         });
@@ -337,13 +551,11 @@ class _BottomBar extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: const [
-                    Icon(Icons.person_outline, size: 18, color: Colors.grey),
-                    SizedBox(width: 8),
-                    Text('user@domain.com', style: TextStyle(color: Colors.grey)),
-                    SizedBox(width: 6),
                     Icon(Icons.more_vert, size: 18, color: Colors.grey),
                   ],
                 ),
+              ),
+                ],
               ),
             ],
           ),

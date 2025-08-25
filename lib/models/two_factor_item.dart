@@ -14,4 +14,12 @@ class TwoFactorItem {
     nextTwoFa: m['next_2fa'] ?? '',
     group: m['group'] ?? '',
   );
+
+  Map<String, String> toMap() => {
+    'service': service,
+    'account': account,
+    '2fa': twoFa,
+    'next_2fa': nextTwoFa,
+    'group': group,
+  };
 }

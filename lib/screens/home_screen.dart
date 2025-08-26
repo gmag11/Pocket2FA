@@ -491,7 +491,7 @@ class _BottomBar extends StatelessWidget {
                               : servers.first;
               final acct = (selectedAccountIndex != null && srv.accounts.length > selectedAccountIndex!)
                 ? srv.accounts[selectedAccountIndex!].account
-                : (srv.userEmail ?? 'user@domain.com');
+                : (srv.userEmail ?? 'no email');
                           displayText = '$acct - ${Uri.parse(srv.url).host}';
                         }
                         return Text(displayText, style: const TextStyle(color: Colors.grey));

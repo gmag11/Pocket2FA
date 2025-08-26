@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'dart:io';
+import 'dart:typed_data';
 import 'dart:developer' as developer;
 import '../models/server_connection.dart';
 
@@ -322,5 +323,26 @@ class ApiService {
     if (e is DioException) return friendlyErrorMessageFromDio(e);
     if (e is StateError) return e.message;
     return e.toString();
+  }
+
+  /// Download an icon file from the server's storage endpoint.
+  ///
+  /// The file is retrieved from: `<server.url>/storage/icons/{fileName}`
+  /// Returns the raw bytes as [Uint8List]. Requires `setServer(...)` to have
+  /// been called previously; otherwise a [StateError] will be thrown.
+  Future<Uint8List> downloadIcon(String fileName, {CancelToken? cancelToken}) async {
+    _ensureReady();
+    final srv = _server!;
+    final trimmed = _trimTrailingSlash(srv.url);
+    final encoded = Uri.encodeComponent(fileName);
+    final url = '$trimmed/storage/icons/$encoded';
+
+    // Use bytes response type to get the raw content
+    final resp = await _dio!.get<List<int>>(url, options: Options(responseType: ResponseType.bytes), cancelToken: cancelToken);
+    if (resp.statusCode == 200 && resp.data != null) {
+      return Uint8List.fromList(List<int>.from(resp.data!));
+    }
+
+    throw StateError('Unexpected response downloading icon: ${resp.statusCode}');
   }
 }

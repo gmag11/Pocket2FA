@@ -1,0 +1,6 @@
+{
+  // Keep the folder visible in the Explorer but exclude it from Dart analysis
+  "dart.analysisExcludedFolders": [
+    "2FAuth-API"
+  ]
+}

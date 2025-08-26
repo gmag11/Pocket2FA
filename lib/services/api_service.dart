@@ -88,7 +88,7 @@ class ApiService {
 
     developer.log('ApiService: server configured', name: 'ApiService',
         error:
-            'id=${server.id} name=${server.name} base=${base} authorization=${server.apiKey.isNotEmpty ? 'present' : 'absent'}');
+            'id=${server.id} name=${server.name} base=$base authorization=${server.apiKey.isNotEmpty ? 'present' : 'absent'}');
   }
 
   /// Cierra la conexión activa y limpia el estado.

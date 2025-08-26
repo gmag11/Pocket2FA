@@ -1,4 +1,4 @@
-import 'two_factor_item.dart';
+import 'account_entry.dart';
 import 'group_entry.dart';
 
 class ServerConnection {
@@ -6,7 +6,7 @@ class ServerConnection {
   final String name;
   final String url;
   final String apiKey;
-  final List<TwoFactorItem> accounts;
+    final List<AccountEntry> accounts;
 
   // User info fetched from /api/v1/user after validating the server
   final int? userId;
@@ -39,7 +39,7 @@ class ServerConnection {
         'name': name,
         'url': url,
         'apiKey': apiKey,
-        'accounts': accounts.map((a) => a.toMap()).toList(),
+    'accounts': accounts.map((a) => a.toMap()).toList(),
         if (groups != null) 'groups': groups!.map((g) => g.toMap()).toList(),
         if (userId != null) 'user_id': userId,
         if (userName != null) 'user_name': userName,
@@ -57,7 +57,7 @@ class ServerConnection {
         url: m['url'] as String,
         apiKey: m['apiKey'] as String,
         accounts: (m['accounts'] as List<dynamic>)
-            .map((e) => TwoFactorItem.fromMap(Map<String, String>.from(e)))
+            .map((e) => AccountEntry.fromMap(Map<dynamic, dynamic>.from(e)))
             .toList(),
         groups: m.containsKey('groups') && m['groups'] is List
             ? (m['groups'] as List<dynamic>)

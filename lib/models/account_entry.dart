@@ -1,3 +1,5 @@
+import 'two_factor_item.dart';
+
 class AccountEntry {
   final String id;
   final String service;
@@ -60,4 +62,12 @@ class AccountEntry {
         period: m.containsKey('period') && m['period'] != null ? (m['period'] is int ? m['period'] as int : int.tryParse(m['period'].toString())) : null,
         counter: m.containsKey('counter') && m['counter'] != null ? (m['counter'] is int ? m['counter'] as int : int.tryParse(m['counter'].toString())) : null,
       );
+
+      TwoFactorItem toTwoFactorItem() => TwoFactorItem(
+            service: service,
+            account: account,
+            twoFa: seed,
+            nextTwoFa: '000000',
+            group: group,
+          );
 }

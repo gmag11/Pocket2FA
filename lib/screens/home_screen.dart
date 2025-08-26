@@ -3,7 +3,6 @@ import '../widgets/account_tile.dart';
 import '../services/settings_service.dart';
 import 'settings_screen.dart';
 import 'accounts_screen.dart';
-import '../data/sample_items.dart';
 import '../models/server_connection.dart';
 import '../models/two_factor_item.dart';
 import '../services/api_service.dart';
@@ -62,7 +61,7 @@ class _HomePageState extends State<HomePage> {
     }
     setState(() {
       _servers = servers;
-      if (_servers.isNotEmpty) {
+  if (_servers.isNotEmpty) {
         // If we restored a selection and it exists in the servers list, use it; otherwise default to first
         if (restoredServerId != null) {
           final idx = _servers.indexWhere((s) => s.id == restoredServerId);
@@ -70,27 +69,22 @@ class _HomePageState extends State<HomePage> {
             final srv = _servers[idx];
             _selectedServerId = srv.id;
             _selectedAccountIndex = (restoredAccountIndex != null && srv.accounts.length > restoredAccountIndex) ? restoredAccountIndex : (srv.accounts.isNotEmpty ? 0 : null);
-            // Prefer sample data by URL when available
-            final sample = sampleServers.firstWhere((ss) => ss.url == srv.url, orElse: () => srv);
-            _currentItems = sample.accounts;
+            // Map AccountEntry -> TwoFactorItem for UI rendering
+            _currentItems = srv.accounts.map((a) => a.toTwoFactorItem()).toList();
             _selectedGroup = 'All (${_currentItems.length})';
           } else {
             // restored server not present anymore, fallback to first
             final first = _servers[0];
             _selectedServerId = first.id;
-            // Prefer sample data by URL when available
-            final sampleFirst = sampleServers.firstWhere((ss) => ss.url == first.url, orElse: () => first);
-            _selectedAccountIndex = sampleFirst.accounts.isNotEmpty ? 0 : null;
-            _currentItems = sampleFirst.accounts;
+            _selectedAccountIndex = first.accounts.isNotEmpty ? 0 : null;
+            _currentItems = first.accounts.map((a) => a.toTwoFactorItem()).toList();
             _selectedGroup = 'All (${_currentItems.length})';
           }
         } else {
           final first = _servers[0];
           _selectedServerId = first.id;
-          // Prefer sample data by URL when available for the default server as well
-          final sampleFirst = sampleServers.firstWhere((ss) => ss.url == first.url, orElse: () => first);
-          _selectedAccountIndex = sampleFirst.accounts.isNotEmpty ? 0 : null;
-          _currentItems = sampleFirst.accounts;
+          _selectedAccountIndex = first.accounts.isNotEmpty ? 0 : null;
+          _currentItems = first.accounts.map((a) => a.toTwoFactorItem()).toList();
           _selectedGroup = 'All (${_currentItems.length})';
         }
       } else {
@@ -105,7 +99,7 @@ class _HomePageState extends State<HomePage> {
     if (_selectedServerId != null) {
       try {
         final srv = _servers.firstWhere((s) => s.id == _selectedServerId);
-        ApiService.instance.setServer(srv);
+          ApiService.instance.setServer(srv);
       } catch (_) {}
     }
   }
@@ -164,11 +158,10 @@ class _HomePageState extends State<HomePage> {
       final accountIndex = choice['accountIndex'] as int?;
       final server = _servers.firstWhere((s) => s.id == serverId);
       // Prefer sample data for display when available
-      final sample = sampleServers.firstWhere((ss) => ss.url == server.url, orElse: () => server);
       setState(() {
         _selectedServerId = serverId;
         _selectedAccountIndex = accountIndex;
-        _currentItems = sample.accounts;
+        _currentItems = server.accounts.map((a) => a.toTwoFactorItem()).toList();
         _selectedGroup = 'All (${_currentItems.length})';
       });
 
@@ -202,11 +195,11 @@ class _HomePageState extends State<HomePage> {
 
   List<String> _groups() {
     final Map<String, int> counts = {};
-    for (final item in sampleItems) {
+    for (final item in _currentItems) {
       final g = item.group.isEmpty ? 'Ungrouped' : item.group;
       counts[g] = (counts[g] ?? 0) + 1;
     }
-    final groups = ['All (${sampleItems.length})'];
+    final groups = ['All (${_currentItems.length})'];
     groups.addAll(counts.keys.map((k) => '$k (${counts[k]})'));
     return groups;
   }
@@ -364,8 +357,8 @@ class _AccountList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-  // If no servers/items available, return empty
-  if (items.isEmpty) return const Center(child: Text('No servers registered', style: TextStyle(color: Colors.grey)));
+  // If no accounts/items available, return informative message
+  if (items.isEmpty) return const Center(child: Text('No accounts registered', style: TextStyle(color: Colors.grey)));
 
   final base = selectedGroup == 'All' || selectedGroup.isEmpty
     ? items

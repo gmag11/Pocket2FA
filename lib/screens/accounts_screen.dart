@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/server_connection.dart';
 import 'dart:developer' as developer;
 import '../services/api_service.dart';
-import '../models/two_factor_item.dart';
+import '../models/account_entry.dart';
 import '../services/settings_storage.dart';
 
 class AccountsScreen extends StatefulWidget {
@@ -294,7 +294,7 @@ class _ServerDetailScreenState extends State<_ServerDetailScreen> {
     );
 
     if (res == true) {
-      final item = TwoFactorItem(service: svc.text, account: acct.text, twoFa: '000000', nextTwoFa: '000000', group: '');
+      final item = AccountEntry(id: DateTime.now().millisecondsSinceEpoch.toString(), service: svc.text, account: acct.text, seed: seed.text, group: '');
       setState(() {
         _server = ServerConnection(id: _server.id, name: _server.name, url: _server.url, apiKey: _server.apiKey, accounts: [..._server.accounts, item]);
       });

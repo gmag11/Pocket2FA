@@ -1,4 +1,5 @@
 import 'two_factor_item.dart';
+import 'group_entry.dart';
 
 class ServerConnection {
   final String id;
@@ -15,6 +16,7 @@ class ServerConnection {
   final bool? authenticatedByProxy;
   final Map<String, dynamic>? preferences;
   final bool? isAdmin;
+  final List<GroupEntry>? groups;
 
   ServerConnection({
     required this.id,
@@ -29,6 +31,7 @@ class ServerConnection {
     this.authenticatedByProxy,
     this.preferences,
     this.isAdmin,
+    this.groups,
   });
 
   Map<String, dynamic> toMap() => {
@@ -37,11 +40,13 @@ class ServerConnection {
         'url': url,
         'apiKey': apiKey,
         'accounts': accounts.map((a) => a.toMap()).toList(),
+        if (groups != null) 'groups': groups!.map((g) => g.toMap()).toList(),
         if (userId != null) 'user_id': userId,
         if (userName != null) 'user_name': userName,
         if (userEmail != null) 'user_email': userEmail,
         if (oauthProvider != null) 'oauth_provider': oauthProvider,
-        if (authenticatedByProxy != null) 'authenticated_by_proxy': authenticatedByProxy,
+        if (authenticatedByProxy != null)
+          'authenticated_by_proxy': authenticatedByProxy,
         if (preferences != null) 'preferences': preferences,
         if (isAdmin != null) 'is_admin': isAdmin,
       };
@@ -51,13 +56,28 @@ class ServerConnection {
         name: m['name'] as String,
         url: m['url'] as String,
         apiKey: m['apiKey'] as String,
-        accounts: (m['accounts'] as List<dynamic>).map((e) => TwoFactorItem.fromMap(Map<String, String>.from(e))).toList(),
-        userId: m.containsKey('user_id') ? (m['user_id'] is int ? m['user_id'] as int : int.tryParse(m['user_id'].toString())) : null,
+        accounts: (m['accounts'] as List<dynamic>)
+            .map((e) => TwoFactorItem.fromMap(Map<String, String>.from(e)))
+            .toList(),
+        groups: m.containsKey('groups') && m['groups'] is List
+            ? (m['groups'] as List<dynamic>)
+                .map((e) => GroupEntry.fromMap(Map<dynamic, dynamic>.from(e)))
+                .toList()
+            : null,
+        userId: m.containsKey('user_id')
+            ? (m['user_id'] is int
+                ? m['user_id'] as int
+                : int.tryParse(m['user_id'].toString()))
+            : null,
         userName: m['user_name'] as String?,
         userEmail: m['user_email'] as String?,
         oauthProvider: m['oauth_provider'] as String?,
-        authenticatedByProxy: m.containsKey('authenticated_by_proxy') ? m['authenticated_by_proxy'] as bool? : null,
-        preferences: m.containsKey('preferences') ? Map<String, dynamic>.from(m['preferences'] as Map) : null,
+        authenticatedByProxy: m.containsKey('authenticated_by_proxy')
+            ? m['authenticated_by_proxy'] as bool?
+            : null,
+        preferences: m.containsKey('preferences')
+            ? Map<String, dynamic>.from(m['preferences'] as Map)
+            : null,
         isAdmin: m.containsKey('is_admin') ? m['is_admin'] as bool? : null,
       );
 }

@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'dart:io';
 import 'dart:developer' as developer;
 import '../models/server_connection.dart';
 
@@ -10,9 +11,11 @@ import '../models/server_connection.dart';
 ///
 /// Ejemplo de uso:
 ///
+/// ```dart
 /// final api = ApiService.instance;
 /// api.setServer(serverConnection);
 /// final resp = await api.get('accounts');
+/// ```
 ///
 class ApiService {
   ApiService._internal();
@@ -54,7 +57,9 @@ class ApiService {
       try {
         developer.log('ApiService: closing previous Dio instance', name: 'ApiService');
         _dio!.close(force: true);
-      } catch (_) {}
+      } catch (_) {
+        // ignore errors while closing
+      }
       _dio = null;
     }
 
@@ -208,5 +213,114 @@ class ApiService {
       p = p.substring(1);
     }
     return p;
+  }
+
+  /// Valida un servidor (GET /api/v1/user) usando los datos del [server] pasado.
+  ///
+  /// Este método no requiere que `setServer` haya sido llamado; crea una
+  /// instancia temporal de Dio con timeouts cortos para validar la conexión y
+  /// devolverá el body decodificado como Map&lt;String, dynamic&gt; cuando el
+  /// endpoint responda con 200.
+  ///
+  /// Lanza [DioException] para errores de conexión/respuesta y [StateError]
+  /// para respuestas inesperadas.
+  Future<Map<String, dynamic>> validateServer(ServerConnection server,
+      {Duration connectTimeout = const Duration(seconds: 6),
+      Duration receiveTimeout = const Duration(seconds: 6)}) async {
+    final trimmedUrl = _trimTrailingSlash(server.url);
+    final base = '$trimmedUrl/api/v1/';
+
+    final opts = BaseOptions(
+      baseUrl: base,
+      connectTimeout: connectTimeout,
+      receiveTimeout: receiveTimeout,
+      headers: {
+        'Accept': 'application/json',
+        if (server.apiKey.isNotEmpty) 'Authorization': 'Bearer ${server.apiKey}',
+      },
+    );
+
+    final dio = Dio(opts);
+    // lightweight logging for validation (do not log sensitive values)
+    dio.interceptors.add(LogInterceptor(request: true, requestBody: false, responseBody: false, error: true, logPrint: (o) => developer.log(o.toString(), name: 'ApiService.validate')));
+
+    final resp = await dio.get('user');
+    if (resp.statusCode == 200 && resp.data is Map) {
+      return Map<String, dynamic>.from(resp.data as Map);
+    }
+
+    throw StateError('Unexpected response validating server: ${resp.statusCode}');
+  }
+
+  /// Produce a user-friendly, localized-ish message from a [DioException].
+  ///
+  /// Intentionally conservative: avoid leaking sensitive data (API keys).
+  String friendlyErrorMessageFromDio(DioException e) {
+    final status = e.response?.statusCode;
+    // If the server returned a code, map common ones to helpful text.
+    if (status != null) {
+      final data = e.response?.data;
+      String detail = '';
+      try {
+        if (data is Map && data['message'] != null) {
+          detail = ': ${data['message']}';
+        } else if (data is String && data.isNotEmpty) {
+          detail = ': $data';
+        }
+      } catch (_) {
+        // ignore parse errors from response body
+      }
+
+      switch (status) {
+        case 400:
+          return 'Bad request (400)$detail';
+        case 401:
+          return 'Unauthorized (401). Check the API key.';
+        case 403:
+          return 'Forbidden (403). You don\'t have permission.';
+        case 404:
+          return 'Not found (404). Verify the server URL.';
+        default:
+          if (status >= 500) return 'Server error ($status). Try again later$detail';
+          return 'Server error ($status)$detail';
+      }
+    }
+
+    // No status code: inspect the DioException type or inner error.
+    switch (e.type) {
+      case DioExceptionType.connectionTimeout:
+      case DioExceptionType.sendTimeout:
+      case DioExceptionType.receiveTimeout:
+        return 'Connection timed out. Check your network and server URL.';
+      case DioExceptionType.cancel:
+        return 'Request cancelled.';
+      case DioExceptionType.unknown:
+        // Fallthrough to inspect inner error
+        break;
+      case DioExceptionType.badResponse:
+        return 'Bad response from server.';
+      default:
+        break;
+    }
+
+    final inner = e.error;
+    if (inner is SocketException) {
+      final os = inner.osError;
+      final msg = os?.message ?? inner.message;
+      if (msg.contains('Failed host lookup') || msg.contains('No address associated')) {
+        return 'Unable to resolve host. Check the server address and your internet connection.';
+      }
+      return 'Connection error: ${msg.isNotEmpty ? msg : inner.toString()}';
+    }
+
+  final m = e.message;
+  return 'Connection error: ${m != null && m.isNotEmpty ? m : e.toString()}';
+  }
+
+  /// Generic helper to convert any thrown object into a user-friendly message.
+  String friendlyErrorMessage(Object e) {
+    if (e is DioException) return friendlyErrorMessageFromDio(e);
+    if (e is StateError) return e.message;
+    return e.toString();
   }
 }

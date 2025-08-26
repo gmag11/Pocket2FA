@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/server_connection.dart';
+import 'dart:developer' as developer;
+import '../services/api_service.dart';
 import '../models/two_factor_item.dart';
 import '../services/settings_storage.dart';
 
@@ -44,16 +46,18 @@ class _AccountsScreenState extends State<AccountsScreen> {
   Future<void> _addServer() async {
     final result = await _showServerDialog(title: 'Add server');
     if (result != null) {
-      setState(() => _servers.add(result));
-      await _saveServers();
+  setState(() => _servers.add(result));
+  await _saveServers();
+  _showGreenToast('Server connection saved and validated');
     }
   }
 
   Future<void> _editServer(ServerConnection server, int index) async {
     final result = await _showServerDialog(title: 'Edit server', initial: server);
     if (result != null) {
-      setState(() => _servers[index] = result);
-      await _saveServers();
+  setState(() => _servers[index] = result);
+  await _saveServers();
+  _showGreenToast('Server updated and validated');
     }
   }
 
@@ -70,10 +74,12 @@ class _AccountsScreenState extends State<AccountsScreen> {
     bool cleared = !isEdit;
     final apiFocus = FocusNode();
 
+    bool loading = false;
+    String? errorText;
+
     final res = await showDialog<ServerConnection?>(
       context: context,
       builder: (c) => StatefulBuilder(builder: (c2, setStateSB) {
-
         Widget apiField() {
           return TextField(
             controller: apiCtrl,
@@ -102,6 +108,57 @@ class _AccountsScreenState extends State<AccountsScreen> {
           );
         }
 
+  Future<void> validateAndClose() async {
+          setStateSB(() { errorText = null; loading = true; });
+          final urlText = urlCtrl.text.trim();
+          final apiKeyText = apiCtrl.text.trim();
+          if (urlText.isEmpty) {
+            setStateSB(() { errorText = 'URL required'; loading = false; });
+            return;
+          }
+
+          final temp = ServerConnection(
+            id: initial?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
+            name: nameCtrl.text,
+            url: urlCtrl.text,
+            apiKey: apiKeyText,
+            accounts: initial?.accounts ?? [],
+          );
+
+          try {
+            final m = await ApiService.instance.validateServer(temp);
+            try {
+              developer.log('AccountsScreen: /api/v1/user response -> $m', name: 'AccountsScreen');
+            } catch (_) {}
+
+            final sc = ServerConnection(
+              id: temp.id,
+              name: temp.name,
+              url: temp.url,
+              apiKey: temp.apiKey,
+              accounts: temp.accounts,
+              userId: m['id'] is int ? m['id'] as int : int.tryParse(m['id'].toString()),
+              userName: m['name'] as String?,
+              userEmail: m['email'] as String?,
+              oauthProvider: m['oauth_provider']?.toString(),
+              authenticatedByProxy: m['authenticated_by_proxy'] as bool?,
+              preferences: m['preferences'] != null ? Map<String, dynamic>.from(m['preferences'] as Map) : null,
+              isAdmin: m['is_admin'] as bool?,
+            );
+
+            // Ensure the owning State is still mounted before using its context.
+            if (!mounted) return;
+            setStateSB(() { loading = false; });
+            Navigator.of(context).pop(sc);
+            return;
+          } catch (e) {
+            // Convert any error into a user-friendly message via ApiService helper.
+            final msg = ApiService.instance.friendlyErrorMessage(e);
+            setStateSB(() { errorText = msg; loading = false; });
+            return;
+          }
+        }
+
         return AlertDialog(
           title: Text(title),
           content: Column(
@@ -110,15 +167,18 @@ class _AccountsScreenState extends State<AccountsScreen> {
               TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Name')),
               TextField(controller: urlCtrl, decoration: const InputDecoration(labelText: 'URL')),
               apiField(),
+              if (errorText != null) ...[
+                const SizedBox(height: 8),
+                Text(errorText!, style: const TextStyle(color: Colors.red)),
+              ],
             ],
           ),
           actions: [
             TextButton(onPressed: () => Navigator.of(c).pop(null), child: const Text('Cancel')),
-            ElevatedButton(onPressed: () {
-              final id = initial?.id ?? DateTime.now().millisecondsSinceEpoch.toString();
-              final accounts = initial?.accounts ?? [];
-              Navigator.of(c).pop(ServerConnection(id: id, name: nameCtrl.text, url: urlCtrl.text, apiKey: apiCtrl.text, accounts: accounts));
-            }, child: Text(isEdit ? 'Save' : 'Add')),
+            ElevatedButton(
+              onPressed: loading ? null : () async { await validateAndClose(); },
+              child: loading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)) : Text(isEdit ? 'Save' : 'Add'),
+            ),
           ],
         );
       }),
@@ -130,6 +190,28 @@ class _AccountsScreenState extends State<AccountsScreen> {
   Future<void> _deleteServer(ServerConnection s) async {
     setState(() => _servers.removeWhere((x) => x.id == s.id));
     await _saveServers();
+  }
+
+  void _showGreenToast(String text) {
+  final overlay = Overlay.of(context);
+    final entry = OverlayEntry(builder: (ctx) {
+      return Positioned(
+        bottom: 60,
+        left: 20,
+        right: 20,
+        child: Material(
+          color: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(color: Colors.green.shade600, borderRadius: BorderRadius.circular(8)),
+            child: Text(text, style: const TextStyle(color: Colors.white)),
+          ),
+        ),
+      );
+    });
+
+    overlay.insert(entry);
+    Future.delayed(const Duration(seconds: 2), () { entry.remove(); });
   }
 
   @override

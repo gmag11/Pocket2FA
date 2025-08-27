@@ -720,15 +720,19 @@ class _BottomBar extends StatelessWidget {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Small LED showing server reachability (green = reachable, red = unreachable)
-                  Container(
-                    width: 8,
-                    height: 8,
-                    margin: const EdgeInsets.only(left: 6.0, right: 6.0),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: serverReachable ? Colors.green : Colors.red,
-                      boxShadow: [BoxShadow(color: Color.fromRGBO(0,0,0,0.12), blurRadius: 2, offset: const Offset(0,1))],
+                  // Reachability indicator: icon + tooltip + semantics for accessibility
+                  Tooltip(
+                    message: serverReachable ? 'Online' : 'Offline',
+                    child: Semantics(
+                      label: serverReachable ? 'Server reachable' : 'Server unreachable',
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 6.0),
+                        child: Icon(
+                          serverReachable ? Icons.cloud : Icons.cloud_off,
+                          size: 14,
+                          color: serverReachable ? Colors.green : Colors.red,
+                        ),
+                      ),
                     ),
                   ),
                   GestureDetector(

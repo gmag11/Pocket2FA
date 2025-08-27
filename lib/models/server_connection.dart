@@ -1,5 +1,6 @@
 import 'account_entry.dart';
 import 'group_entry.dart';
+import 'user_preferences.dart';
 
 class ServerConnection {
   final String id;
@@ -14,7 +15,7 @@ class ServerConnection {
   final String? userEmail;
   final String? oauthProvider;
   final bool? authenticatedByProxy;
-  final Map<String, dynamic>? preferences;
+  final UserPreferences? preferences;
   final bool? isAdmin;
   final List<GroupEntry>? groups;
 
@@ -29,7 +30,7 @@ class ServerConnection {
     this.userEmail,
     this.oauthProvider,
     this.authenticatedByProxy,
-    this.preferences,
+  this.preferences,
     this.isAdmin,
     this.groups,
   });
@@ -44,10 +45,10 @@ class ServerConnection {
         if (userId != null) 'user_id': userId,
         if (userName != null) 'user_name': userName,
         if (userEmail != null) 'user_email': userEmail,
-        if (oauthProvider != null) 'oauth_provider': oauthProvider,
-        if (authenticatedByProxy != null)
-          'authenticated_by_proxy': authenticatedByProxy,
-        if (preferences != null) 'preferences': preferences,
+          if (oauthProvider != null) 'oauth_provider': oauthProvider,
+          if (authenticatedByProxy != null)
+            'authenticated_by_proxy': authenticatedByProxy,
+          if (preferences != null) 'preferences': preferences!.toMap(),
         if (isAdmin != null) 'is_admin': isAdmin,
       };
 
@@ -72,12 +73,12 @@ class ServerConnection {
         userName: m['user_name'] as String?,
         userEmail: m['user_email'] as String?,
         oauthProvider: m['oauth_provider'] as String?,
-        authenticatedByProxy: m.containsKey('authenticated_by_proxy')
-            ? m['authenticated_by_proxy'] as bool?
-            : null,
-        preferences: m.containsKey('preferences')
-            ? Map<String, dynamic>.from(m['preferences'] as Map)
-            : null,
+    authenticatedByProxy: m.containsKey('authenticated_by_proxy')
+      ? m['authenticated_by_proxy'] as bool?
+      : null,
+    preferences: m.containsKey('preferences')
+      ? UserPreferences.fromMap(Map<dynamic, dynamic>.from(m['preferences'] as Map))
+      : null,
         isAdmin: m.containsKey('is_admin') ? m['is_admin'] as bool? : null,
       );
 }

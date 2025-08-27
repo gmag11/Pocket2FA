@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/server_connection.dart';
+import '../models/user_preferences.dart';
 import 'dart:developer' as developer;
 import '../services/api_service.dart';
 import '../models/account_entry.dart';
@@ -142,7 +143,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
               userEmail: m['email'] as String?,
               oauthProvider: m['oauth_provider']?.toString(),
               authenticatedByProxy: m['authenticated_by_proxy'] as bool?,
-              preferences: m['preferences'] != null ? Map<String, dynamic>.from(m['preferences'] as Map) : null,
+              preferences: m['preferences'] != null ? UserPreferences.fromMap(Map<dynamic, dynamic>.from(m['preferences'] as Map)) : null,
               isAdmin: m['is_admin'] as bool?,
             );
 

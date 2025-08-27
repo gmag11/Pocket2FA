@@ -1,4 +1,4 @@
-import 'two_factor_item.dart';
+// legacy model removed: use AccountEntry directly in UI
 
 class AccountEntry {
   final String id;
@@ -68,13 +68,7 @@ class AccountEntry {
   localIcon: m['local_icon']?.toString(),
       );
 
-      TwoFactorItem toTwoFactorItem() => TwoFactorItem(
-            service: service,
-            account: account,
-            twoFa: seed,
-            nextTwoFa: '000000',
-            group: group,
-          );
+  // Legacy conversion removed: UI should use AccountEntry directly and generate OTPs dynamically.
 
   AccountEntry copyWith({
     String? id,

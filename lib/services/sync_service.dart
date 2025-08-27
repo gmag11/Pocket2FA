@@ -14,6 +14,7 @@ class SyncService {
 
   static const Duration _throttle = Duration(minutes: 15);
   static const _lastSyncKeyPrefix = 'last_sync_';
+  static const _lastSyncForcedKeyPrefix = 'last_sync_forced_';
 
   /// Returns a summary map:
   /// {
@@ -24,7 +25,7 @@ class SyncService {
   ///   'message': String?
   /// }
   Future<Map<String, dynamic>> syncIfNeeded(ServerConnection server, SettingsStorage storage, {CancelToken? cancelToken, int concurrency = 4}) async {
-    final key = '$_lastSyncKeyPrefix${server.id}';
+  final key = '$_lastSyncKeyPrefix${server.id}';
     final box = storage.box;
     final lastRaw = box.get(key);
     DateTime? last;
@@ -34,16 +35,27 @@ class SyncService {
       } catch (_) {}
     }
 
+  // Check whether the last sync was marked as forced. If it was forced we
+  // ignore the throttle window for skipping (i.e. allow an automatic sync to
+  // proceed even if the last recorded sync was a forced one).
+  final forcedKey = '$_lastSyncForcedKeyPrefix${server.id}';
+  final forcedRaw = box.get(forcedKey);
+  final bool wasLastForced = forcedRaw == true;
+
     if (last != null && DateTime.now().difference(last) < _throttle) {
-      developer.log('SyncService: skipping sync for ${server.id}, last=${last.toIso8601String()}', name: 'SyncService');
-      return {'skipped': true, 'success': true, 'downloaded': 0, 'failed': 0, 'message': 'Skipped (throttled)'};
+      if (wasLastForced) {
+        developer.log('SyncService: last sync for ${server.id} was forced; ignoring throttle and proceeding', name: 'SyncService');
+      } else {
+        developer.log('SyncService: skipping sync for ${server.id}, last=${last.toIso8601String()}', name: 'SyncService');
+        return {'skipped': true, 'success': true, 'downloaded': 0, 'failed': 0, 'message': 'Skipped (throttled)'};
+      }
     }
 
     final res = await forceSync(server, storage, cancelToken: cancelToken, concurrency: concurrency);
     return res;
   }
 
-  Future<Map<String, dynamic>> forceSync(ServerConnection server, SettingsStorage storage, {CancelToken? cancelToken, int concurrency = 4}) async {
+  Future<Map<String, dynamic>> forceSync(ServerConnection server, SettingsStorage storage, {CancelToken? cancelToken, int concurrency = 4, bool markAsForced = false}) async {
     developer.log('SyncService: starting sync for ${server.id}', name: 'SyncService');
 
     // Ensure ApiService is configured for this server so Authorization headers and base are correct
@@ -80,8 +92,9 @@ class SyncService {
     }
 
     // 3) download icons for each account that has icon field, in parallel batches
-    int downloaded = 0;
-    int failed = 0;
+  int downloaded = 0;
+  int failed = 0;
+  int skipped = 0;
     final iconEntries = <int>[];
     for (var i = 0; i < accounts.length; i++) {
       final acc = accounts[i];
@@ -98,10 +111,24 @@ class SyncService {
       final batch = iconEntries.sublist(start, end);
       final futures = batch.map((idx) async {
         final acc = accounts[idx];
-          try {
-          await IconCacheService.instance.getIconBytes(server, acc.icon!, cancelToken: cancelToken);
+        try {
+          developer.log('SyncService: checking icon for account=${acc.id} file=${acc.icon}', name: 'SyncService');
           final f = await IconCacheService.instance.getIconFile(server, acc.icon!);
-          accounts[idx] = acc.copyWith(localIcon: f.path);
+          final exists = await f.exists();
+          if (exists) {
+            developer.log('SyncService: icon already cached for account=${acc.id} path=${f.path}', name: 'SyncService');
+            // Already cached, just set the local path
+            accounts[idx] = acc.copyWith(localIcon: f.path);
+            skipped++;
+            return;
+          }
+
+          // Not present yet: download and persist
+          developer.log('SyncService: downloading icon for account=${acc.id} file=${acc.icon}', name: 'SyncService');
+          await IconCacheService.instance.getIconBytes(server, acc.icon!, cancelToken: cancelToken);
+          final f2 = await IconCacheService.instance.getIconFile(server, acc.icon!);
+          accounts[idx] = acc.copyWith(localIcon: f2.path);
+          developer.log('SyncService: icon downloaded for account=${acc.id} saved=${f2.path}', name: 'SyncService');
           downloaded++;
         } catch (e) {
           failed++;
@@ -151,13 +178,21 @@ class SyncService {
       } else {
         await box.put('servers', [updated.toMap()]);
       }
-      // record last sync time
-      await box.put('$_lastSyncKeyPrefix${server.id}', DateTime.now().toIso8601String());
+  // record last sync time and whether it was forced
+  await box.put('$_lastSyncKeyPrefix${server.id}', DateTime.now().toIso8601String());
+  await box.put('$_lastSyncForcedKeyPrefix${server.id}', markAsForced == true);
     } catch (e) {
       developer.log('SyncService: failed to persist servers: $e', name: 'SyncService');
     }
 
-    developer.log('SyncService: sync completed for ${server.id} (downloaded=$downloaded failed=$failed)', name: 'SyncService');
-    return {'skipped': false, 'success': failed == 0, 'downloaded': downloaded, 'failed': failed, 'message': (failed == 0 ? 'Sync completed' : 'Sync completed with failures')};
+    developer.log('SyncService: sync completed for ${server.id} (downloaded=$downloaded failed=$failed skipped=$skipped)', name: 'SyncService');
+    return {
+      'skipped': false,
+      'success': failed == 0,
+      'downloaded': downloaded,
+      'failed': failed,
+      'skipped_count': skipped,
+      'message': (failed == 0 ? 'Sync completed' : 'Sync completed with failures')
+    };
   }
 }

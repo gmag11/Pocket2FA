@@ -4,7 +4,7 @@ import '../services/settings_service.dart';
 import 'settings_screen.dart';
 import 'accounts_screen.dart';
 import '../models/server_connection.dart';
-import '../models/two_factor_item.dart';
+import '../models/account_entry.dart';
 import '../services/api_service.dart';
 import '../services/sync_service.dart';
 
@@ -24,7 +24,7 @@ class _HomePageState extends State<HomePage> {
   List<ServerConnection> _servers = [];
   String? _selectedServerId;
   int? _selectedAccountIndex;
-  List<TwoFactorItem> _currentItems = [];
+  List<AccountEntry> _currentItems = [];
   bool _isSyncing = false;
 
   Future<void> _forceSyncCurrentServer() async {
@@ -33,7 +33,7 @@ class _HomePageState extends State<HomePage> {
     final srv = _servers.firstWhere((s) => s.id == _selectedServerId, orElse: () => _servers.first);
     try {
       if (mounted) setState(() { _isSyncing = true; });
-      final result = await SyncService.instance.forceSync(srv, storage);
+  final result = await SyncService.instance.forceSync(srv, storage, markAsForced: true);
       // After forcing sync, reload servers
       await _loadServers();
       if (mounted) {
@@ -91,22 +91,22 @@ class _HomePageState extends State<HomePage> {
             final srv = _servers[idx];
             _selectedServerId = srv.id;
             _selectedAccountIndex = (restoredAccountIndex != null && srv.accounts.length > restoredAccountIndex) ? restoredAccountIndex : (srv.accounts.isNotEmpty ? 0 : null);
-            // Map AccountEntry -> TwoFactorItem for UI rendering
-            _currentItems = srv.accounts.map((a) => a.toTwoFactorItem()).toList();
+            // Keep AccountEntry list for UI
+            _currentItems = srv.accounts;
             _selectedGroup = 'All (${_currentItems.length})';
           } else {
             // restored server not present anymore, fallback to first
             final first = _servers[0];
             _selectedServerId = first.id;
             _selectedAccountIndex = first.accounts.isNotEmpty ? 0 : null;
-            _currentItems = first.accounts.map((a) => a.toTwoFactorItem()).toList();
+            _currentItems = first.accounts;
             _selectedGroup = 'All (${_currentItems.length})';
           }
         } else {
           final first = _servers[0];
           _selectedServerId = first.id;
           _selectedAccountIndex = first.accounts.isNotEmpty ? 0 : null;
-          _currentItems = first.accounts.map((a) => a.toTwoFactorItem()).toList();
+          _currentItems = first.accounts;
           _selectedGroup = 'All (${_currentItems.length})';
         }
       } else {
@@ -139,7 +139,7 @@ class _HomePageState extends State<HomePage> {
                   final idx = _servers.indexWhere((s) => s.id == srv.id);
                   if (idx != -1) {
                     final updatedSrv = _servers[idx];
-                    _currentItems = updatedSrv.accounts.map((a) => a.toTwoFactorItem()).toList();
+                    _currentItems = updatedSrv.accounts;
                     _selectedGroup = 'All (${_currentItems.length})';
                   }
                 });
@@ -216,7 +216,7 @@ class _HomePageState extends State<HomePage> {
       setState(() {
         _selectedServerId = serverId;
         _selectedAccountIndex = accountIndex;
-        _currentItems = server.accounts.map((a) => a.toTwoFactorItem()).toList();
+  _currentItems = server.accounts;
         _selectedGroup = 'All (${_currentItems.length})';
       });
 
@@ -320,6 +320,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
                 const SizedBox(height: 8),
+                // Forzar Expanded y asegurar que la lista ocupa todo el espacio disponible
                 Expanded(
                   child: LayoutBuilder(
                     builder: (context, constraints) {
@@ -328,11 +329,27 @@ class _HomePageState extends State<HomePage> {
                         return Center(
                           child: ConstrainedBox(
                             constraints: const BoxConstraints(maxWidth: 1400),
-                            child: _AccountList(selectedGroup: _groupKey(_selectedGroup), searchQuery: _searchQuery, settings: widget.settings, items: _currentItems, onRefresh: _forceSyncCurrentServer),
+                            child: SizedBox.expand(
+                              child: _AccountList(
+                                selectedGroup: _groupKey(_selectedGroup),
+                                searchQuery: _searchQuery,
+                                settings: widget.settings,
+                                items: _currentItems,
+                                onRefresh: _forceSyncCurrentServer,
+                              ),
+                            ),
                           ),
                         );
                       }
-                      return _AccountList(selectedGroup: _groupKey(_selectedGroup), searchQuery: _searchQuery, settings: widget.settings, items: _currentItems, onRefresh: _forceSyncCurrentServer);
+                      return SizedBox.expand(
+                        child: _AccountList(
+                          selectedGroup: _groupKey(_selectedGroup),
+                          searchQuery: _searchQuery,
+                          settings: widget.settings,
+                          items: _currentItems,
+                          onRefresh: _forceSyncCurrentServer,
+                        ),
+                      );
                     },
                   ),
                 ),
@@ -443,31 +460,59 @@ class _AccountList extends StatelessWidget {
   final String selectedGroup;
   final String searchQuery;
   final SettingsService settings;
-  final List<TwoFactorItem> items;
+  final List<AccountEntry> items;
   final Future<void> Function()? onRefresh;
 
   const _AccountList({required this.selectedGroup, required this.searchQuery, required this.settings, required this.items, this.onRefresh});
 
   @override
   Widget build(BuildContext context) {
-  // If no accounts/items available, return informative message
-  if (items.isEmpty) return const Center(child: Text('No accounts registered', style: TextStyle(color: Colors.grey)));
+    // Helper refresh wrapper that uses provided onRefresh when available.
+    Future<void> handleRefresh() async {
+      if (onRefresh != null) {
+        await onRefresh!();
+      }
+    }
 
-  final base = selectedGroup == 'All' || selectedGroup.isEmpty
-    ? items
-    : items.where((i) => i.group == selectedGroup).toList();
+    // If no accounts/items available, return informative message but keep pull-to-refresh
+    if (items.isEmpty) {
+      return RefreshIndicator(
+        onRefresh: handleRefresh,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          children: const [
+            SizedBox(height: 120),
+            Center(child: Text('No accounts registered', style: TextStyle(color: Colors.grey))),
+          ],
+        ),
+      );
+    }
+
+    final base = selectedGroup == 'All' || selectedGroup.isEmpty
+      ? items
+      : items.where((i) => i.group == selectedGroup).toList();
 
     final query = searchQuery.toLowerCase();
     final filtered = query.isEmpty
-        ? base
-        : base.where((i) {
-            final s = i.service.toLowerCase();
-            final a = i.account.toLowerCase();
-            return s.contains(query) || a.contains(query);
-          }).toList();
+      ? base
+      : base.where((i) {
+        final s = i.service.toLowerCase();
+        final a = i.account.toLowerCase();
+        return s.contains(query) || a.contains(query);
+      }).toList();
 
+    // No results after filtering — still allow pull-to-refresh
     if (filtered.isEmpty) {
-      return const Center(child: Text('No results', style: TextStyle(color: Colors.grey)));
+      return RefreshIndicator(
+        onRefresh: handleRefresh,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          children: const [
+            SizedBox(height: 120),
+            Center(child: Text('No results', style: TextStyle(color: Colors.grey))),
+          ],
+        ),
+      );
     }
 
     final width = MediaQuery.of(context).size.width;
@@ -482,38 +527,65 @@ class _AccountList extends StatelessWidget {
 
     if (columns == 1) {
       return RefreshIndicator(
-        onRefresh: onRefresh ?? () async {},
+        onRefresh: handleRefresh,
         child: ListView.separated(
+          physics: const AlwaysScrollableScrollPhysics(),
           itemCount: filtered.length,
           separatorBuilder: (context, index) => Divider(indent: 20, endIndent: 20,),
           itemBuilder: (context, index) {
-            final item = filtered[index];
-            return AccountTile(item: item, settings: settings);
+            try {
+              final item = filtered[index];
+              return AccountTile(item: item, settings: settings);
+            } catch (e) {
+              return ListTile(
+                leading: const Icon(Icons.error, color: Colors.red),
+                title: const Text('Error al mostrar cuenta'),
+                subtitle: Text(e.toString()),
+                isThreeLine: true,
+                dense: true,
+              );
+            }
           },
         ),
       );
     }
 
-    // Multi-column grid for wide screens (up to 3 columns)
+    // Multi-column grid for wide screens (up to 3 columns) — wrap with RefreshIndicator
     return RefreshIndicator(
-      onRefresh: onRefresh ?? () async {},
+      onRefresh: handleRefresh,
       child: GridView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: columns,
-        crossAxisSpacing: 16,
-        mainAxisExtent: 92, // enough to contain the 72px tile plus spacing
-      ),
-      itemCount: filtered.length,
-      itemBuilder: (context, index) {
-        final item = filtered[index];
-        return Container(
-          decoration: const BoxDecoration(
-            border: Border(bottom: BorderSide(color: Color(0xFFE0E0E0))),
-          ),
-          child: AccountTile(item: item, settings: settings),
-        );
-      },
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: columns,
+          crossAxisSpacing: 16,
+          mainAxisExtent: 92, // enough to contain the 72px tile plus spacing
+        ),
+        itemCount: filtered.length,
+        itemBuilder: (context, index) {
+          try {
+            final item = filtered[index];
+            return Container(
+              decoration: const BoxDecoration(
+                border: Border(bottom: BorderSide(color: Color(0xFFE0E0E0))),
+              ),
+              child: AccountTile(item: item, settings: settings),
+            );
+          } catch (e) {
+            return Container(
+              decoration: const BoxDecoration(
+                border: Border(bottom: BorderSide(color: Color(0xFFE0E0E0))),
+              ),
+              child: ListTile(
+                leading: const Icon(Icons.error, color: Colors.red),
+                title: const Text('Error al mostrar cuenta'),
+                subtitle: Text(e.toString()),
+                isThreeLine: true,
+                dense: true,
+              ),
+            );
+          }
+        },
       ),
     );
   }

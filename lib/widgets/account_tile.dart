@@ -1,9 +1,12 @@
+import 'package:flutter_svg/flutter_svg.dart';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
-import '../models/two_factor_item.dart';
+import '../models/account_entry.dart';
 import '../services/settings_service.dart';
 
 class AccountTile extends StatelessWidget {
-  final TwoFactorItem item;
+  final AccountEntry item;
   final SettingsService? settings;
 
   const AccountTile({required this.item, this.settings, super.key});
@@ -36,6 +39,16 @@ class AccountTile extends StatelessWidget {
     return parts.join(' ');
   }
 
+  // Temporary OTP generator stub: real generation will use the account seed
+  // and proper TOTP/HOTP algorithms. For now return the fixed placeholder.
+  String _currentOtp() {
+    return '000000';
+  }
+
+  String _nextOtp() {
+    return '000000';
+  }
+
   @override
   Widget build(BuildContext context) {
     final color = Colors.primaries[item.service.length % Colors.primaries.length];
@@ -65,18 +78,51 @@ class AccountTile extends StatelessWidget {
                         decoration: const BoxDecoration(
                           shape: BoxShape.circle,
                         ),
-                        child: CircleAvatar(
-                          radius: 14,
-                          backgroundColor: color.shade100,
-                          child: Text(
-                            item.service.characters.first, 
-                            style: TextStyle(
-                              color: color.shade900, 
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
-                            )
-                          ),
-                        ),
+                        child: () {
+                          const double radius = 14.0;
+                          Widget fallbackAvatar() => CircleAvatar(
+                            radius: radius,
+                            backgroundColor: color.shade100,
+                            child: Text(
+                              item.service.characters.first,
+                              style: TextStyle(
+                                color: color.shade900,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
+                            ),
+                          );
+
+                          if (item.localIcon != null && item.localIcon!.isNotEmpty) {
+                            final file = File(item.localIcon!);
+                            final isSvg = item.localIcon!.toLowerCase().endsWith('.svg');
+                            try {
+                              if (isSvg) {
+                                return CircleAvatar(
+                                  radius: radius,
+                                  backgroundColor: Colors.transparent,
+                                  child: SvgPicture.file(
+                                    file,
+                                    width: radius * 2,
+                                    height: radius * 2,
+                                    fit: BoxFit.contain,
+                                    placeholderBuilder: (ctx) => fallbackAvatar(),
+                                  ),
+                                );
+                              } else {
+                                return CircleAvatar(
+                                  radius: radius,
+                                  backgroundImage: FileImage(file),
+                                  backgroundColor: Colors.transparent,
+                                  onBackgroundImageError: (_, __) {},
+                                );
+                              }
+                            } catch (_) {
+                              return fallbackAvatar();
+                            }
+                          }
+                          return fallbackAvatar();
+                        }(),
                       ),
                       const SizedBox(width: 8),
                       Expanded(
@@ -115,10 +161,10 @@ class AccountTile extends StatelessWidget {
                     ? AnimatedBuilder(
                         animation: settings!,
                         builder: (context, _) {
-                          return Text(_formatCode(item.nextTwoFa), style: TextStyle(fontSize: 12, color: Colors.grey.shade500));
-                        },
+                              return Text(_formatCode(_nextOtp()), style: TextStyle(fontSize: 12, color: Colors.grey.shade500));
+                            },
                       )
-                    : Text(_formatCode(item.nextTwoFa), style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+                    : Text(_formatCode(_nextOtp()), style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
               ),
           ),
 
@@ -139,10 +185,10 @@ class AccountTile extends StatelessWidget {
                         ? AnimatedBuilder(
                             animation: settings!,
                             builder: (context, _) {
-                              return Text(_formatCode(item.twoFa), style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700));
+                              return Text(_formatCode(_currentOtp()), style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700));
                             },
                           )
-                        : Text(_formatCode(item.twoFa), style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700)),
+                        : Text(_formatCode(_currentOtp()), style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700)),
                   ),
                   const SizedBox(height: 8),
                   Align(

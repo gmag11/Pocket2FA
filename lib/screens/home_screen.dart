@@ -29,9 +29,23 @@ class _HomePageState extends State<HomePage> {
   bool _isSyncing = false;
   bool _suppressNextSyncSnack = false;
   bool _serverReachable = false;
+  int _loadServerAttempts = 0;
+  static const int _maxLoadServerAttempts = 6;
 
   Future<void> _forceSyncCurrentServer() async {
     final storage = widget.settings.storage;
+    // If storage is not yet available (race during startup), retry a few times
+    // before giving up. Do not clear currently displayed servers while retrying.
+    if (storage == null) {
+      _loadServerAttempts += 1;
+      if (_loadServerAttempts <= _maxLoadServerAttempts) {
+        Future.delayed(const Duration(milliseconds: 400), () {
+          if (mounted) _loadServers();
+        });
+        return;
+      }
+      // fall through: proceed with storage == null (no persistent data)
+    }
     if (_selectedServerId == null || storage == null) return;
     final srv = _servers.firstWhere((s) => s.id == _selectedServerId, orElse: () => _servers.first);
     try {

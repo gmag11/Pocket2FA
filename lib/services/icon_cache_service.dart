@@ -54,6 +54,15 @@ class IconCacheService {
     return bytes;
   }
 
+  /// Returns the expected local file path for a cached icon (does not guarantee it exists).
+  Future<File> getIconFile(ServerConnection server, String fileName) async {
+    final dir = await getApplicationSupportDirectory();
+    final safeServer = server.id.replaceAll(RegExp(r'[^a-zA-Z0-9_-]'), '_');
+    final safeName = fileName.replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_');
+    final filePath = '${dir.path}/icons';
+    return File('$filePath/${safeServer}__$safeName');
+  }
+
   Future<void> evict(ServerConnection server, String fileName) async {
     final dir = await getApplicationSupportDirectory();
     final safeServer = server.id.replaceAll(RegExp(r'[^a-zA-Z0-9_-]'), '_');

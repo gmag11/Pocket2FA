@@ -6,6 +6,7 @@ import 'accounts_screen.dart';
 import '../models/server_connection.dart';
 import '../models/two_factor_item.dart';
 import '../services/api_service.dart';
+import '../services/sync_service.dart';
 
 class HomePage extends StatefulWidget {
   final SettingsService settings;
@@ -24,6 +25,27 @@ class _HomePageState extends State<HomePage> {
   String? _selectedServerId;
   int? _selectedAccountIndex;
   List<TwoFactorItem> _currentItems = [];
+  bool _isSyncing = false;
+
+  Future<void> _forceSyncCurrentServer() async {
+    final storage = widget.settings.storage;
+    if (_selectedServerId == null || storage == null) return;
+    final srv = _servers.firstWhere((s) => s.id == _selectedServerId, orElse: () => _servers.first);
+    try {
+      if (mounted) setState(() { _isSyncing = true; });
+      final result = await SyncService.instance.forceSync(srv, storage);
+      // After forcing sync, reload servers
+      await _loadServers();
+      if (mounted) {
+        final msg = result['skipped'] == true ? 'Sync skipped' : 'Sync finished — downloaded: ${result['downloaded']}, failed: ${result['failed']}';
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+      }
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Sync failed: $e')));
+    } finally {
+      if (mounted) setState(() { _isSyncing = false; });
+    }
+  }
 
   @override
   void initState() {
@@ -99,7 +121,40 @@ class _HomePageState extends State<HomePage> {
     if (_selectedServerId != null) {
       try {
         final srv = _servers.firstWhere((s) => s.id == _selectedServerId);
-          ApiService.instance.setServer(srv);
+        ApiService.instance.setServer(srv);
+        // Attempt a throttled sync to refresh accounts/icons (if we have persistent storage)
+        if (storage != null) {
+          try {
+            if (mounted) setState(() { _isSyncing = true; });
+            final result = await SyncService.instance.syncIfNeeded(srv, storage);
+            // Reload servers from storage to pick up any updates (icons/local paths)
+            final raw2 = storage.box.get('servers');
+            if (raw2 != null) {
+              final servers2 = (raw2 as List<dynamic>)
+                  .map((e) => ServerConnection.fromMap(Map<dynamic, dynamic>.from(e)))
+                  .toList();
+              if (mounted) {
+                setState(() {
+                  _servers = servers2;
+                  final idx = _servers.indexWhere((s) => s.id == srv.id);
+                  if (idx != -1) {
+                    final updatedSrv = _servers[idx];
+                    _currentItems = updatedSrv.accounts.map((a) => a.toTwoFactorItem()).toList();
+                    _selectedGroup = 'All (${_currentItems.length})';
+                  }
+                });
+              }
+            }
+            if (mounted) {
+              final msg = result['skipped'] == true ? 'Sync skipped (recently synced)' : 'Sync finished — downloaded: ${result['downloaded']}, failed: ${result['failed']}';
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+            }
+          } catch (_) {
+            // ignore sync errors here
+          } finally {
+            if (mounted) setState(() { _isSyncing = false; });
+          }
+        }
       } catch (_) {}
     }
   }
@@ -178,6 +233,18 @@ class _HomePageState extends State<HomePage> {
       // Configure ApiService for the newly selected server. Show error if it fails.
       try {
         ApiService.instance.setServer(server);
+        // Trigger a throttled sync and reload servers so cached icons/local paths are available
+        final storage = widget.settings.storage;
+        if (storage != null) {
+          try {
+            final result = await SyncService.instance.syncIfNeeded(server, storage);
+            await _loadServers();
+            if (mounted) {
+              final msg = result['skipped'] == true ? 'Sync skipped (recently synced)' : 'Sync finished — downloaded: ${result['downloaded']}, failed: ${result['failed']}';
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+            }
+          } catch (_) {}
+        }
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error configuring API: $e')));
@@ -216,74 +283,99 @@ class _HomePageState extends State<HomePage> {
   final groups = _groups();
     return Scaffold(
       body: SafeArea(
-        child: Column(
+        child: Stack(
           children: [
-            const SizedBox(height: 12),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: _SearchBar(
-                controller: _searchController,
-                focusNode: _searchFocus,
-                onChanged: (v) => setState(() => _searchQuery = v),
-              ),
+            Column(
+              children: [
+                const SizedBox(height: 12),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: _SearchBar(
+                    controller: _searchController,
+                    focusNode: _searchFocus,
+                    onChanged: (v) => setState(() => _searchQuery = v),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                // Group selector
+                Center(
+                  child: PopupMenuButton<String>(
+                    initialValue: _selectedGroup,
+                    onSelected: (value) {
+                      setState(() {
+                        _selectedGroup = value;
+                      });
+                    },
+                    itemBuilder: (context) => groups
+                        .map((g) => PopupMenuItem(value: g, child: Text(g)))
+                        .toList(),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(_selectedGroup, style: TextStyle(color: Colors.grey.shade700)),
+                        const SizedBox(width: 6),
+                        Icon(Icons.keyboard_arrow_down, size: 18, color: Colors.grey.shade600),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Expanded(
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final screenW = MediaQuery.of(context).size.width;
+                      if (screenW > 1400) {
+                        return Center(
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 1400),
+                            child: _AccountList(selectedGroup: _groupKey(_selectedGroup), searchQuery: _searchQuery, settings: widget.settings, items: _currentItems, onRefresh: _forceSyncCurrentServer),
+                          ),
+                        );
+                      }
+                      return _AccountList(selectedGroup: _groupKey(_selectedGroup), searchQuery: _searchQuery, settings: widget.settings, items: _currentItems, onRefresh: _forceSyncCurrentServer);
+                    },
+                  ),
+                ),
+                _BottomBar(
+                  settings: widget.settings,
+                  servers: _servers,
+                  selectedServerId: _selectedServerId,
+                  selectedAccountIndex: _selectedAccountIndex,
+                  onOpenSelector: _openServerAccountSelector,
+                  onOpenAccounts: () async {
+                    if (widget.settings.storage != null) {
+                      await Navigator.of(context).push(MaterialPageRoute(builder: (c) => AccountsScreen(storage: widget.settings.storage!)));
+                      // After returning from AccountsScreen, reload servers from storage
+                      await _loadServers();
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Storage not available')));
+                    }
+                  },
+                ),
+              ],
             ),
-            const SizedBox(height: 8),
-            // Group selector
-            Center(
-              child: PopupMenuButton<String>(
-                initialValue: _selectedGroup,
-                onSelected: (value) {
-                  setState(() {
-                    _selectedGroup = value;
-                  });
-                },
-                itemBuilder: (context) => groups
-                    .map((g) => PopupMenuItem(value: g, child: Text(g)))
-                    .toList(),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(_selectedGroup, style: TextStyle(color: Colors.grey.shade700)),
-                    const SizedBox(width: 6),
-                    Icon(Icons.keyboard_arrow_down, size: 18, color: Colors.grey.shade600),
-                  ],
+            if (_isSyncing)
+              Positioned.fill(
+                child: Container(
+                  color: const Color.fromRGBO(0, 0, 0, 0.35),
+                  child: Center(
+                    child: Card(
+                      elevation: 4,
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: const [
+                            CircularProgressIndicator(),
+                            SizedBox(height: 12),
+                            Text('Syncing...', style: TextStyle(fontSize: 16)),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 8),
-            Expanded(
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final screenW = MediaQuery.of(context).size.width;
-                  // For very wide screens center the main content and cap width so columns stay together
-          if (screenW > 1400) {
-                    return Center(
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 1400),
-              child: _AccountList(selectedGroup: _groupKey(_selectedGroup), searchQuery: _searchQuery, settings: widget.settings, items: _currentItems),
-                      ),
-                    );
-                  }
-            return _AccountList(selectedGroup: _groupKey(_selectedGroup), searchQuery: _searchQuery, settings: widget.settings, items: _currentItems);
-                },
-              ),
-            ),
-            _BottomBar(
-              settings: widget.settings,
-              servers: _servers,
-              selectedServerId: _selectedServerId,
-              selectedAccountIndex: _selectedAccountIndex,
-              onOpenSelector: _openServerAccountSelector,
-              onOpenAccounts: () async {
-                if (widget.settings.storage != null) {
-                  await Navigator.of(context).push(MaterialPageRoute(builder: (c) => AccountsScreen(storage: widget.settings.storage!)));
-                  // After returning from AccountsScreen, reload servers from storage
-                  await _loadServers();
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Storage not available')));
-                }
-              },
-            ),
           ],
         ),
       ),
@@ -352,8 +444,9 @@ class _AccountList extends StatelessWidget {
   final String searchQuery;
   final SettingsService settings;
   final List<TwoFactorItem> items;
+  final Future<void> Function()? onRefresh;
 
-  const _AccountList({required this.selectedGroup, required this.searchQuery, required this.settings, required this.items});
+  const _AccountList({required this.selectedGroup, required this.searchQuery, required this.settings, required this.items, this.onRefresh});
 
   @override
   Widget build(BuildContext context) {
@@ -388,18 +481,23 @@ class _AccountList extends StatelessWidget {
     }
 
     if (columns == 1) {
-      return ListView.separated(
-        itemCount: filtered.length,
-        separatorBuilder: (context, index) => Divider(indent: 20, endIndent: 20,),
-        itemBuilder: (context, index) {
-          final item = filtered[index];
-          return AccountTile(item: item, settings: settings);
-        },
+      return RefreshIndicator(
+        onRefresh: onRefresh ?? () async {},
+        child: ListView.separated(
+          itemCount: filtered.length,
+          separatorBuilder: (context, index) => Divider(indent: 20, endIndent: 20,),
+          itemBuilder: (context, index) {
+            final item = filtered[index];
+            return AccountTile(item: item, settings: settings);
+          },
+        ),
       );
     }
 
     // Multi-column grid for wide screens (up to 3 columns)
-    return GridView.builder(
+    return RefreshIndicator(
+      onRefresh: onRefresh ?? () async {},
+      child: GridView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: columns,
@@ -416,6 +514,7 @@ class _AccountList extends StatelessWidget {
           child: AccountTile(item: item, settings: settings),
         );
       },
+      ),
     );
   }
 }

@@ -89,6 +89,17 @@ class ApiService {
         error: true,
         logPrint: (obj) => developer.log(obj.toString(), name: 'ApiService.Log'),
       ));
+      // Also attach a lightweight response-summary interceptor so callers
+      // can see response status and path in the same ApiService log channel.
+      _dio!.interceptors.add(InterceptorsWrapper(
+        onResponse: (response, handler) {
+          try {
+            final path = response.requestOptions.path;
+            developer.log('ApiService: response path=$path status=${response.statusCode}', name: 'ApiService.Log');
+          } catch (_) {}
+          handler.next(response);
+        },
+      ));
       developer.log('ApiService: logging interceptor attached', name: 'ApiService');
     }
 

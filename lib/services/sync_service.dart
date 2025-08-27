@@ -44,9 +44,8 @@ class SyncService {
 
     if (last != null && DateTime.now().difference(last) < _throttle) {
       if (wasLastForced) {
-        developer.log('SyncService: last sync for ${server.id} was forced; ignoring throttle and proceeding', name: 'SyncService');
+        // proceed despite throttle when last sync was forced
       } else {
-        developer.log('SyncService: skipping sync for ${server.id}, last=${last.toIso8601String()}', name: 'SyncService');
         return {'skipped': true, 'success': true, 'downloaded': 0, 'failed': 0, 'message': 'Skipped (throttled)'};
       }
     }
@@ -56,7 +55,7 @@ class SyncService {
   }
 
   Future<Map<String, dynamic>> forceSync(ServerConnection server, SettingsStorage storage, {CancelToken? cancelToken, int concurrency = 4, bool markAsForced = false}) async {
-    developer.log('SyncService: starting sync for ${server.id}', name: 'SyncService');
+  // Starting sync (kept minimal)
 
     // Ensure ApiService is configured for this server so Authorization headers and base are correct
     ApiService.instance.setServer(server);
@@ -67,11 +66,7 @@ class SyncService {
       final resp = await ApiService.instance.dio.get('groups', cancelToken: cancelToken);
       if (resp.statusCode == 200 && resp.data is List) {
         final list = resp.data as List;
-        developer.log('SyncService: groups response status=${resp.statusCode}, count=${list.length}', name: 'SyncService');
         groups = list.map((e) => GroupEntry.fromMap(Map<dynamic, dynamic>.from(e))).toList();
-        developer.log('SyncService: parsed groups=${groups.map((g) => g.toString()).toList()}', name: 'SyncService');
-      } else {
-        developer.log('SyncService: groups response status=${resp.statusCode}, type=${resp.data.runtimeType}', name: 'SyncService');
       }
     } catch (e) {
       developer.log('SyncService: error fetching groups: $e', name: 'SyncService');
@@ -83,10 +78,7 @@ class SyncService {
       final resp = await ApiService.instance.dio.get('twofaccounts', cancelToken: cancelToken);
       if (resp.statusCode == 200 && resp.data is List) {
         final list = resp.data as List;
-        developer.log('SyncService: twofaccounts response status=${resp.statusCode}, count=${list.length}', name: 'SyncService');
         accounts = list.map((e) => AccountEntry.fromMap(Map<dynamic, dynamic>.from(e))).toList();
-      } else {
-        developer.log('SyncService: twofaccounts response status=${resp.statusCode}, type=${resp.data.runtimeType}', name: 'SyncService');
       }
     } catch (e) {
       developer.log('SyncService: error fetching accounts: $e', name: 'SyncService');
@@ -95,7 +87,6 @@ class SyncService {
     // If groups were fetched, map account.groupId -> group.name so UI can filter
     if (groups.isNotEmpty && accounts.isNotEmpty) {
       final Map<int, String> gidToName = { for (var g in groups) g.id : g.name };
-      developer.log('SyncService: group id->name mapping=${gidToName.toString()}', name: 'SyncService');
       for (var i = 0; i < accounts.length; i++) {
         final acc = accounts[i];
         if ((acc.group.isEmpty) && acc.groupId != null) {
@@ -105,7 +96,6 @@ class SyncService {
           }
         }
       }
-      developer.log('SyncService: accounts after group mapping sample=${accounts.take(10).map((a) => {'id': a.id, 'group': a.group}).toList()}', name: 'SyncService');
     }
 
     // 3) download icons for each account that has icon field, in parallel batches
@@ -126,14 +116,12 @@ class SyncService {
       }
       final end = (start + concurrency).clamp(0, iconEntries.length);
       final batch = iconEntries.sublist(start, end);
-      final futures = batch.map((idx) async {
+    final futures = batch.map((idx) async {
         final acc = accounts[idx];
         try {
-          developer.log('SyncService: checking icon for account=${acc.id} file=${acc.icon}', name: 'SyncService');
           final f = await IconCacheService.instance.getIconFile(server, acc.icon!);
           final exists = await f.exists();
           if (exists) {
-            developer.log('SyncService: icon already cached for account=${acc.id} path=${f.path}', name: 'SyncService');
             // Already cached, just set the local path
             accounts[idx] = acc.copyWith(localIcon: f.path);
             skipped++;
@@ -141,15 +129,13 @@ class SyncService {
           }
 
           // Not present yet: download and persist
-          developer.log('SyncService: downloading icon for account=${acc.id} file=${acc.icon}', name: 'SyncService');
           await IconCacheService.instance.getIconBytes(server, acc.icon!, cancelToken: cancelToken);
           final f2 = await IconCacheService.instance.getIconFile(server, acc.icon!);
           accounts[idx] = acc.copyWith(localIcon: f2.path);
-          developer.log('SyncService: icon downloaded for account=${acc.id} saved=${f2.path}', name: 'SyncService');
           downloaded++;
         } catch (e) {
           failed++;
-          developer.log('SyncService: failed to cache icon for ${acc.id}: $e', name: 'SyncService');
+      developer.log('SyncService: failed to cache icon for ${acc.id}: $e', name: 'SyncService');
         }
       }).toList();
 
@@ -157,7 +143,6 @@ class SyncService {
         await Future.wait(futures);
       } catch (e) {
         // Individual failures are already counted; a cancellation may throw here
-        developer.log('SyncService: batch error: $e', name: 'SyncService');
         if (cancelToken != null && cancelToken.isCancelled) break;
       }
     }

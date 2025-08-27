@@ -27,6 +27,7 @@ class _HomePageState extends State<HomePage> {
   int? _selectedAccountIndex;
   List<AccountEntry> _currentItems = [];
   bool _isSyncing = false;
+  bool _suppressNextSyncSnack = false;
 
   Future<void> _forceSyncCurrentServer() async {
     final storage = widget.settings.storage;
@@ -35,11 +36,16 @@ class _HomePageState extends State<HomePage> {
     try {
       if (mounted) setState(() { _isSyncing = true; });
   final result = await SyncService.instance.forceSync(srv, storage, markAsForced: true);
-      // After forcing sync, reload servers
-      await _loadServers();
+  // After forcing sync, reload servers but suppress the automatic sync snackbar
+  _suppressNextSyncSnack = true;
+  await _loadServers();
       if (mounted) {
-        final msg = result['skipped'] == true ? 'Sync skipped' : 'Sync finished — downloaded: ${result['downloaded']}, failed: ${result['failed']}';
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+        if (!_suppressNextSyncSnack) {
+          final msg = result['skipped'] == true ? 'Sync skipped' : 'Sync finished';
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+        } else {
+          _suppressNextSyncSnack = false;
+        }
       }
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Sync failed: $e')));
@@ -82,43 +88,33 @@ class _HomePageState extends State<HomePage> {
         }
       }
     }
-    developer.log('HomePage: loaded ${servers.length} servers from storage', name: 'HomePage');
+
     setState(() {
       _servers = servers;
       if (_servers.isNotEmpty) {
-        // If we restored a selection and it exists in the servers list, use it; otherwise default to first
         if (restoredServerId != null) {
           final idx = _servers.indexWhere((s) => s.id == restoredServerId);
           if (idx != -1) {
             final srv = _servers[idx];
-            developer.log('HomePage: restoring selection for server=${srv.id} with ${srv.accounts.length} accounts', name: 'HomePage');
             _selectedServerId = srv.id;
             _selectedAccountIndex = (restoredAccountIndex != null && srv.accounts.length > restoredAccountIndex) ? restoredAccountIndex : (srv.accounts.isNotEmpty ? 0 : null);
-            // Keep AccountEntry list for UI
             _currentItems = srv.accounts;
-            developer.log('HomePage: server=${srv.id} groups=${srv.groups}', name: 'HomePage');
             _selectedGroup = 'All (${_currentItems.length})';
           } else {
-            // restored server not present anymore, fallback to first
             final first = _servers[0];
-            developer.log('HomePage: restored server not found; defaulting to first server=${first.id} with ${first.accounts.length} accounts', name: 'HomePage');
             _selectedServerId = first.id;
             _selectedAccountIndex = first.accounts.isNotEmpty ? 0 : null;
             _currentItems = first.accounts;
-            developer.log('HomePage: server=${first.id} groups=${first.groups}', name: 'HomePage');
             _selectedGroup = 'All (${_currentItems.length})';
           }
         } else {
           final first = _servers[0];
-          developer.log('HomePage: no restored server; selecting first server=${first.id} with ${first.accounts.length} accounts', name: 'HomePage');
           _selectedServerId = first.id;
           _selectedAccountIndex = first.accounts.isNotEmpty ? 0 : null;
           _currentItems = first.accounts;
-          developer.log('HomePage: server=${first.id} groups=${first.groups}', name: 'HomePage');
           _selectedGroup = 'All (${_currentItems.length})';
         }
       } else {
-        developer.log('HomePage: no servers found in storage', name: 'HomePage');
         _selectedServerId = null;
         _selectedAccountIndex = null;
         _currentItems = [];
@@ -155,8 +151,13 @@ class _HomePageState extends State<HomePage> {
               }
             }
             if (mounted) {
-              final msg = result['skipped'] == true ? 'Sync skipped (recently synced)' : 'Sync finished — downloaded: ${result['downloaded']}, failed: ${result['failed']}';
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+              if (!_suppressNextSyncSnack) {
+                final msg = result['skipped'] == true ? 'Sync skipped (recently synced)' : 'Sync finished';
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+              } else {
+                // consume the suppression flag once
+                _suppressNextSyncSnack = false;
+              }
             }
           } catch (_) {
             // ignore sync errors here
@@ -247,9 +248,11 @@ class _HomePageState extends State<HomePage> {
         if (storage != null) {
           try {
             final result = await SyncService.instance.syncIfNeeded(server, storage);
+            // Suppress the automatic notification from _loadServers() and show only this one
+            _suppressNextSyncSnack = true;
             await _loadServers();
             if (mounted) {
-              final msg = result['skipped'] == true ? 'Sync skipped (recently synced)' : 'Sync finished — downloaded: ${result['downloaded']}, failed: ${result['failed']}';
+              final msg = result['skipped'] == true ? 'Sync skipped (recently synced)' : 'Sync finished';
               ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
             }
           } catch (_) {}

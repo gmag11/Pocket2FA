@@ -31,6 +31,18 @@ class _HomePageState extends State<HomePage> {
   bool _serverReachable = false;
   int _loadServerAttempts = 0;
   static const int _maxLoadServerAttempts = 6;
+  bool _suppressFullScreenSyncIndicator = false;
+
+  Future<void> _onRefreshFromPull() async {
+    // Called by RefreshIndicator's onRefresh. Suppress the fullscreen overlay
+    // because RefreshIndicator already shows a spinner.
+    _suppressFullScreenSyncIndicator = true;
+    try {
+      await _forceSyncCurrentServer();
+    } finally {
+      _suppressFullScreenSyncIndicator = false;
+    }
+  }
 
   Future<void> _forceSyncCurrentServer() async {
     final storage = widget.settings.storage;
@@ -49,7 +61,7 @@ class _HomePageState extends State<HomePage> {
     if (_selectedServerId == null || storage == null) return;
     final srv = _servers.firstWhere((s) => s.id == _selectedServerId, orElse: () => _servers.first);
     try {
-      if (mounted) setState(() { _isSyncing = true; });
+      if (mounted) setState(() { if (!_suppressFullScreenSyncIndicator) _isSyncing = true; });
   final result = await SyncService.instance.forceSync(srv, storage, markAsForced: true);
   // Force sync attempted network operations; success means server reachable
   if (mounted) setState(() { _serverReachable = true; });
@@ -189,7 +201,9 @@ class _HomePageState extends State<HomePage> {
         // Attempt a throttled sync to refresh accounts/icons (if we have persistent storage)
         if (storage != null) {
           try {
-            if (mounted) setState(() { _isSyncing = true; });
+            // Do not show the fullscreen sync overlay when a pull-to-refresh
+            // is active; the RefreshIndicator already shows a spinner.
+            if (mounted && !_suppressFullScreenSyncIndicator) setState(() { _isSyncing = true; });
             final result = await SyncService.instance.syncIfNeeded(srv, storage);
             // If syncIfNeeded actually performed a network sync, it will not set
             // 'skipped' to true. Only update reachability state when a network
@@ -242,7 +256,8 @@ class _HomePageState extends State<HomePage> {
               }
             }
           } finally {
-            if (mounted) setState(() { _isSyncing = false; });
+            // Only clear the fullscreen overlay if we actually showed it here.
+            if (mounted && !_suppressFullScreenSyncIndicator) setState(() { _isSyncing = false; });
           }
         }
       } catch (_) {}
@@ -434,7 +449,7 @@ class _HomePageState extends State<HomePage> {
                                 searchQuery: _searchQuery,
                                 settings: widget.settings,
                                 items: _currentItems,
-                                onRefresh: _forceSyncCurrentServer,
+                                onRefresh: _onRefreshFromPull,
                               ),
                             ),
                           ),
@@ -446,7 +461,7 @@ class _HomePageState extends State<HomePage> {
                           searchQuery: _searchQuery,
                           settings: widget.settings,
                           items: _currentItems,
-                          onRefresh: _forceSyncCurrentServer,
+                            onRefresh: _onRefreshFromPull,
                         ),
                       );
                     },

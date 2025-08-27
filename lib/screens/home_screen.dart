@@ -87,7 +87,28 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     _searchController = TextEditingController();
     _searchFocus = FocusNode();
-    _loadServers();
+    // Load servers and then perform an initial connectivity check for the selected server.
+    _loadServers().then((_) async {
+      try {
+        final storage = widget.settings.storage;
+        if (storage != null && _selectedServerId != null && _servers.isNotEmpty) {
+          final srv = _servers.firstWhere((s) => s.id == _selectedServerId, orElse: () => _servers.first);
+          // Use ApiService.validateServer which performs GET /user on a short timeout
+          try {
+            await ApiService.instance.validateServer(srv);
+            // If response ok, mark reachable and refresh local data
+            if (mounted) {
+              setState(() { _serverReachable = true; });
+              await _loadServers();
+              developer.log('HomePage: initial connectivity check passed for ${srv.id}', name: 'HomePage');
+            }
+          } catch (e) {
+            if (mounted) setState(() { _serverReachable = false; });
+            developer.log('HomePage: initial connectivity check failed for ${srv.id}: $e', name: 'HomePage');
+          }
+        }
+      } catch (_) {}
+    });
   }
 
   Future<void> _loadServers() async {

@@ -59,12 +59,14 @@ class _HomePageState extends State<HomePage> {
       if (mounted) {
         if (result['network_failed'] == true) {
           setState(() { _serverReachable = false; });
-          if (!_suppressNextSyncSnack) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Cannot sync: offline or server unreachable')));
+          developer.log('HomePage: cannot sync (network failure) for server ${srv.id}', name: 'HomePage');
           _suppressNextSyncSnack = false;
         } else {
           if (!_suppressNextSyncSnack) {
-            final msg = result['skipped'] == true ? 'Sync skipped' : 'Sync finished';
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+            // Only log when an actual network sync ran (not when skipped)
+            if (result['skipped'] != true) {
+              developer.log('HomePage: sync finished for server ${srv.id}', name: 'HomePage');
+            }
           } else {
             _suppressNextSyncSnack = false;
           }
@@ -73,7 +75,7 @@ class _HomePageState extends State<HomePage> {
     } catch (e) {
       if (mounted) {
         setState(() { _serverReachable = false; });
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Sync failed: $e')));
+        developer.log('HomePage: forceSync failed: $e', name: 'HomePage');
       }
     } finally {
       if (mounted) setState(() { _isSyncing = false; });
@@ -195,12 +197,12 @@ class _HomePageState extends State<HomePage> {
             if (mounted) {
               if (result['network_failed'] == true) {
                 setState(() { _serverReachable = false; });
-                if (!_suppressNextSyncSnack) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Cannot sync: offline or server unreachable')));
+                developer.log('HomePage: cannot sync (network failure) for server ${srv.id}', name: 'HomePage');
                 _suppressNextSyncSnack = false;
               } else {
                 if (!_suppressNextSyncSnack) {
-                  final msg = result['skipped'] == true ? 'Sync skipped (recently synced)' : 'Sync finished';
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+                  // Only log when an actual network sync ran
+                  if (result['skipped'] != true) developer.log('HomePage: sync finished for server ${srv.id}', name: 'HomePage');
                 } else {
                   // consume the suppression flag once
                   _suppressNextSyncSnack = false;
@@ -313,8 +315,7 @@ class _HomePageState extends State<HomePage> {
             _suppressNextSyncSnack = true;
             await _loadServers();
             if (mounted) {
-              final msg = result['skipped'] == true ? 'Sync skipped (recently synced)' : 'Sync finished';
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+              if (result['skipped'] != true) developer.log('HomePage: sync finished for server ${server.id}', name: 'HomePage');
             }
           } catch (_) {
             if (mounted) setState(() { _serverReachable = false; });
@@ -322,7 +323,7 @@ class _HomePageState extends State<HomePage> {
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error configuring API: $e')));
+          developer.log('HomePage: Error configuring API: $e', name: 'HomePage');
         }
       }
     }

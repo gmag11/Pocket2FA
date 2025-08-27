@@ -69,6 +69,7 @@ class SyncService {
         final list = resp.data as List;
         developer.log('SyncService: groups response status=${resp.statusCode}, count=${list.length}', name: 'SyncService');
         groups = list.map((e) => GroupEntry.fromMap(Map<dynamic, dynamic>.from(e))).toList();
+        developer.log('SyncService: parsed groups=${groups.map((g) => g.toString()).toList()}', name: 'SyncService');
       } else {
         developer.log('SyncService: groups response status=${resp.statusCode}, type=${resp.data.runtimeType}', name: 'SyncService');
       }
@@ -89,6 +90,22 @@ class SyncService {
       }
     } catch (e) {
       developer.log('SyncService: error fetching accounts: $e', name: 'SyncService');
+    }
+
+    // If groups were fetched, map account.groupId -> group.name so UI can filter
+    if (groups.isNotEmpty && accounts.isNotEmpty) {
+      final Map<int, String> gidToName = { for (var g in groups) g.id : g.name };
+      developer.log('SyncService: group id->name mapping=${gidToName.toString()}', name: 'SyncService');
+      for (var i = 0; i < accounts.length; i++) {
+        final acc = accounts[i];
+        if ((acc.group.isEmpty) && acc.groupId != null) {
+          final name = gidToName[acc.groupId!] ?? '';
+          if (name.isNotEmpty) {
+            accounts[i] = acc.copyWith(group: name);
+          }
+        }
+      }
+      developer.log('SyncService: accounts after group mapping sample=${accounts.take(10).map((a) => {'id': a.id, 'group': a.group}).toList()}', name: 'SyncService');
     }
 
     // 3) download icons for each account that has icon field, in parallel batches
@@ -162,7 +179,7 @@ class SyncService {
       isAdmin: server.isAdmin,
     );
 
-  try {
+    try {
       // Replace the server entry in persisted storage
       final box = storage.box;
       final raw = box.get('servers');

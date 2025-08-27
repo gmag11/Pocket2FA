@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:developer' as developer;
 import '../widgets/account_tile.dart';
 import '../services/settings_service.dart';
 import 'settings_screen.dart';
@@ -81,35 +82,43 @@ class _HomePageState extends State<HomePage> {
         }
       }
     }
+    developer.log('HomePage: loaded ${servers.length} servers from storage', name: 'HomePage');
     setState(() {
       _servers = servers;
-  if (_servers.isNotEmpty) {
+      if (_servers.isNotEmpty) {
         // If we restored a selection and it exists in the servers list, use it; otherwise default to first
         if (restoredServerId != null) {
           final idx = _servers.indexWhere((s) => s.id == restoredServerId);
           if (idx != -1) {
             final srv = _servers[idx];
+            developer.log('HomePage: restoring selection for server=${srv.id} with ${srv.accounts.length} accounts', name: 'HomePage');
             _selectedServerId = srv.id;
             _selectedAccountIndex = (restoredAccountIndex != null && srv.accounts.length > restoredAccountIndex) ? restoredAccountIndex : (srv.accounts.isNotEmpty ? 0 : null);
             // Keep AccountEntry list for UI
             _currentItems = srv.accounts;
+            developer.log('HomePage: server=${srv.id} groups=${srv.groups}', name: 'HomePage');
             _selectedGroup = 'All (${_currentItems.length})';
           } else {
             // restored server not present anymore, fallback to first
             final first = _servers[0];
+            developer.log('HomePage: restored server not found; defaulting to first server=${first.id} with ${first.accounts.length} accounts', name: 'HomePage');
             _selectedServerId = first.id;
             _selectedAccountIndex = first.accounts.isNotEmpty ? 0 : null;
             _currentItems = first.accounts;
+            developer.log('HomePage: server=${first.id} groups=${first.groups}', name: 'HomePage');
             _selectedGroup = 'All (${_currentItems.length})';
           }
         } else {
           final first = _servers[0];
+          developer.log('HomePage: no restored server; selecting first server=${first.id} with ${first.accounts.length} accounts', name: 'HomePage');
           _selectedServerId = first.id;
           _selectedAccountIndex = first.accounts.isNotEmpty ? 0 : null;
           _currentItems = first.accounts;
+          developer.log('HomePage: server=${first.id} groups=${first.groups}', name: 'HomePage');
           _selectedGroup = 'All (${_currentItems.length})';
         }
       } else {
+        developer.log('HomePage: no servers found in storage', name: 'HomePage');
         _selectedServerId = null;
         _selectedAccountIndex = null;
         _currentItems = [];
@@ -263,9 +272,11 @@ class _HomePageState extends State<HomePage> {
   List<String> _groups() {
     final Map<String, int> counts = {};
     for (final item in _currentItems) {
-      final g = item.group.isEmpty ? 'Ungrouped' : item.group;
+      final g = item.group.trim();
+      if (g.isEmpty) continue; // do not include ungrouped entries in selector
       counts[g] = (counts[g] ?? 0) + 1;
     }
+    developer.log('HomePage: computed group counts=${counts.toString()} from ${_currentItems.length} items', name: 'HomePage');
     final groups = ['All (${_currentItems.length})'];
     groups.addAll(counts.keys.map((k) => '$k (${counts[k]})'));
     return groups;

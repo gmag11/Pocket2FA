@@ -62,11 +62,13 @@ class SyncService {
 
     // 1) GET /groups
     List<GroupEntry> groups = [];
+    var groupsFetched = false;
     try {
       final resp = await ApiService.instance.dio.get('groups', cancelToken: cancelToken);
       if (resp.statusCode == 200 && resp.data is List) {
         final list = resp.data as List;
         groups = list.map((e) => GroupEntry.fromMap(Map<dynamic, dynamic>.from(e))).toList();
+        groupsFetched = true;
       }
     } catch (e) {
       developer.log('SyncService: error fetching groups: $e', name: 'SyncService');
@@ -74,11 +76,13 @@ class SyncService {
 
     // 2) GET /twofaccounts
     List<AccountEntry> accounts = [];
+    var accountsFetched = false;
     try {
       final resp = await ApiService.instance.dio.get('twofaccounts', cancelToken: cancelToken);
       if (resp.statusCode == 200 && resp.data is List) {
         final list = resp.data as List;
         accounts = list.map((e) => AccountEntry.fromMap(Map<dynamic, dynamic>.from(e))).toList();
+        accountsFetched = true;
       }
     } catch (e) {
       developer.log('SyncService: error fetching accounts: $e', name: 'SyncService');
@@ -147,6 +151,22 @@ class SyncService {
       }
     }
 
+    // If we couldn't fetch either groups or accounts, treat this as a network failure
+    // and avoid overwriting persisted cached data.
+    final anyFetched = groupsFetched || accountsFetched;
+    if (!anyFetched) {
+      developer.log('SyncService: network failure - no groups or accounts fetched for ${server.id}', name: 'SyncService');
+      return {
+        'skipped': false,
+        'success': false,
+        'downloaded': downloaded,
+        'failed': failed,
+        'skipped_count': skipped,
+        'network_failed': true,
+        'message': 'Network failure - no data fetched'
+      };
+    }
+
     // Update server object with groups and accounts and persist to storage
     final updated = ServerConnection(
       id: server.id,
@@ -164,7 +184,7 @@ class SyncService {
       isAdmin: server.isAdmin,
     );
 
-    try {
+  try {
       // Replace the server entry in persisted storage
       final box = storage.box;
       final raw = box.get('servers');

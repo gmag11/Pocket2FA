@@ -28,6 +28,7 @@ class _HomePageState extends State<HomePage> {
   List<AccountEntry> _currentItems = [];
   bool _isSyncing = false;
   bool _suppressNextSyncSnack = false;
+  bool _serverReachable = false;
 
   Future<void> _forceSyncCurrentServer() async {
     final storage = widget.settings.storage;
@@ -36,19 +37,30 @@ class _HomePageState extends State<HomePage> {
     try {
       if (mounted) setState(() { _isSyncing = true; });
   final result = await SyncService.instance.forceSync(srv, storage, markAsForced: true);
+  // Force sync attempted network operations; success means server reachable
+  if (mounted) setState(() { _serverReachable = true; });
   // After forcing sync, reload servers but suppress the automatic sync snackbar
   _suppressNextSyncSnack = true;
   await _loadServers();
       if (mounted) {
-        if (!_suppressNextSyncSnack) {
-          final msg = result['skipped'] == true ? 'Sync skipped' : 'Sync finished';
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
-        } else {
+        if (result['network_failed'] == true) {
+          setState(() { _serverReachable = false; });
+          if (!_suppressNextSyncSnack) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Cannot sync: offline or server unreachable')));
           _suppressNextSyncSnack = false;
+        } else {
+          if (!_suppressNextSyncSnack) {
+            final msg = result['skipped'] == true ? 'Sync skipped' : 'Sync finished';
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+          } else {
+            _suppressNextSyncSnack = false;
+          }
         }
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Sync failed: $e')));
+      if (mounted) {
+        setState(() { _serverReachable = false; });
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Sync failed: $e')));
+      }
     } finally {
       if (mounted) setState(() { _isSyncing = false; });
     }
@@ -63,8 +75,11 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _loadServers() async {
-    final storage = widget.settings.storage;
-    List<ServerConnection> servers = [];
+  final storage = widget.settings.storage;
+  List<ServerConnection> servers = [];
+  // Keep a copy of the currently displayed servers so we can fall back to them
+  // if storage returns empty due to a failed/partial sync while offline.
+  final previousServers = List<ServerConnection>.from(_servers);
     String? restoredServerId;
     int? restoredAccountIndex;
     if (storage != null) {
@@ -87,6 +102,13 @@ class _HomePageState extends State<HomePage> {
           restoredAccountIndex = null;
         }
       }
+    }
+
+    // If storage returned no servers but we had servers previously, keep
+    // showing the cached servers instead of clearing the UI.
+    final usedCachedFallback = servers.isEmpty && previousServers.isNotEmpty;
+    if (usedCachedFallback) {
+      servers = previousServers;
     }
 
     setState(() {
@@ -132,6 +154,12 @@ class _HomePageState extends State<HomePage> {
           try {
             if (mounted) setState(() { _isSyncing = true; });
             final result = await SyncService.instance.syncIfNeeded(srv, storage);
+            // If syncIfNeeded actually performed a network sync, it will not set
+            // 'skipped' to true. Only update reachability state when a network
+            // attempt occurred and succeeded.
+            if (result['skipped'] != true) {
+              if (mounted) setState(() { _serverReachable = true; });
+            }
             // Reload servers from storage to pick up any updates (icons/local paths)
             final raw2 = storage.box.get('servers');
             if (raw2 != null) {
@@ -151,16 +179,31 @@ class _HomePageState extends State<HomePage> {
               }
             }
             if (mounted) {
-              if (!_suppressNextSyncSnack) {
-                final msg = result['skipped'] == true ? 'Sync skipped (recently synced)' : 'Sync finished';
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
-              } else {
-                // consume the suppression flag once
+              if (result['network_failed'] == true) {
+                setState(() { _serverReachable = false; });
+                if (!_suppressNextSyncSnack) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Cannot sync: offline or server unreachable')));
                 _suppressNextSyncSnack = false;
+              } else {
+                if (!_suppressNextSyncSnack) {
+                  final msg = result['skipped'] == true ? 'Sync skipped (recently synced)' : 'Sync finished';
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+                } else {
+                  // consume the suppression flag once
+                  _suppressNextSyncSnack = false;
+                }
               }
             }
           } catch (_) {
-            // ignore sync errors here
+            // If a sync error occurred (for example offline or server unreachable),
+            // inform the user but keep showing cached data. Also mark unreachable.
+            if (mounted) {
+              setState(() { _serverReachable = false; });
+              if (!_suppressNextSyncSnack) {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Cannot sync: offline or server unreachable')));
+              } else {
+                _suppressNextSyncSnack = false;
+              }
+            }
           } finally {
             if (mounted) setState(() { _isSyncing = false; });
           }
@@ -248,6 +291,10 @@ class _HomePageState extends State<HomePage> {
         if (storage != null) {
           try {
             final result = await SyncService.instance.syncIfNeeded(server, storage);
+            // If network sync occurred and returned (not skipped), mark reachable
+            if (result['skipped'] != true) {
+              if (mounted) setState(() { _serverReachable = true; });
+            }
             // Suppress the automatic notification from _loadServers() and show only this one
             _suppressNextSyncSnack = true;
             await _loadServers();
@@ -255,7 +302,9 @@ class _HomePageState extends State<HomePage> {
               final msg = result['skipped'] == true ? 'Sync skipped (recently synced)' : 'Sync finished';
               ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
             }
-          } catch (_) {}
+          } catch (_) {
+            if (mounted) setState(() { _serverReachable = false; });
+          }
         }
       } catch (e) {
         if (mounted) {
@@ -373,6 +422,7 @@ class _HomePageState extends State<HomePage> {
                   selectedServerId: _selectedServerId,
                   selectedAccountIndex: _selectedAccountIndex,
                   onOpenSelector: _openServerAccountSelector,
+                  serverReachable: _serverReachable,
                   onOpenAccounts: () async {
                     if (widget.settings.storage != null) {
                       await Navigator.of(context).push(MaterialPageRoute(builder: (c) => AccountsScreen(storage: widget.settings.storage!)));
@@ -612,10 +662,11 @@ class _BottomBar extends StatelessWidget {
   final List<ServerConnection> servers;
   final String? selectedServerId;
   final int? selectedAccountIndex;
+  final bool serverReachable;
   final VoidCallback onOpenSelector;
   final VoidCallback? onOpenAccounts;
 
-  const _BottomBar({required this.settings, required this.servers, required this.selectedServerId, required this.selectedAccountIndex, required this.onOpenSelector, this.onOpenAccounts});
+  const _BottomBar({required this.settings, required this.servers, required this.selectedServerId, required this.selectedAccountIndex, required this.onOpenSelector, this.onOpenAccounts, required this.serverReachable});
 
   @override
   Widget build(BuildContext context) {
@@ -654,6 +705,17 @@ class _BottomBar extends StatelessWidget {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  // Small LED showing server reachability (green = reachable, red = unreachable)
+                  Container(
+                    width: 8,
+                    height: 8,
+                    margin: const EdgeInsets.only(left: 6.0, right: 6.0),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: serverReachable ? Colors.green : Colors.red,
+                      boxShadow: [BoxShadow(color: Color.fromRGBO(0,0,0,0.12), blurRadius: 2, offset: const Offset(0,1))],
+                    ),
+                  ),
                   GestureDetector(
                     onTap: onOpenSelector,
                     child: Padding(
@@ -676,7 +738,6 @@ class _BottomBar extends StatelessWidget {
                       }),
                     ),
                   ),
-                  const SizedBox(width: 6),
                   InkWell(
                     onTap: () {
                       final s = settings;

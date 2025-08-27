@@ -345,4 +345,10 @@ class ApiService {
 
     throw StateError('Unexpected response downloading icon: ${resp.statusCode}');
   }
+
+  /// Get a persistently cached icon file. If the file does not exist locally
+  /// it will be downloaded via `downloadIcon` and saved to the application
+  /// support directory. Returns the bytes read from disk.
+  // Persistent icon caching moved to `IconCacheService` to keep network and
+  // storage responsibilities separated.
 }

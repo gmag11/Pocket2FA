@@ -158,13 +158,23 @@ class _AccountTileState extends State<AccountTile> {
         }
       });
     } catch (_) {
-      // On error, show offline in current code slot for consistency
+      // On error, show 'offline' in the HOTP display area (transient)
       if (mounted) {
         setState(() {
-          currentCode = 'offline';
-          nextCode = '';
+          _hotpCode = 'offline';
+          _hotpCounter = null;
         });
       }
+      // Clear the transient offline state after 30s like a successful HOTP
+      _hotpTimer?.cancel();
+      _hotpTimer = Timer(const Duration(seconds: 30), () {
+        if (mounted) {
+          setState(() {
+            _hotpCode = null;
+            _hotpCounter = null;
+          });
+        }
+      });
     }
   }
 

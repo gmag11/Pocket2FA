@@ -311,34 +311,61 @@ class _AccountTileState extends State<AccountTile> {
         final isHotp = (widget.item.otpType ?? 'totp').toLowerCase() == 'hotp';
         if (isHotp) {
           if (_hotpCode == null) {
-            return Expanded(
-              child: Align(
-                alignment: Alignment.centerRight,
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 180),
-                  child: ElevatedButton(
-                    onPressed: _requestHotp,
-                    style: ElevatedButton.styleFrom(minimumSize: const Size(0, 36)),
-                    child: const Text('Request Code'),
+                return Expanded(
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 12.0),
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 180),
+                        child: ElevatedButton(
+                          onPressed: _requestHotp,
+                          style: ElevatedButton.styleFrom(minimumSize: const Size(0, 36)),
+                          child: const Text('Generate'),
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-              ),
-            );
+                );
           }
 
+          // When a HOTP has been requested, display it using the same
+          // styling and positioning as the main OTP code for consistency.
           return Expanded(
             child: Align(
               alignment: Alignment.centerRight,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(_hotpCode ?? '', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
-                  if (_hotpCounter != null) Padding(
-                    padding: const EdgeInsets.only(top: 2.0),
-                    child: Text('counter ${_hotpCounter}', style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(minWidth: 100, maxWidth: 110),
+                child: Container(
+                  padding: const EdgeInsets.only(right: 8.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: settings != null
+                            ? AnimatedBuilder(
+                                animation: settings!,
+                                builder: (context, _) {
+                                  return Text(_formatCode(_hotpCode ?? ''), style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700));
+                                },
+                              )
+                            : Text(_formatCode(_hotpCode ?? ''), style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700)),
+                      ),
+                      const SizedBox(height: 8),
+                      if (_hotpCounter != null)
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Padding(
+                            padding: const EdgeInsets.only(top: 2.0),
+                            child: Text('counter $_hotpCounter', style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+                          ),
+                        ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           );

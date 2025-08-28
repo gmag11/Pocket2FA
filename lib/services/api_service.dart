@@ -6,9 +6,9 @@ import '../models/server_connection.dart';
 
 /// Servicio centralizado para llamadas a la API de 2fauth.
 ///
-  /// - Mantiene una única instancia activa de `Dio`.
-  /// - Use `setServer` para configurar el servidor (base URL y Authorization).
-  /// - Provee métodos HTTP privados convenientes: `_get`/`_post`/`_put`/`_delete`.
+/// - Mantiene una única instancia activa de `Dio`.
+/// - Use `setServer` para configurar el servidor (base URL y Authorization).
+/// - Provee métodos HTTP privados convenientes: `_get`/`_post`/`_put`/`_delete`.
 ///
 /// Ejemplo de uso:
 ///
@@ -41,13 +41,19 @@ class ApiService {
   void setServer(ServerConnection server, {bool enableLogging = true}) {
     // Compare with previous server (do not log the API key value)
     final prev = _server;
-    final bool isDifferent = prev == null || prev.id != server.id || prev.url != server.url || prev.apiKey != server.apiKey;
+    final bool isDifferent = prev == null ||
+        prev.id != server.id ||
+        prev.url != server.url ||
+        prev.apiKey != server.apiKey;
 
-    developer.log('ApiService: setServer() called - prev=${prev?.id ?? 'none'} new=${server.id} isDifferent=$isDifferent',
+    developer.log(
+        'ApiService: setServer() called - prev=${prev?.id ?? 'none'} new=${server.id} isDifferent=$isDifferent',
         name: 'ApiService');
 
     if (!isDifferent) {
-      developer.log('ApiService: same server selected, skipping reconfiguration', name: 'ApiService');
+      developer.log(
+          'ApiService: same server selected, skipping reconfiguration',
+          name: 'ApiService');
       // If the same server was selected, do not recreate the Dio instance.
       // This avoids losing existing interceptors or inflight requests.
       return;
@@ -56,7 +62,8 @@ class ApiService {
     // Close previous instance (we are switching to a different server)
     if (_dio != null) {
       try {
-        developer.log('ApiService: closing previous Dio instance', name: 'ApiService');
+        developer.log('ApiService: closing previous Dio instance',
+            name: 'ApiService');
         _dio!.close(force: true);
       } catch (_) {
         // ignore errors while closing
@@ -75,7 +82,8 @@ class ApiService {
       receiveTimeout: _receiveTimeout,
       headers: {
         'Accept': 'application/json',
-        if (server.apiKey.isNotEmpty) 'Authorization': 'Bearer ${server.apiKey}',
+        if (server.apiKey.isNotEmpty)
+          'Authorization': 'Bearer ${server.apiKey}',
       },
     );
 
@@ -87,7 +95,8 @@ class ApiService {
         requestBody: false,
         responseBody: false,
         error: true,
-        logPrint: (obj) => developer.log(obj.toString(), name: 'ApiService.Log'),
+        logPrint: (obj) =>
+            developer.log(obj.toString(), name: 'ApiService.Log'),
       ));
       // Also attach a lightweight response-summary interceptor so callers
       // can see response status and path in the same ApiService log channel.
@@ -95,22 +104,26 @@ class ApiService {
         onResponse: (response, handler) {
           try {
             final path = response.requestOptions.path;
-            developer.log('ApiService: response path=$path status=${response.statusCode}', name: 'ApiService.Log');
+            developer.log(
+                'ApiService: response path=$path status=${response.statusCode}',
+                name: 'ApiService.Log');
           } catch (_) {}
           handler.next(response);
         },
       ));
-      developer.log('ApiService: logging interceptor attached', name: 'ApiService');
+      developer.log('ApiService: logging interceptor attached',
+          name: 'ApiService');
     }
 
-    developer.log('ApiService: server configured', name: 'ApiService',
+    developer.log('ApiService: server configured',
+        name: 'ApiService',
         error:
             'id=${server.id} name=${server.name} base=$base authorization=${server.apiKey.isNotEmpty ? 'present' : 'absent'}');
   }
 
   /// Cierra la conexión activa y limpia el estado.
   void close() {
-  developer.log('ApiService: close() called', name: 'ApiService');
+    developer.log('ApiService: close() called', name: 'ApiService');
     if (_dio != null) {
       try {
         _dio!.close(force: true);
@@ -144,7 +157,10 @@ class ApiService {
   }) async {
     _ensureReady();
     final rel = _normalizeRelativePath(path);
-    return _dio!.get<T>(rel, queryParameters: queryParameters, options: options, cancelToken: cancelToken);
+    return _dio!.get<T>(rel,
+        queryParameters: queryParameters,
+        options: options,
+        cancelToken: cancelToken);
   }
 
   /// POST request (método privado).
@@ -158,7 +174,11 @@ class ApiService {
   }) async {
     _ensureReady();
     final rel = _normalizeRelativePath(path);
-    return _dio!.post<T>(rel, data: data, queryParameters: queryParameters, options: options, cancelToken: cancelToken);
+    return _dio!.post<T>(rel,
+        data: data,
+        queryParameters: queryParameters,
+        options: options,
+        cancelToken: cancelToken);
   }
 
   /// PUT request (método privado).
@@ -172,7 +192,11 @@ class ApiService {
   }) async {
     _ensureReady();
     final rel = _normalizeRelativePath(path);
-    return _dio!.put<T>(rel, data: data, queryParameters: queryParameters, options: options, cancelToken: cancelToken);
+    return _dio!.put<T>(rel,
+        data: data,
+        queryParameters: queryParameters,
+        options: options,
+        cancelToken: cancelToken);
   }
 
   /// DELETE request (método privado).
@@ -186,7 +210,11 @@ class ApiService {
   }) async {
     _ensureReady();
     final rel = _normalizeRelativePath(path);
-    return _dio!.delete<T>(rel, data: data, queryParameters: queryParameters, options: options, cancelToken: cancelToken);
+    return _dio!.delete<T>(rel,
+        data: data,
+        queryParameters: queryParameters,
+        options: options,
+        cancelToken: cancelToken);
   }
 
   /// Devuelve la instancia Dio (para usos avanzados). Lanza si no está lista.
@@ -199,7 +227,8 @@ class ApiService {
 
   void _ensureReady() {
     if (_dio == null || _server == null) {
-      throw StateError('ApiService: servidor no configurado. Llama a setServer(...) antes de hacer peticiones.');
+      throw StateError(
+          'ApiService: servidor no configurado. Llama a setServer(...) antes de hacer peticiones.');
     }
   }
 
@@ -218,7 +247,8 @@ class ApiService {
     // But to be flexible, if they pass a URL that starts with http(s)://, remove the scheme and host
     // and keep the path part relative to base. Simpler: disallow absolute full URLs to avoid surprises.
     if (p.startsWith('http://') || p.startsWith('https://')) {
-      throw ArgumentError('Las rutas deben ser relativas al base (/api/v1/). Pasa solo el path relativo, p.ej. "accounts" o "accounts/1".');
+      throw ArgumentError(
+          'Las rutas deben ser relativas al base (/api/v1/). Pasa solo el path relativo, p.ej. "accounts" o "accounts/1".');
     }
     // remove leading slashes so baseUrl + path concatenation works as intended
     while (p.startsWith('/')) {
@@ -248,20 +278,28 @@ class ApiService {
       receiveTimeout: receiveTimeout,
       headers: {
         'Accept': 'application/json',
-        if (server.apiKey.isNotEmpty) 'Authorization': 'Bearer ${server.apiKey}',
+        if (server.apiKey.isNotEmpty)
+          'Authorization': 'Bearer ${server.apiKey}',
       },
     );
 
     final dio = Dio(opts);
     // lightweight logging for validation (do not log sensitive values)
-    dio.interceptors.add(LogInterceptor(request: true, requestBody: false, responseBody: false, error: true, logPrint: (o) => developer.log(o.toString(), name: 'ApiService.validate')));
+    dio.interceptors.add(LogInterceptor(
+        request: true,
+        requestBody: false,
+        responseBody: false,
+        error: true,
+        logPrint: (o) =>
+            developer.log(o.toString(), name: 'ApiService.validate')));
 
     final resp = await dio.get('user');
     if (resp.statusCode == 200 && resp.data is Map) {
       return Map<String, dynamic>.from(resp.data as Map);
     }
 
-    throw StateError('Unexpected response validating server: ${resp.statusCode}');
+    throw StateError(
+        'Unexpected response validating server: ${resp.statusCode}');
   }
 
   /// Request a one-time OTP (HOTP) for a specific account from the server.
@@ -270,7 +308,8 @@ class ApiService {
   ///  - 'password': the current OTP (always present)
   ///  - 'nextPassword': the next OTP when provided by the API (may be null)
   ///  - 'counter': integer counter value when the API provides it (may be null)
-  Future<Map<String, dynamic>> fetchAccountOtp(int accountId, {CancelToken? cancelToken}) async {
+  Future<Map<String, dynamic>> fetchAccountOtp(int accountId,
+      {CancelToken? cancelToken}) async {
     _ensureReady();
     if (accountId <= 0) throw ArgumentError('accountId debe ser mayor que 0');
     final path = 'twofaccounts/$accountId/otp';
@@ -279,18 +318,26 @@ class ApiService {
       final data = resp.data;
       if (data is Map) {
         final pwd = data['password'];
-        if (pwd == null) throw StateError('Invalid OTP response shape: missing "password"');
+        if (pwd == null) {
+          throw StateError('Invalid OTP response shape: missing "password"');
+        }
         // Support both snake_case and camelCase from server responses
         final nextPwd = data.containsKey('next_password')
             ? (data['nextPassword']?.toString())
-            : (data.containsKey('next_password') ? (data['next_password']?.toString()) : null);
+            : (data.containsKey('next_password')
+                ? (data['next_password']?.toString())
+                : null);
         int? counter;
         try {
           if (data.containsKey('counter') && data['counter'] != null) {
             final v = data['counter'];
-            if (v is int) counter = v;
-            else if (v is String) counter = int.tryParse(v);
-            else counter = int.tryParse(v.toString());
+            if (v is int) {
+              counter = v;
+            } else if (v is String) {
+              counter = int.tryParse(v);
+            } else {
+              counter = int.tryParse(v.toString());
+            }
           }
         } catch (_) {
           counter = null;
@@ -334,8 +381,12 @@ class ApiService {
           return 'Forbidden (403). You don\'t have permission.';
         case 404:
           return 'Not found (404). Verify the server URL.';
+        case 405:
+          return 'Method not allowed (405). Check the API documentation.';
         default:
-          if (status >= 500) return 'Server error ($status). Try again later$detail';
+          if (status >= 500) {
+            return 'Server error ($status). Try again later$detail';
+          }
           return 'Server error ($status)$detail';
       }
     }
@@ -361,14 +412,15 @@ class ApiService {
     if (inner is SocketException) {
       final os = inner.osError;
       final msg = os?.message ?? inner.message;
-      if (msg.contains('Failed host lookup') || msg.contains('No address associated')) {
+      if (msg.contains('Failed host lookup') ||
+          msg.contains('No address associated')) {
         return 'Unable to resolve host. Check the server address and your internet connection.';
       }
       return 'Connection error: ${msg.isNotEmpty ? msg : inner.toString()}';
     }
 
-  final m = e.message;
-  return 'Connection error: ${m != null && m.isNotEmpty ? m : e.toString()}';
+    final m = e.message;
+    return 'Connection error: ${m != null && m.isNotEmpty ? m : e.toString()}';
   }
 
   /// Generic helper to convert any thrown object into a user-friendly message.
@@ -383,7 +435,8 @@ class ApiService {
   /// The file is retrieved from: `<server.url>/storage/icons/{fileName}`
   /// Returns the raw bytes as [Uint8List]. Requires `setServer(...)` to have
   /// been called previously; otherwise a [StateError] will be thrown.
-  Future<Uint8List> downloadIcon(String fileName, {CancelToken? cancelToken}) async {
+  Future<Uint8List> downloadIcon(String fileName,
+      {CancelToken? cancelToken}) async {
     _ensureReady();
     final srv = _server!;
     final trimmed = _trimTrailingSlash(srv.url);
@@ -391,12 +444,15 @@ class ApiService {
     final url = '$trimmed/storage/icons/$encoded';
 
     // Use bytes response type to get the raw content
-    final resp = await _dio!.get<List<int>>(url, options: Options(responseType: ResponseType.bytes), cancelToken: cancelToken);
+    final resp = await _dio!.get<List<int>>(url,
+        options: Options(responseType: ResponseType.bytes),
+        cancelToken: cancelToken);
     if (resp.statusCode == 200 && resp.data != null) {
       return Uint8List.fromList(List<int>.from(resp.data!));
     }
 
-    throw StateError('Unexpected response downloading icon: ${resp.statusCode}');
+    throw StateError(
+        'Unexpected response downloading icon: ${resp.statusCode}');
   }
 
   /// Get a persistently cached icon file. If the file does not exist locally

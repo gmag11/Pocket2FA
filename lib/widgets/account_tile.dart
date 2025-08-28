@@ -564,22 +564,47 @@ class _AccountTileState extends State<AccountTile>
                                   const yellowColor = Color(0xFFFFC107);
                                   const redColor = Color(0xFFD32F2F);
 
-                                  return List.generate(dotsCount, (j) {
-                                    final dotColor = j < 6
-                                        ? greenColor
-                                        : (j < 9 ? yellowColor : redColor);
-                                    return Padding(
-                                      padding: EdgeInsets.only(left: j == 0 ? 0 : spacing),
-                                      child: Container(
-                                        width: dotSize,
-                                        height: dotSize,
-                                        decoration: BoxDecoration(
-                                          color: dotColor,
-                                          borderRadius: BorderRadius.circular(dotSize / 2.0),
-                                        ),
-                                      ),
-                                    );
-                                  });
+                                  // Wrap dots in an AnimatedBuilder so they update when the controller ticks.
+                                  return [
+                                    AnimatedBuilder(
+                                      animation: _animController ?? AlwaysStoppedAnimation<double>(0.0),
+                                      builder: (context, _) {
+                                        final progress = (_animController != null) ? _animController!.value.clamp(0.0, 1.0) : 0.0;
+                                        const int dotsCountLocal = dotsCount;
+                                        return Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: List.generate(dotsCountLocal, (j) {
+                                            // Determine base color
+                                            final baseColor = j < 6 ? greenColor : (j < 9 ? yellowColor : redColor);
+                                            // Sequential activation: compute how many full dots and partial
+                                            final scaled = progress * dotsCountLocal;
+                                            final fullActive = scaled.floor();
+                                            final partial = (scaled - fullActive).clamp(0.0, 1.0);
+                                            Color dotColor;
+                                            if (j < fullActive) {
+                                              dotColor = baseColor;
+                                            } else if (j == fullActive) {
+                                              dotColor = Color.lerp(const Color(0xFFBDBDBD), baseColor, partial) ?? baseColor;
+                                            } else {
+                                              dotColor = const Color(0xFFBDBDBD);
+                                            }
+
+                                            return Padding(
+                                              padding: EdgeInsets.only(left: j == 0 ? 0 : spacing),
+                                              child: Container(
+                                                width: dotSize,
+                                                height: dotSize,
+                                                decoration: BoxDecoration(
+                                                  color: dotColor,
+                                                  borderRadius: BorderRadius.circular(dotSize / 2.0),
+                                                ),
+                                              ),
+                                            );
+                                          }),
+                                        );
+                                      },
+                                    ),
+                                  ];
                                 }(),
                               ),
                             ),

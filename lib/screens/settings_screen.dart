@@ -5,6 +5,10 @@ class SettingsScreen extends StatelessWidget {
   final SettingsService settings;
   const SettingsScreen({required this.settings, super.key});
 
+  // Base accent color used across this screen. Derived shades are computed
+  // locally so the UI matches the requested palette.
+  static const Color _baseAccent = Color(0xFF4F63E6);
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -25,6 +29,7 @@ class SettingsScreen extends StatelessWidget {
                     Switch(
                       value: enabled,
                       onChanged: (v) => settings.setEnabled(v),
+                      activeColor: _baseAccent,
                     ),
                     const SizedBox(width: 8),
                     Flexible(
@@ -54,9 +59,12 @@ class SettingsScreen extends StatelessWidget {
   }
 
   Widget _formatButton(BuildContext context, bool selected, String label, String sample, VoidCallback onTap) {
-    final bg = selected ? Theme.of(context).colorScheme.primary : Colors.white;
-    final fg = selected ? Colors.white : Colors.black87;
-    final borderColor = selected ? Theme.of(context).colorScheme.primary : Colors.grey.shade300;
+  // Slightly lighten the selected background so the button reads as "selected"
+  // but less saturated than the raw accent color.
+  final bg = selected ? Color.lerp(_baseAccent, Colors.white, 0.22)! : Colors.white;
+  final fg = selected ? Colors.white : Colors.black87;
+  // Use a lighter border when selected to match the lighter background.
+  final borderColor = selected ? Color.lerp(_baseAccent, Colors.white, 0.18)! : Colors.grey.shade300;
     return Material(
       color: bg,
       elevation: selected ? 2 : 0,

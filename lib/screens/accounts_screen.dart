@@ -17,6 +17,8 @@ class AccountsScreen extends StatefulWidget {
 class _AccountsScreenState extends State<AccountsScreen> {
   List<ServerConnection> _servers = [];
 
+  static const Color _baseAccent = Color(0xFF4F63E6);
+
   @override
   void initState() {
     super.initState();
@@ -204,7 +206,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
           color: Colors.transparent,
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(color: Colors.green.shade600, borderRadius: BorderRadius.circular(8)),
+            decoration: BoxDecoration(color: _baseAccent, borderRadius: BorderRadius.circular(8)),
             child: Text(text, style: const TextStyle(color: Colors.white)),
           ),
         ),
@@ -247,6 +249,8 @@ class _AccountsScreenState extends State<AccountsScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _addServer,
+        foregroundColor: Colors.white,
+        backgroundColor: Color.lerp(_baseAccent, Colors.white, 0.22)!,
         child: const Icon(Icons.add),
       ),
     );

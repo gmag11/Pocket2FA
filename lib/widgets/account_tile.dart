@@ -1,15 +1,69 @@
 import 'package:flutter_svg/flutter_svg.dart';
 import 'dart:io';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
+import '../services/otp_service.dart';
 import '../models/account_entry.dart';
 import '../services/settings_service.dart';
 
-class AccountTile extends StatelessWidget {
+class AccountTile extends StatefulWidget {
   final AccountEntry item;
   final SettingsService? settings;
 
   const AccountTile({required this.item, this.settings, super.key});
+
+  @override
+  State<AccountTile> createState() => _AccountTileState();
+}
+
+class _AccountTileState extends State<AccountTile> {
+  SettingsService? get settings => widget.settings;
+  String currentCode = '------';
+  String nextCode = '------';
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+  // start a 1s periodic timer to refresh TOTP display
+  _timer = Timer.periodic(const Duration(seconds: 1), (_) => _refreshCodes());
+  // initial compute
+  _refreshCodes();
+  }
+
+  @override
+  void didUpdateWidget(covariant AccountTile oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.item != widget.item) {
+      _refreshCodes();
+    }
+  }
+
+  @override
+  void dispose() {
+  _timer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _refreshCodes() async {
+  // compute current and next codes
+  final acct = widget.item;
+  // current
+  final c = OtpService.generateOtp(acct, timeOffsetSeconds: 0, storage: settings?.storage);
+  // next period: use period or default 30
+  final period = acct.period ?? 30;
+  final n = OtpService.generateOtp(acct, timeOffsetSeconds: period, storage: settings?.storage);
+    if (mounted) {
+      setState(() {
+        currentCode = c;
+        nextCode = n;
+      });
+    }
+  }
+
+  // HOTP consume behavior removed while HOTP is disabled.
+
 
   String _formatCode(String code) {
     final digits = code.replaceAll(RegExp(r'\s+'), '');
@@ -39,19 +93,11 @@ class AccountTile extends StatelessWidget {
     return parts.join(' ');
   }
 
-  // Temporary OTP generator stub: real generation will use the account seed
-  // and proper TOTP/HOTP algorithms. For now return the fixed placeholder.
-  String _currentOtp() {
-    return '000000';
-  }
-
-  String _nextOtp() {
-    return '000000';
-  }
+  // currentCode/nextCode are updated periodically in state
 
   @override
   Widget build(BuildContext context) {
-    final color = Colors.primaries[item.service.length % Colors.primaries.length];
+  final color = Colors.primaries[widget.item.service.length % Colors.primaries.length];
   // debugBoxes removed; restoring production layout
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -84,7 +130,7 @@ class AccountTile extends StatelessWidget {
                             radius: radius,
                             backgroundColor: color.shade100,
                             child: Text(
-                              item.service.characters.first,
+                              widget.item.service.characters.first,
                               style: TextStyle(
                                 color: color.shade900,
                                 fontWeight: FontWeight.bold,
@@ -93,9 +139,9 @@ class AccountTile extends StatelessWidget {
                             ),
                           );
 
-                          if (item.localIcon != null && item.localIcon!.isNotEmpty) {
-                            final file = File(item.localIcon!);
-                            final isSvg = item.localIcon!.toLowerCase().endsWith('.svg');
+                          if (widget.item.localIcon != null && widget.item.localIcon!.isNotEmpty) {
+                            final file = File(widget.item.localIcon!);
+                            final isSvg = widget.item.localIcon!.toLowerCase().endsWith('.svg');
                             try {
                               if (isSvg) {
                                 return CircleAvatar(
@@ -127,7 +173,7 @@ class AccountTile extends StatelessWidget {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          item.service,
+                          widget.item.service,
                           style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w400),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -140,7 +186,7 @@ class AccountTile extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.only(left: 10.0), // Align with service text
                     child: Text(
-                      item.account,
+                      widget.item.account,
                       style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -161,10 +207,10 @@ class AccountTile extends StatelessWidget {
                     ? AnimatedBuilder(
                         animation: settings!,
                         builder: (context, _) {
-                              return Text(_formatCode(_nextOtp()), style: TextStyle(fontSize: 12, color: Colors.grey.shade500));
+                              return Text(_formatCode(nextCode), style: TextStyle(fontSize: 12, color: Colors.grey.shade500));
                             },
                       )
-                    : Text(_formatCode(_nextOtp()), style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+                    : Text(_formatCode(nextCode), style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
               ),
           ),
 
@@ -181,14 +227,29 @@ class AccountTile extends StatelessWidget {
                 children: [
                   Align(
                     alignment: Alignment.centerLeft,
-                    child: settings != null
-                        ? AnimatedBuilder(
-                            animation: settings!,
-                            builder: (context, _) {
-                              return Text(_formatCode(_currentOtp()), style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700));
-                            },
-                          )
-                        : Text(_formatCode(_currentOtp()), style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700)),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        settings != null
+                            ? AnimatedBuilder(
+                                animation: settings!,
+                                builder: (context, _) {
+                                  return Text(_formatCode(currentCode), style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700));
+                                },
+                              )
+                            : Text(_formatCode(currentCode), style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700)),
+                        const SizedBox(width: 8),
+                        // HOTP is currently disabled: show a small disabled hint
+                        if ((widget.item.otpType ?? 'totp').toLowerCase() == 'hotp')
+                          Padding(
+                            padding: const EdgeInsets.only(left: 4.0),
+                            child: Tooltip(
+                              message: 'HOTP deshabilitado hasta sincronización',
+                              child: Icon(Icons.block, size: 18, color: Colors.grey.shade500),
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Align(

@@ -78,11 +78,13 @@ class SyncService {
     List<AccountEntry> accounts = [];
     var accountsFetched = false;
     try {
-      final resp = await ApiService.instance.dio.get('twofaccounts', cancelToken: cancelToken);
+      // Request accounts including secrets so we can generate OTPs locally
+      final resp = await ApiService.instance.dio.get('twofaccounts', queryParameters: {'withSecret': 'true'}, cancelToken: cancelToken);
       if (resp.statusCode == 200 && resp.data is List) {
         final list = resp.data as List;
         accounts = list.map((e) => AccountEntry.fromMap(Map<dynamic, dynamic>.from(e))).toList();
         accountsFetched = true;
+  // secrets are stored in AccountEntry.seed via AccountEntry.fromMap
       }
     } catch (e) {
       developer.log('SyncService: error fetching accounts: $e', name: 'SyncService');
@@ -187,6 +189,22 @@ class SyncService {
   try {
       // Replace the server entry in persisted storage
       final box = storage.box;
+      // If accounts include HOTP counters provided by the server, initialize
+      // the persisted hotp_counter:<id> values when not already set so local
+      // generation will prefer the persisted value.
+      try {
+        for (var acc in accounts) {
+          if ((acc.otpType ?? '').toLowerCase() == 'hotp' && acc.counter != null) {
+            final key = 'hotp_counter:${acc.id}';
+            final existing = box.get(key);
+            if (existing == null) {
+              await box.put(key, acc.counter);
+            }
+          }
+        }
+      } catch (e) {
+        developer.log('SyncService: failed to initialize HOTP counters: $e', name: 'SyncService');
+      }
       final raw = box.get('servers');
       if (raw != null) {
         final list = (raw as List<dynamic>).map((e) => Map<dynamic, dynamic>.from(e)).toList();

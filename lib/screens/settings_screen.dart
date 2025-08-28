@@ -29,7 +29,7 @@ class SettingsScreen extends StatelessWidget {
                     const SizedBox(width: 8),
                     Flexible(
                       fit: FlexFit.loose,
-                      child: Text('Code formatting', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: enabled ? null : Colors.grey.shade600)),
+                      child: Text('Code formatting', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: enabled ? null : Colors.grey.shade600)),
                     ),
                     const SizedBox(width: 8),
                     Opacity(
@@ -38,7 +38,7 @@ class SettingsScreen extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           _formatButton(context, settings.format == CodeFormat.spaced3, 'by Trio', '123 456', enabled ? () => settings.setFormat(CodeFormat.spaced3) : () {}),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 4),
                           _formatButton(context, settings.format == CodeFormat.spaced2, 'by Pair', '12 34 56', enabled ? () => settings.setFormat(CodeFormat.spaced2) : () {}),
                         ],
                       ),

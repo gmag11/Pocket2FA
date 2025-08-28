@@ -18,7 +18,7 @@ class AccountTile extends StatefulWidget {
   State<AccountTile> createState() => _AccountTileState();
 }
 
-class _AccountTileState extends State<AccountTile> {
+class _AccountTileState extends State<AccountTile> with TickerProviderStateMixin {
   SettingsService? get settings => widget.settings;
   String currentCode = '------';
   String nextCode = '------';
@@ -27,6 +27,8 @@ class _AccountTileState extends State<AccountTile> {
   String? _hotpCode;
   int? _hotpCounter;
   Timer? _hotpTimer;
+  // Animation controller for per-period animations (dots + nextCode fade)
+  AnimationController? _animController;
 
   @override
   void initState() {
@@ -53,7 +55,63 @@ class _AccountTileState extends State<AccountTile> {
   void dispose() {
   _timer?.cancel();
   _hotpTimer?.cancel();
+    try {
+      _animController?.dispose();
+    } catch (_) {}
     super.dispose();
+  }
+
+  void _stopAnimation() {
+    try {
+      _animController?.stop();
+    } catch (_) {}
+    try {
+      _animController?.dispose();
+    } catch (_) {}
+    _animController = null;
+  }
+
+  void _startAnimation(int periodSec) {
+    // No animation for HOTP
+    final isHotp = (widget.item.otpType ?? 'totp').toLowerCase() == 'hotp';
+    if (isHotp) {
+      _stopAnimation();
+      return;
+    }
+
+    final periodMs = (periodSec > 0 ? periodSec : 30) * 1000;
+    final nowMs = DateTime.now().toUtc().millisecondsSinceEpoch;
+    final remMs = nowMs % periodMs;
+    var progress = remMs / periodMs;
+    if (progress < 0) progress = 0; if (progress > 1) progress = 0;
+
+    // Recreate controller to reflect potential period changes
+    try {
+      _animController?.dispose();
+    } catch (_) {}
+    _animController = AnimationController(vsync: this, duration: Duration(milliseconds: periodMs));
+    // Set initial progress and animate to 1.0 over the remaining time in this cycle
+    _animController!.value = progress;
+    final remainingMs = (periodMs - remMs).clamp(0, periodMs);
+    try {
+      _animController!.animateTo(1.0, duration: Duration(milliseconds: remainingMs));
+    } catch (_) {
+      // ignore animate errors if controller disposed
+    }
+
+    // Capture controller locally so the listener references the same instance
+    final ctrl = _animController!;
+    ctrl.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        // Restart a full cycle from 0 to 1
+        try {
+          ctrl.value = 0.0;
+          ctrl.animateTo(1.0, duration: Duration(milliseconds: periodMs));
+        } catch (_) {
+          // controller might have been disposed concurrently; ignore
+        }
+      }
+    });
   }
 
   Future<void> _refreshCodes() async {
@@ -88,6 +146,8 @@ class _AccountTileState extends State<AccountTile> {
       _timer = Timer(Duration(milliseconds: delayMs + 50), () {
         if (mounted) _refreshCodes();
       });
+      // Start per-period animation aligned to epoch
+      _startAnimation(periodSec);
     } catch (_) {
       _timer = Timer(const Duration(seconds: 1), () {
         if (mounted) _refreshCodes();
@@ -101,15 +161,17 @@ class _AccountTileState extends State<AccountTile> {
   // next period: use period or default 30
   final period = acct.period ?? 30;
   final n = OtpService.generateOtp(acct, timeOffsetSeconds: period, storage: settings?.storage);
-  if (mounted) {
-    setState(() {
-      currentCode = c;
-      nextCode = n;
-    });
-  }
+    if (mounted) {
+      setState(() {
+        currentCode = c;
+        nextCode = n;
+      });
+      // Start per-period animation aligned to epoch
+      _startAnimation(period);
+    }
   // Schedule next refresh at the period boundary. Use milliseconds to avoid
   // drift. Add a small epsilon to ensure the code has actually advanced.
-  try {
+    try {
     final periodSec = (acct.period != null && acct.period! > 0) ? acct.period! : 30;
     final nowMs = DateTime.now().toUtc().millisecondsSinceEpoch;
     final periodMs = periodSec * 1000;
@@ -118,6 +180,8 @@ class _AccountTileState extends State<AccountTile> {
     _timer = Timer(Duration(milliseconds: delayMs + 50), () {
       if (mounted) _refreshCodes();
     });
+    // Start per-period animation aligned to epoch
+    _startAnimation(periodSec);
   } catch (_) {
     // If scheduling fails for any reason, fallback to a conservative 1s tick
     _timer = Timer(const Duration(seconds: 1), () {
@@ -382,14 +446,13 @@ class _AccountTileState extends State<AccountTile> {
               height: 60,
               child: Align(
                 alignment: Alignment.bottomRight,
-                child: settings != null
-                    ? AnimatedBuilder(
-                        animation: settings!,
-                        builder: (context, _) {
-                          return Text(_formatCode(nextCode), style: TextStyle(fontSize: 12, color: Colors.grey.shade500));
-                        },
-                      )
-                    : Text(_formatCode(nextCode), style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+                child: AnimatedBuilder(
+                    animation: _animController ?? Listenable.merge([]),
+                    builder: (context, _) {
+                      final anim = _animController;
+                      final opacity = (anim != null) ? anim.value.clamp(0.0, 1.0) : 1.0;
+                      return Opacity(opacity: opacity, child: Text(_formatCode(nextCode), style: TextStyle(fontSize: 12, color: Colors.black)));
+                    }),
               ),
             ),
 
@@ -434,18 +497,22 @@ class _AccountTileState extends State<AccountTile> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: () {
-                          // Default: colored dots for TOTP visualization
+                          // Default: colored dots for TOTP visualization driven by animation progress
                           return List.generate(10, (i) {
-                            final Color dotColor = i < 6
+                            // Use AnimatedBuilder above the entire row; here read controller value directly
+                            final progress = (_animController != null) ? _animController!.value : 1.0;
+                            final baseColor = i < 6
                                 ? Colors.green.shade400
                                 : (i < 9 ? Colors.amber.shade600 : Colors.red.shade400);
+                            // When cycle starts, dots are grey (progress=0). They colorize progressively.
+                            final lerpColor = Color.lerp(Colors.grey.shade400, baseColor, progress) ?? baseColor;
                             return Padding(
                               padding: EdgeInsets.only(left: i == 0 ? 0 : 6.0),
                               child: Container(
                                 width: 3,
                                 height: 3,
                                 decoration: BoxDecoration(
-                                  color: dotColor,
+                                  color: lerpColor,
                                   borderRadius: BorderRadius.circular(1.5),
                                 ),
                               ),

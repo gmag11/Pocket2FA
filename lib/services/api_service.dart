@@ -266,10 +266,11 @@ class ApiService {
 
   /// Request a one-time OTP (HOTP) for a specific account from the server.
   ///
-  /// Calls POST /twofaccounts/{id}/otp and returns a Map with keys:
+  /// Calls GET /twofaccounts/{id}/otp and returns a Map with keys:
   ///  - 'password': the current OTP (always present)
-  ///  - 'next_password': the next OTP when provided by the API (may be null)
-  Future<Map<String, String?>> fetchAccountOtp(int accountId, {CancelToken? cancelToken}) async {
+  ///  - 'nextPassword': the next OTP when provided by the API (may be null)
+  ///  - 'counter': integer counter value when the API provides it (may be null)
+  Future<Map<String, dynamic>> fetchAccountOtp(int accountId, {CancelToken? cancelToken}) async {
     _ensureReady();
     if (accountId <= 0) throw ArgumentError('accountId debe ser mayor que 0');
     final path = 'twofaccounts/$accountId/otp';
@@ -279,10 +280,25 @@ class ApiService {
       if (data is Map) {
         final pwd = data['password'];
         if (pwd == null) throw StateError('Invalid OTP response shape: missing "password"');
-        final nextPwd = data.containsKey('next_password') ? (data['next_password']?.toString()) : null;
+        // Support both snake_case and camelCase from server responses
+        final nextPwd = data.containsKey('next_password')
+            ? (data['nextPassword']?.toString())
+            : (data.containsKey('next_password') ? (data['next_password']?.toString()) : null);
+        int? counter;
+        try {
+          if (data.containsKey('counter') && data['counter'] != null) {
+            final v = data['counter'];
+            if (v is int) counter = v;
+            else if (v is String) counter = int.tryParse(v);
+            else counter = int.tryParse(v.toString());
+          }
+        } catch (_) {
+          counter = null;
+        }
         return {
           'password': pwd.toString(),
           'next_password': nextPwd,
+          'counter': counter,
         };
       }
       throw StateError('Invalid OTP response shape');

@@ -23,6 +23,10 @@ class _AccountTileState extends State<AccountTile> {
   String currentCode = '------';
   String nextCode = '------';
   Timer? _timer;
+  // HOTP transient display state
+  String? _hotpCode;
+  int? _hotpCounter;
+  Timer? _hotpTimer;
 
   @override
   void initState() {
@@ -48,6 +52,7 @@ class _AccountTileState extends State<AccountTile> {
   @override
   void dispose() {
   _timer?.cancel();
+  _hotpTimer?.cancel();
     super.dispose();
   }
 
@@ -131,6 +136,37 @@ class _AccountTileState extends State<AccountTile> {
 
   // HOTP consume behavior removed while HOTP is disabled.
 
+  Future<void> _requestHotp() async {
+    final acct = widget.item;
+    try {
+      final resp = await ApiService.instance.fetchAccountOtp(acct.id);
+      final pwd = resp['password']?.toString() ?? '';
+      final counter = resp['counter'] is int ? resp['counter'] as int : (resp['counter'] != null ? int.tryParse(resp['counter'].toString()) : null);
+      if (mounted) {
+        setState(() {
+          _hotpCode = pwd;
+          _hotpCounter = counter;
+        });
+      }
+      _hotpTimer?.cancel();
+      _hotpTimer = Timer(const Duration(seconds: 30), () {
+        if (mounted) {
+          setState(() {
+            _hotpCode = null;
+            _hotpCounter = null;
+          });
+        }
+      });
+    } catch (_) {
+      // On error, show offline in current code slot for consistency
+      if (mounted) {
+        setState(() {
+          currentCode = 'offline';
+          nextCode = '';
+        });
+      }
+    }
+  }
 
   String _formatCode(String code) {
   // If the tile shows an offline indicator, return it verbatim so it
@@ -268,87 +304,134 @@ class _AccountTileState extends State<AccountTile> {
             ),
           ),
 
-      // Small code column (left of main code) - bottom-right aligned
-          SizedBox(
-            width: 54,
-            height: 60,
+      // Right-side area: either show a HOTP request UI that occupies the
+      // combined area (next + current + dots), or render the normal three
+      // columns for non-HOTP accounts.
+      (() {
+        final isHotp = (widget.item.otpType ?? 'totp').toLowerCase() == 'hotp';
+        if (isHotp) {
+          if (_hotpCode == null) {
+            return Expanded(
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 180),
+                  child: ElevatedButton(
+                    onPressed: _requestHotp,
+                    style: ElevatedButton.styleFrom(minimumSize: const Size(0, 36)),
+                    child: const Text('Request Code'),
+                  ),
+                ),
+              ),
+            );
+          }
+
+          return Expanded(
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(_hotpCode ?? '', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+                  if (_hotpCounter != null) Padding(
+                    padding: const EdgeInsets.only(top: 2.0),
+                    child: Text('counter ${_hotpCounter}', style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        // Non-HOTP rendering: nextCode (small), spacer, main code + dots
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              width: 54,
+              height: 60,
               child: Align(
                 alignment: Alignment.bottomRight,
                 child: settings != null
                     ? AnimatedBuilder(
                         animation: settings!,
                         builder: (context, _) {
-                              return Text(_formatCode(nextCode), style: TextStyle(fontSize: 12, color: Colors.grey.shade500));
-                            },
+                          return Text(_formatCode(nextCode), style: TextStyle(fontSize: 12, color: Colors.grey.shade500));
+                        },
                       )
                     : Text(_formatCode(nextCode), style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
               ),
-          ),
+            ),
 
-          const SizedBox(width: 8),
+            const SizedBox(width: 8),
 
-          // Main code column (right)
-          ConstrainedBox(
-            constraints: const BoxConstraints(minWidth: 100, maxWidth: 110),
-            child: Container(
-              padding: const EdgeInsets.only(right: 8.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        settings != null
-                            ? AnimatedBuilder(
-                                animation: settings!,
-                                builder: (context, _) {
-                                  return Text(_formatCode(currentCode), style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700));
-                                },
-                              )
-                            : Text(_formatCode(currentCode), style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700)),
-                        const SizedBox(width: 8),
-                        // HOTP is currently disabled: show a small disabled hint
-                        if ((widget.item.otpType ?? 'totp').toLowerCase() == 'hotp')
-                          Padding(
-                            padding: const EdgeInsets.only(left: 4.0),
-                            child: Tooltip(
-                              message: 'HOTP deshabilitado hasta sincronización',
-                              child: Icon(Icons.block, size: 18, color: Colors.grey.shade500),
+            ConstrainedBox(
+              constraints: const BoxConstraints(minWidth: 100, maxWidth: 110),
+              child: Container(
+                padding: const EdgeInsets.only(right: 8.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          settings != null
+                              ? AnimatedBuilder(
+                                  animation: settings!,
+                                  builder: (context, _) {
+                                    return Text(_formatCode(currentCode), style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700));
+                                  },
+                                )
+                              : Text(_formatCode(currentCode), style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700)),
+                          const SizedBox(width: 8),
+                          if ((widget.item.otpType ?? 'totp').toLowerCase() == 'hotp')
+                            Padding(
+                              padding: const EdgeInsets.only(left: 4.0),
+                              child: Tooltip(
+                                message: 'HOTP deshabilitado hasta sincronización',
+                                child: Icon(Icons.block, size: 18, color: Colors.grey.shade500),
+                              ),
                             ),
-                          ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: List.generate(10, (i) {
-                        final Color dotColor = i < 6
-                            ? Colors.green.shade400
-                            : (i < 9 ? Colors.amber.shade600 : Colors.red.shade400);
-                        return Padding(
-                          padding: EdgeInsets.only(left: i == 0 ? 0 : 6.0),
-                          child: Container(
-                            width: 3,
-                            height: 3,
-                            decoration: BoxDecoration(
-                              color: dotColor,
-                              borderRadius: BorderRadius.circular(1.5),
-                            ),
-                          ),
-                        );
-                      }),
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: () {
+                          // Default: colored dots for TOTP visualization
+                          return List.generate(10, (i) {
+                            final Color dotColor = i < 6
+                                ? Colors.green.shade400
+                                : (i < 9 ? Colors.amber.shade600 : Colors.red.shade400);
+                            return Padding(
+                              padding: EdgeInsets.only(left: i == 0 ? 0 : 6.0),
+                              child: Container(
+                                width: 3,
+                                height: 3,
+                                decoration: BoxDecoration(
+                                  color: dotColor,
+                                  borderRadius: BorderRadius.circular(1.5),
+                                ),
+                              ),
+                            );
+                          });
+                        }(),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
+          ],
+        );
+      }()),
             ],
           ),
         );

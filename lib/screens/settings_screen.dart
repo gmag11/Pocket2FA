@@ -29,7 +29,7 @@ class SettingsScreen extends StatelessWidget {
                     Switch(
                       value: enabled,
                       onChanged: (v) => settings.setEnabled(v),
-                      activeColor: _baseAccent,
+                      activeThumbColor: _baseAccent,
                     ),
                     const SizedBox(width: 8),
                     Flexible(

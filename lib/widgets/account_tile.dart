@@ -557,7 +557,7 @@ class _AccountTileState extends State<AccountTile>
                                 children: () {
                                   // Static colored dots (no animation): all dots shown in final color
                                   const int dotsCount = 10;
-                                  const double dotSize = 6.0;
+                                  const double dotSize = 5.0;
                                   const double spacing = 4.0;
                                   // Explicit colors for stability at startup
                                   const greenColor = Color(0xFF00C853);

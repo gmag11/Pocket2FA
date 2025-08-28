@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../services/otp_service.dart';
 import '../services/api_service.dart';
 import '../models/account_entry.dart';
@@ -252,6 +253,51 @@ class _AccountTileState extends State<AccountTile>
     }
   }
 
+  void _copyToClipboard(String code) async {
+    if (!mounted) return;
+    final trimmed = code.trim();
+    if (trimmed.isEmpty || trimmed.toLowerCase() == 'offline') {
+      final horizontalMargin = MediaQuery.of(context).size.width * 0.12;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: const Center(child: Text('No code to copy', style: TextStyle(color: Colors.white))),
+        behavior: SnackBarBehavior.floating,
+        margin: EdgeInsets.fromLTRB(horizontalMargin, 0, horizontalMargin, 96),
+        padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 10.0),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(16.0))),
+        backgroundColor: const Color(0xFF666666),
+        duration: const Duration(milliseconds: 1500),
+      ));
+      return;
+    }
+    final digits = trimmed.replaceAll(RegExp(r'\s+'), '');
+    try {
+      await Clipboard.setData(ClipboardData(text: digits));
+      if (!mounted) return;
+      final horizontalMargin = MediaQuery.of(context).size.width * 0.12;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: const Center(child: Text('Copied to clipboard', style: TextStyle(color: Colors.white))),
+        behavior: SnackBarBehavior.floating,
+        margin: EdgeInsets.fromLTRB(horizontalMargin, 0, horizontalMargin, 96),
+        padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 10.0),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(16.0))),
+        backgroundColor: const Color(0xFF00C853),
+        duration: const Duration(milliseconds: 1500),
+      ));
+    } catch (_) {
+      if (!mounted) return;
+      final horizontalMargin = MediaQuery.of(context).size.width * 0.12;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: const Center(child: Text('Error copying to clipboard', style: TextStyle(color: Colors.white))),
+        behavior: SnackBarBehavior.floating,
+        margin: EdgeInsets.fromLTRB(horizontalMargin, 0, horizontalMargin, 96),
+        padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 10.0),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(16.0))),
+        backgroundColor: const Color(0xFFFF0000),
+        duration: const Duration(milliseconds: 1500),
+      ));
+    }
+  }
+
   String _formatCode(String code) {
     // If the tile shows an offline indicator, return it verbatim so it
     // doesn't get grouped/spaced like numeric OTPs (fixes "off lin e").
@@ -445,17 +491,23 @@ class _AccountTileState extends State<AccountTile>
                                     ? AnimatedBuilder(
                                         animation: settings!,
                                         builder: (context, _) {
-                                          return Text(
-                                              _formatCode(_hotpCode ?? ''),
-                                              style: const TextStyle(
-                                                  fontSize: 24,
-                                                  fontWeight: FontWeight.w700));
+                                          return InkWell(
+                                            onTap: () => _copyToClipboard(_hotpCode ?? ''),
+                                            child: Text(
+                                                _formatCode(_hotpCode ?? ''),
+                                                style: const TextStyle(
+                                                    fontSize: 24,
+                                                    fontWeight: FontWeight.w700)),
+                                          );
                                         },
                                       )
-                                    : Text(_formatCode(_hotpCode ?? ''),
-                                        style: const TextStyle(
-                                            fontSize: 24,
-                                            fontWeight: FontWeight.w700)),
+                                    : InkWell(
+                                        onTap: () => _copyToClipboard(_hotpCode ?? ''),
+                                        child: Text(_formatCode(_hotpCode ?? ''),
+                                            style: const TextStyle(
+                                                fontSize: 24,
+                                                fontWeight: FontWeight.w700)),
+                                      ),
                               ),
                               const SizedBox(height: 8),
                               if (_hotpCounter != null)
@@ -520,18 +572,24 @@ class _AccountTileState extends State<AccountTile>
                                       ? AnimatedBuilder(
                                           animation: settings!,
                                           builder: (context, _) {
-                                            return Text(
-                                                _formatCode(currentCode),
-                                                style: const TextStyle(
-                                                    fontSize: 24,
-                                                    fontWeight:
-                                                        FontWeight.w700));
+                                            return InkWell(
+                                              onTap: () => _copyToClipboard(currentCode),
+                                              child: Text(
+                                                  _formatCode(currentCode),
+                                                  style: const TextStyle(
+                                                      fontSize: 24,
+                                                      fontWeight:
+                                                          FontWeight.w700)),
+                                            );
                                           },
                                         )
-                                      : Text(_formatCode(currentCode),
-                                          style: const TextStyle(
-                                              fontSize: 24,
-                                              fontWeight: FontWeight.w700)),
+                                      : InkWell(
+                                          onTap: () => _copyToClipboard(currentCode),
+                                          child: Text(_formatCode(currentCode),
+                                              style: const TextStyle(
+                                                  fontSize: 24,
+                                                  fontWeight: FontWeight.w700)),
+                                        ),
                                   const SizedBox(width: 8),
                                   if ((widget.item.otpType ?? 'totp')
                                           .toLowerCase() ==

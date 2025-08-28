@@ -133,7 +133,11 @@ class _AccountTileState extends State<AccountTile> {
 
 
   String _formatCode(String code) {
-    final digits = code.replaceAll(RegExp(r'\s+'), '');
+  // If the tile shows an offline indicator, return it verbatim so it
+  // doesn't get grouped/spaced like numeric OTPs (fixes "off lin e").
+  if (code.toLowerCase() == 'offline') return code;
+
+  final digits = code.replaceAll(RegExp(r'\s+'), '');
     // If formatting is disabled, always return compact digits
     if (settings != null && settings!.enabled == false) return digits;
 

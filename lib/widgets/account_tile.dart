@@ -4,6 +4,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import '../services/otp_service.dart';
+import '../services/api_service.dart';
 import '../models/account_entry.dart';
 import '../services/settings_service.dart';
 
@@ -26,9 +27,10 @@ class _AccountTileState extends State<AccountTile> {
   @override
   void initState() {
     super.initState();
-  // start a 1s periodic timer to refresh TOTP display
-  _timer = Timer.periodic(const Duration(seconds: 1), (_) => _refreshCodes());
-  // initial compute
+  // Use a one-shot timer per-tile: schedule the next refresh when the current
+  // code expires (based on AccountEntry.period) instead of firing every second.
+  _timer = null;
+  // initial compute (which will schedule the next run)
   _refreshCodes();
   }
 
@@ -36,6 +38,9 @@ class _AccountTileState extends State<AccountTile> {
   void didUpdateWidget(covariant AccountTile oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.item != widget.item) {
+      // account changed: cancel pending timer and refresh immediately
+      _timer?.cancel();
+      _timer = null;
       _refreshCodes();
     }
   }
@@ -47,19 +52,81 @@ class _AccountTileState extends State<AccountTile> {
   }
 
   Future<void> _refreshCodes() async {
-  // compute current and next codes
+  // compute current and next codes, then schedule next refresh at the
+  // period boundary using AccountEntry.period (seconds).
   final acct = widget.item;
-  // current
+  final type = (acct.otpType ?? 'totp').toLowerCase();
+
+  // Cancel any pending timer so we only have one scheduled refresh at a time.
+  _timer?.cancel();
+  _timer = null;
+
+  if (type == 'steamtotp') {
+    try {
+      final resp = await ApiService.instance.fetchAccountOtp(acct.id);
+      final pwd = resp['password'] ?? '';
+      final nextPwd = resp['next_password'];
+        if (mounted) {
+          setState(() {
+            currentCode = pwd;
+            nextCode = nextPwd ?? '';
+          });
+        }
+    } catch (_) {
+      // If we can't reach the server or an error occurs, show offline
+      if (mounted) {
+        setState(() {
+          currentCode = 'offline';
+          nextCode = '';
+        });
+      }
+    }
+    // Schedule next refresh at epoch-aligned period boundary.
+    try {
+      final periodSec = (acct.period != null && acct.period! > 0) ? acct.period! : 30;
+      final nowMs = DateTime.now().toUtc().millisecondsSinceEpoch;
+      final periodMs = periodSec * 1000;
+      final remMs = nowMs % periodMs;
+      final delayMs = periodMs - remMs;
+      _timer = Timer(Duration(milliseconds: delayMs + 50), () {
+        if (mounted) _refreshCodes();
+      });
+    } catch (_) {
+      _timer = Timer(const Duration(seconds: 1), () {
+        if (mounted) _refreshCodes();
+      });
+    }
+    return;
+  }
+
+  // current (non-STEAM)
   final c = OtpService.generateOtp(acct, timeOffsetSeconds: 0, storage: settings?.storage);
   // next period: use period or default 30
   final period = acct.period ?? 30;
   final n = OtpService.generateOtp(acct, timeOffsetSeconds: period, storage: settings?.storage);
-    if (mounted) {
-      setState(() {
-        currentCode = c;
-        nextCode = n;
-      });
-    }
+  if (mounted) {
+    setState(() {
+      currentCode = c;
+      nextCode = n;
+    });
+  }
+  // Schedule next refresh at the period boundary. Use milliseconds to avoid
+  // drift. Add a small epsilon to ensure the code has actually advanced.
+  try {
+    final periodSec = (acct.period != null && acct.period! > 0) ? acct.period! : 30;
+    final nowMs = DateTime.now().toUtc().millisecondsSinceEpoch;
+    final periodMs = periodSec * 1000;
+    final remMs = nowMs % periodMs;
+    final delayMs = periodMs - remMs;
+    _timer = Timer(Duration(milliseconds: delayMs + 50), () {
+      if (mounted) _refreshCodes();
+    });
+  } catch (_) {
+    // If scheduling fails for any reason, fallback to a conservative 1s tick
+    _timer = Timer(const Duration(seconds: 1), () {
+      if (mounted) _refreshCodes();
+    });
+  }
   }
 
   // HOTP consume behavior removed while HOTP is disabled.

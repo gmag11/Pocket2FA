@@ -1,7 +1,7 @@
 // legacy model removed: use AccountEntry directly in UI
 
 class AccountEntry {
-  final String id;
+  final int id;
   final String service;
   final String account;
   final String seed; // secret for TOTP (sample only) - maps to API 'secret'
@@ -52,7 +52,9 @@ class AccountEntry {
       };
 
   factory AccountEntry.fromMap(Map<dynamic, dynamic> m) => AccountEntry(
-        id: (m['id'] is String) ? m['id'] as String : (m['id']?.toString() ?? ''),
+        id: m.containsKey('id') && m['id'] != null
+            ? (m['id'] is int ? m['id'] as int : int.tryParse(m['id'].toString()) ?? 0)
+            : 0,
         service: m['service']?.toString() ?? '',
         account: m['account']?.toString() ?? '',
         // accept both 'secret' (API) and 'seed' (legacy/local)
@@ -71,7 +73,7 @@ class AccountEntry {
   // Legacy conversion removed: UI should use AccountEntry directly and generate OTPs dynamically.
 
   AccountEntry copyWith({
-    String? id,
+  int? id,
     String? service,
     String? account,
     String? seed,

@@ -264,6 +264,32 @@ class ApiService {
     throw StateError('Unexpected response validating server: ${resp.statusCode}');
   }
 
+  /// Request a one-time OTP (HOTP) for a specific account from the server.
+  ///
+  /// Calls POST /twofaccounts/{id}/otp and returns a Map with keys:
+  ///  - 'password': the current OTP (always present)
+  ///  - 'next_password': the next OTP when provided by the API (may be null)
+  Future<Map<String, String?>> fetchAccountOtp(int accountId, {CancelToken? cancelToken}) async {
+    _ensureReady();
+    if (accountId <= 0) throw ArgumentError('accountId debe ser mayor que 0');
+    final path = 'twofaccounts/$accountId/otp';
+    final resp = await _dio!.get(path, cancelToken: cancelToken);
+    if (resp.statusCode == 200 && resp.data != null) {
+      final data = resp.data;
+      if (data is Map) {
+        final pwd = data['password'];
+        if (pwd == null) throw StateError('Invalid OTP response shape: missing "password"');
+        final nextPwd = data.containsKey('next_password') ? (data['next_password']?.toString()) : null;
+        return {
+          'password': pwd.toString(),
+          'next_password': nextPwd,
+        };
+      }
+      throw StateError('Invalid OTP response shape');
+    }
+    throw StateError('Unexpected OTP response: ${resp.statusCode}');
+  }
+
   /// Produce a user-friendly, localized-ish message from a [DioException].
   ///
   /// Intentionally conservative: avoid leaking sensitive data (API keys).

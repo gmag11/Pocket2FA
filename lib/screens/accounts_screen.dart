@@ -295,7 +295,7 @@ class _ServerDetailScreenState extends State<_ServerDetailScreen> {
     );
 
     if (res == true) {
-      final item = AccountEntry(id: DateTime.now().millisecondsSinceEpoch.toString(), service: svc.text, account: acct.text, seed: seed.text, group: '');
+  final item = AccountEntry(id: DateTime.now().millisecondsSinceEpoch, service: svc.text, account: acct.text, seed: seed.text, group: '');
       setState(() {
         _server = ServerConnection(id: _server.id, name: _server.name, url: _server.url, apiKey: _server.apiKey, accounts: [..._server.accounts, item]);
       });

@@ -17,7 +17,7 @@ class OtpService {
     //   return _hotp(acct);
     // }
 
-    // if (type == 'steam') {
+    // if (type == 'otp') {
     //   return _steam(acct);
     // }
 
@@ -95,11 +95,13 @@ class OtpService {
     return otp.toString().padLeft(digits, '0');
   }
 
+  // ignore: unused_element
   static String _hotp(AccountEntry acct) {
     // HOTP is disabled — return placeholder so UI can indicate it's unavailable.
     return 'HOTP';
   }
 
+  // ignore: unused_element
   static String _steam(AccountEntry acct) {
     // Steam codes disabled — return placeholder so UI can indicate it's unavailable.
     return 'STEAM';
@@ -133,35 +135,35 @@ class OtpService {
     return Uint8List.fromList(output);
   }
 
-  // HOTP persistence helpers: store per-account counter in the encrypted Hive box
-  static int? _getPersistedHotpCounter(
-      String accountId, SettingsStorage? storage) {
-    try {
-      if (storage == null) return null;
-      final box = storage.box;
-      final key = 'hotp_counter:$accountId';
-      final v = box.get(key);
-      if (v == null) return null;
-      if (v is int) return v;
-      return int.tryParse(v.toString());
-    } catch (_) {
-      return null;
-    }
-  }
+  // // HOTP persistence helpers: store per-account counter in the encrypted Hive box
+  // static int? _getPersistedHotpCounter(
+  //     String accountId, SettingsStorage? storage) {
+  //   try {
+  //     if (storage == null) return null;
+  //     final box = storage.box;
+  //     final key = 'hotp_counter:$accountId';
+  //     final v = box.get(key);
+  //     if (v == null) return null;
+  //     if (v is int) return v;
+  //     return int.tryParse(v.toString());
+  //   } catch (_) {
+  //     return null;
+  //   }
+  // }
 
-  // Public getter wrapper
-  static int? getPersistedHotpCounter(
-          String accountId, SettingsStorage? storage) =>
-      _getPersistedHotpCounter(accountId, storage);
+  // // Public getter wrapper
+  // static int? getPersistedHotpCounter(
+  //         String accountId, SettingsStorage? storage) =>
+  //     _getPersistedHotpCounter(accountId, storage);
 
-  static Future<int> incrementPersistedHotpCounter(
-      String accountId, SettingsStorage? storage) async {
-    if (storage == null) return Future.value(0);
-    final box = storage.box;
-    final key = 'hotp_counter:$accountId';
-    final cur = _getPersistedHotpCounter(accountId, storage) ?? 0;
-    final next = cur + 1;
-    await box.put(key, next);
-    return next;
-  }
+  // static Future<int> incrementPersistedHotpCounter(
+  //     String accountId, SettingsStorage? storage) async {
+  //   if (storage == null) return Future.value(0);
+  //   final box = storage.box;
+  //   final key = 'hotp_counter:$accountId';
+  //   final cur = _getPersistedHotpCounter(accountId, storage) ?? 0;
+  //   final next = cur + 1;
+  //   await box.put(key, next);
+  //   return next;
+  // }
 }

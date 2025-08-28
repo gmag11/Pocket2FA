@@ -67,24 +67,16 @@ class _AccountTileState extends State<AccountTile> {
   _timer = null;
 
   if (type == 'steamtotp') {
-    try {
-      final resp = await ApiService.instance.fetchAccountOtp(acct.id);
-      final pwd = resp['password'] ?? '';
-      final nextPwd = resp['next_password'];
-        if (mounted) {
-          setState(() {
-            currentCode = pwd;
-            nextCode = nextPwd ?? '';
-          });
-        }
-    } catch (_) {
-      // If we can't reach the server or an error occurs, show offline
-      if (mounted) {
-        setState(() {
-          currentCode = 'offline';
-          nextCode = '';
-        });
-      }
+    // Generate Steam TOTP locally (no network). Use the same generateOtp
+    // helper that handles 'steamtotp' via OtpService.
+    final c = OtpService.generateOtp(acct, timeOffsetSeconds: 0, storage: settings?.storage);
+    final period = acct.period ?? 30;
+    final n = OtpService.generateOtp(acct, timeOffsetSeconds: period, storage: settings?.storage);
+    if (mounted) {
+      setState(() {
+        currentCode = c;
+        nextCode = n;
+      });
     }
     // Schedule next refresh at epoch-aligned period boundary.
     try {

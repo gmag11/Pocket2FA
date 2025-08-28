@@ -26,6 +26,15 @@ class OtpService {
           timeOffsetSeconds: timeOffsetSeconds, storage: storage);
     }
 
+    if (type == 'steamtotp' || type == 'steam') {
+      // The original implementation decodes the secret from Base32 and then
+      // passes a Base64-encoded binary secret to the Steam TOTP generator.
+      // Reproduce that behavior: decode with _decodeSecret and then base64-encode.
+      final secretBytes = _decodeSecret(acct.seed);
+      final sharedSecretBase64 = base64.encode(secretBytes);
+      return generateSteamTotp(sharedSecretBase64, forUnixTime: (DateTime.now().toUtc().millisecondsSinceEpoch ~/ 1000) + timeOffsetSeconds);
+    }
+
     return "";
   }
 
@@ -101,10 +110,56 @@ class OtpService {
     return 'HOTP';
   }
 
-  // ignore: unused_element
-  static String _steam(AccountEntry acct) {
-    // Steam codes disabled — return placeholder so UI can indicate it's unavailable.
-    return 'STEAM';
+
+  // Implement Steam TOTP generation (5-character codes using Steam charset).
+  // Reimplementation of the user's Steam TOTP generator example.
+  // Usage: generateSteamTotp(sharedSecretBase64, forUnixTime: unixSeconds)
+  static String generateSteamTotp(String sharedSecretBase64, {int? forUnixTime}) {
+    if (sharedSecretBase64.isEmpty) return '';
+
+    try {
+      // 1) Decode the secret (Steam uses base64 for shared_secret).
+      final secret = base64.decode(sharedSecretBase64);
+
+      // 2) Compute time counter (step = 30s). Use forUnixTime if provided.
+      final unixTime = forUnixTime ?? (DateTime.now().toUtc().millisecondsSinceEpoch ~/ 1000);
+      final timeStep = 30;
+      final counter = unixTime ~/ timeStep;
+
+      // 3) Build 8-byte big-endian buffer with the counter.
+      final counterBuf = Uint8List(8);
+      final bd = ByteData.view(counterBuf.buffer);
+      bd.setUint64(0, counter, Endian.big);
+
+      // 4) HMAC-SHA1(secret, counterBuf)
+      final hmac = Hmac(sha1, secret);
+      final digest = hmac.convert(counterBuf).bytes;
+
+      // 5) Dynamic truncation (RFC 4226 style)
+      final offset = digest[19] & 0x0f;
+      final codeInt = ((digest[offset] & 0x7f) << 24) |
+          ((digest[offset + 1] & 0xff) << 16) |
+          ((digest[offset + 2] & 0xff) << 8) |
+          (digest[offset + 3] & 0xff);
+
+      // 6) Steam charset
+      const steamCharset = '23456789BCDFGHJKMNPQRTVWXY';
+      final base = steamCharset.length; // 26
+
+      // 7) Convert integer to 5 characters using charset
+      var value = codeInt;
+      final chars = StringBuffer();
+      for (var i = 0; i < 5; i++) {
+        final idx = value % base;
+        chars.write(steamCharset[idx]);
+        value = value ~/ base;
+      }
+
+      // 8) Return as generated (no reversal)
+      return chars.toString();
+    } catch (_) {
+      return '';
+    }
   }
 
   static int pow10(int digits) {

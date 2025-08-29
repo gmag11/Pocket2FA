@@ -68,9 +68,15 @@ jobs:
           echo "KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> "$GITHUB_ENV"
           echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> "$GITHUB_ENV"
 
-      - name: Build Android App Bundle (release)
+      - name: Build split-per-ABI APKs
         if: steps.detect_keystore.outputs.has_keystore == 'true'
-        run: flutter build appbundle --release
+        shell: bash
+        run: flutter build apk --release --split-per-abi
+
+      - name: Build universal APK (all ABIs in one)
+        if: steps.detect_keystore.outputs.has_keystore == 'true'
+        shell: bash
+        run: flutter build apk --release
 
       - name: Upload Android artifact
         if: steps.detect_keystore.outputs.has_keystore == 'true'

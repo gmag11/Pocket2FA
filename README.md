@@ -78,6 +78,15 @@ This project complements the official 2FAuth web application by offering:
 - Server synchronization uses secure HTTPS connections
 - API keys and sensitive data are stored using platform secure storage
 
+## Current Limitations
+
+This application is in early development and may have bugs or incomplete features.
+
+- Synchronization is currently one-way (read-only).
+- Editing, creating, deleting, or managing accounts is not implemented.
+- Accounts cannot be reordered; the order present on the server is replicated.
+- Offline local generation of HOTP codes is not supported. You must synchronize the counter with the server to avoid breaking the HOTP sequence.
+
 ## License
 
 This project is licensed under the AGPL-3.0 License - see the LICENSE file for details.
@@ -101,3 +110,9 @@ For support and questions:
 ---
 
 **Note**: This client requires an existing 2FAuth server instance. It is not a standalone 2FA solution but rather a mobile companion to the web application.
+
+## Disclaimer
+
+The author and contributors are not responsible for any errors, synchronization issues, alterations, corruption, or loss of data that may occur while using this application. Use this software at your own risk. The project is provided "as is" without any warranties or guarantees.
+
+It is recommended to make regular backups of your data.

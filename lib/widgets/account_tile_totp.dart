@@ -77,11 +77,14 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
     if (trimmed.isEmpty || trimmed.toLowerCase() == 'offline') {
       final horizontalMargin = MediaQuery.of(context).size.width * 0.12;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: const Center(child: Text('No code to copy', style: TextStyle(color: Colors.white))),
+        content: const Center(
+            child:
+                Text('No code to copy', style: TextStyle(color: Colors.white))),
         behavior: SnackBarBehavior.floating,
         margin: EdgeInsets.fromLTRB(horizontalMargin, 0, horizontalMargin, 96),
         padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 10.0),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(16.0))),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(16.0))),
         backgroundColor: const Color(0xFF666666),
         duration: const Duration(milliseconds: 1500),
       ));
@@ -93,11 +96,14 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
       if (!mounted) return;
       final horizontalMargin = MediaQuery.of(context).size.width * 0.12;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: const Center(child: Text('Copied to clipboard', style: TextStyle(color: Colors.white))),
+        content: const Center(
+            child: Text('Copied to clipboard',
+                style: TextStyle(color: Colors.white))),
         behavior: SnackBarBehavior.floating,
         margin: EdgeInsets.fromLTRB(horizontalMargin, 0, horizontalMargin, 96),
         padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 10.0),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(16.0))),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(16.0))),
         backgroundColor: const Color(0xFF00C853),
         duration: const Duration(milliseconds: 1500),
       ));
@@ -105,11 +111,14 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
       if (!mounted) return;
       final horizontalMargin = MediaQuery.of(context).size.width * 0.12;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: const Center(child: Text('Error copying to clipboard', style: TextStyle(color: Colors.white))),
+        content: const Center(
+            child: Text('Error copying to clipboard',
+                style: TextStyle(color: Colors.white))),
         behavior: SnackBarBehavior.floating,
         margin: EdgeInsets.fromLTRB(horizontalMargin, 0, horizontalMargin, 96),
         padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 10.0),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(16.0))),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(16.0))),
         backgroundColor: const Color(0xFFFF0000),
         duration: const Duration(milliseconds: 1500),
       ));
@@ -119,22 +128,25 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
   @override
   Widget build(BuildContext context) {
     final color = AccountTileUtils.getServiceColor(widget.item.service);
-    
-  // Debug flag: computed at runtime so analyzer doesn't treat branches as dead code.
-  // Set this expression to `false` or change the condition to disable debug borders quickly.
-  final showDebugBorders = MediaQuery.of(context).size.width > 0;
+
+    // Debug flag: computed at runtime so analyzer doesn't treat branches as dead code.
+    // Set this expression to `false` or change the condition to disable debug borders quickly.
+    //final bool showDebugBorders = false; //MediaQuery.of(context).size.width > 0;
 
     // Helper to wrap a widget with a visible border when debugging is enabled
     Widget borderWrap(Widget child, {EdgeInsets? margin, EdgeInsets? padding}) {
-      if (!showDebugBorders) return child;
-      return Container(
-        margin: margin,
-        padding: padding,
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.redAccent, width: 1.0),
-        ),
-        child: child,
-      );
+      // if (!showDebugBorders) {
+        return child;
+      // } else {
+      //   return Container(
+      //     margin: margin,
+      //     padding: padding,
+      //     decoration: BoxDecoration(
+      //       border: Border.all(color: Colors.redAccent, width: 1.0),
+      //     ),
+      //     child: child,
+      //   );
+      // }
     }
 
     return LayoutBuilder(
@@ -162,14 +174,15 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
                       child: borderWrap(
                         Text(
                           widget.item.service,
-                          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w400),
+                          style: const TextStyle(
+                              fontSize: 24, fontWeight: FontWeight.w400),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                         padding: const EdgeInsets.all(2),
                       ),
                     ),
-                    
+
                     // Código OTP (ocupa espacio necesario, sin recorte, alineado derecha)
                     borderWrap(
                       IntrinsicWidth(
@@ -180,9 +193,11 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
                                   animation: settings!,
                                   builder: (context, _) {
                                     return InkWell(
-                                      onTap: () => _copyToClipboard(_otpService.currentCode),
+                                      onTap: () => _copyToClipboard(
+                                          _otpService.currentCode),
                                       child: Text(
-                                        AccountTileUtils.formatCode(_otpService.currentCode, settings),
+                                        AccountTileUtils.formatCode(
+                                            _otpService.currentCode, settings),
                                         style: const TextStyle(
                                           fontSize: 24,
                                           fontWeight: FontWeight.w700,
@@ -194,9 +209,11 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
                                   },
                                 )
                               : InkWell(
-                                  onTap: () => _copyToClipboard(_otpService.currentCode),
+                                  onTap: () =>
+                                      _copyToClipboard(_otpService.currentCode),
                                   child: Text(
-                                    AccountTileUtils.formatCode(_otpService.currentCode, null),
+                                    AccountTileUtils.formatCode(
+                                        _otpService.currentCode, null),
                                     style: const TextStyle(
                                       fontSize: 24,
                                       fontWeight: FontWeight.w700,
@@ -211,9 +228,9 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
                     ),
                   ],
                 ),
-                
-                const SizedBox(height: 4),
-                
+
+                const SizedBox(height: 6),
+
                 // Fila inferior: Usuario + Next OTP + Línea de puntos
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
@@ -222,10 +239,11 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
                     Expanded(
                       child: borderWrap(
                         Padding(
-                          padding: const EdgeInsets.only(left: 10.0),
+                          padding: const EdgeInsets.only(left: 2.0),
                           child: Text(
                             widget.item.account,
-                            style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+                            style: TextStyle(
+                                fontSize: 14, color: Colors.grey.shade600),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -233,14 +251,15 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
                         padding: const EdgeInsets.all(2),
                       ),
                     ),
-                    
+
                     // Next OTP (ocupa espacio necesario, sin recorte, alineado derecha)
                     borderWrap(
                       IntrinsicWidth(
                         child: Align(
                           alignment: Alignment.centerRight,
                           child: AnimatedBuilder(
-                            animation: _animations.animController ?? Listenable.merge([]),
+                            animation: _animations.animController ??
+                                Listenable.merge([]),
                             builder: (context, _) {
                               final anim = _animations.animController;
                               final opacity = (anim != null)
@@ -249,8 +268,10 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
                               return Opacity(
                                 opacity: opacity,
                                 child: Text(
-                                  AccountTileUtils.formatCode(_otpService.nextCode, settings),
-                                  style: TextStyle(fontSize: 12, color: Colors.black),
+                                  AccountTileUtils.formatCode(
+                                      _otpService.nextCode, settings),
+                                  style: TextStyle(
+                                      fontSize: 12, color: Colors.black),
                                   maxLines: 1,
                                   overflow: TextOverflow.visible,
                                 ),
@@ -261,12 +282,13 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
                       ),
                       padding: const EdgeInsets.all(2),
                     ),
-                    
-                    const SizedBox(width: 8),
-                    
+
+                    const SizedBox(width: 12),
+
                     // Línea de puntos (ancho fijo, alineado derecha)
                     borderWrap(
-                      AccountTileUi.buildProgressDots(_animations.animController),
+                      AccountTileUi.buildProgressDots(
+                          _animations.animController),
                       padding: const EdgeInsets.all(2),
                     ),
                   ],

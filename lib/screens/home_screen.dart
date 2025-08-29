@@ -36,7 +36,7 @@ class _HomePageState extends State<HomePage> {
   Future<void> _onRefreshFromPull() async {
     // Called by RefreshIndicator's onRefresh. Suppress the fullscreen overlay
     // because RefreshIndicator already shows a spinner.
-    _suppressFullScreenSyncIndicator = true;
+  _suppressFullScreenSyncIndicator = true; // Suppress fullscreen sync overlay
     try {
       await _forceSyncCurrentServer();
     } finally {
@@ -379,6 +379,31 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  /// Called when the user presses the manual sync button in the UI. Ensure
+  /// the fullscreen syncing indicator is shown immediately while the
+  /// refresh/sync runs, even if the underlying sync logic decides not to show
+  /// it for its own reasons.
+  Future<void> _manualSyncPressed() async {
+    // Suppress the fullscreen overlay for manual sync; show only the
+    // small spinner in the sync button.
+    if (mounted) {
+      setState(() {
+      _suppressFullScreenSyncIndicator = true;
+      _isSyncing = true;
+    });
+    }
+    try {
+      await _onRefreshFromPull();
+    } finally {
+      if (mounted) {
+        setState(() {
+        _isSyncing = false;
+        _suppressFullScreenSyncIndicator = false;
+      });
+      }
+    }
+  }
+
   @override
   void dispose() {
     _searchController.dispose();
@@ -414,7 +439,7 @@ class _HomePageState extends State<HomePage> {
     // can re-attempt authentication. This prevents the home UI from being
     // visible while the local store is locked.
     final storage = widget.settings.storage;
-    if (storage != null && !storage.isUnlocked) {
+  if (storage != null && !storage.isUnlocked) {
       return Scaffold(
         body: SafeArea(
           child: Center(
@@ -432,16 +457,16 @@ class _HomePageState extends State<HomePage> {
                 const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: () async {
-                final messenger = ScaffoldMessenger.of(context);
-                final ok = await storage.attemptUnlock();
-                if (ok) {
-                  // Reload servers from unlocked storage and rebuild UI
-                  await _loadServers();
-                  if (!mounted) return;
-                  setState(() {});
-                } else {
-                  messenger.showSnackBar(const SnackBar(content: Text('Authentication failed')));
-                }
+                    final messenger = ScaffoldMessenger.of(context);
+                    final ok = await storage.attemptUnlock();
+                    if (ok) {
+                      // Reload servers from unlocked storage and rebuild UI
+                      await _loadServers();
+                      if (!mounted) return;
+                      setState(() {});
+                    } else {
+                      messenger.showSnackBar(const SnackBar(content: Text('Authentication failed')));
+                    }
                   },
                   child: const Text('Retry'),
                 ),
@@ -461,10 +486,37 @@ class _HomePageState extends State<HomePage> {
                 const SizedBox(height: 12),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: _SearchBar(
-                    controller: _searchController,
-                    focusNode: _searchFocus,
-                    onChanged: (v) => setState(() => _searchQuery = v),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: _SearchBar(
+                          controller: _searchController,
+                          focusNode: _searchFocus,
+                          onChanged: (v) => setState(() => _searchQuery = v),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      // Manual sync button that performs the same action as pull-to-refresh
+                      _isSyncing
+                          ? SizedBox(
+                              width: 48,
+                              height: 48,
+                              child: Center(
+                                child: SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: const CircularProgressIndicator(strokeWidth: 2),
+                                ),
+                              ),
+                            )
+                          : IconButton(
+                              tooltip: 'Sync',
+                              icon: const Icon(Icons.sync),
+                              onPressed: () async {
+                                await _manualSyncPressed();
+                              },
+                            ),
+                    ],
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -543,7 +595,7 @@ class _HomePageState extends State<HomePage> {
                 ),
               ],
             ),
-            if (_isSyncing)
+            if (_isSyncing && !_suppressFullScreenSyncIndicator)
               Positioned.fill(
                 child: Container(
                   color: const Color.fromRGBO(0, 0, 0, 0.35),

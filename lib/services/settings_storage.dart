@@ -21,6 +21,17 @@ class SettingsStorage {
 
   final LocalAuthentication _localAuth = LocalAuthentication();
 
+  /// Check whether the device supports biometric or credential-based auth.
+  /// Returns true if either biometrics or device credentials are available.
+  Future<bool> supportsBiometrics() async {
+    try {
+      return await _localAuth.canCheckBiometrics || await _localAuth.isDeviceSupported();
+    } catch (e) {
+      debugPrint('supportsBiometrics check failed: $e');
+      return false;
+    }
+  }
+
   /// Initialise Hive and the encrypted box. Call this early (before runApp)
   Future<void> init() async {
     await Hive.initFlutter();

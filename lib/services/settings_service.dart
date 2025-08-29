@@ -16,6 +16,8 @@ class SettingsService extends ChangeNotifier {
   bool get enabled => _enabled;
 
   final SettingsStorage? storage;
+  bool _biometricsSupported = false;
+  bool get biometricsSupported => _biometricsSupported;
 
   SettingsService({this.storage}) {
     _load();
@@ -23,7 +25,9 @@ class SettingsService extends ChangeNotifier {
 
   Future<void> _load() async {
     if (storage != null) {
-      final box = storage!.box;
+  // Query support for biometrics once and cache the result for the UI
+  _biometricsSupported = await storage!.supportsBiometrics();
+  final box = storage!.box;
   final v = box.get(_key, defaultValue: 'spaced3') as String;
       _format = _fromString(v);
       _enabled = box.get(_enabledKey, defaultValue: true) as bool;

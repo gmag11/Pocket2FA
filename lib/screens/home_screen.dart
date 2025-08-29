@@ -418,8 +418,20 @@ class _HomePageState extends State<HomePage> {
       return Scaffold(
         body: SafeArea(
           child: Center(
-            child: ElevatedButton(
-              onPressed: () async {
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 24.0),
+                  child: Text(
+                    'Biometric authentication failed or was cancelled. Please retry to unlock your local data.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 16, color: Colors.red),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () async {
                 final messenger = ScaffoldMessenger.of(context);
                 final ok = await storage.attemptUnlock();
                 if (ok) {
@@ -430,8 +442,10 @@ class _HomePageState extends State<HomePage> {
                 } else {
                   messenger.showSnackBar(const SnackBar(content: Text('Authentication failed')));
                 }
-              },
-              child: const Text('Retry'),
+                  },
+                  child: const Text('Retry'),
+                ),
+              ],
             ),
           ),
         ),

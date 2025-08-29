@@ -59,21 +59,35 @@ class SettingsScreen extends StatelessWidget {
                     children: [
                       Builder(builder: (ctx) {
                         final messenger = ScaffoldMessenger.of(ctx);
-                        return Switch(
+                        final supported = settings.biometricsSupported;
+                        final switchWidget = Switch(
                           value: settings.biometricEnabled,
-                          onChanged: (v) async {
-                            final ok = await settings.setBiometricEnabled(v);
-                            messenger.showSnackBar(SnackBar(
-                              content: Text(ok ? (v ? 'Biometric enabled' : 'Biometric disabled') : 'Operation failed'),
-                            ));
-                          },
+                          onChanged: supported
+                              ? (v) async {
+                                  final ok = await settings.setBiometricEnabled(v);
+                                  messenger.showSnackBar(SnackBar(
+                                    content: Text(ok ? (v ? 'Biometric enabled' : 'Biometric disabled') : 'Operation failed'),
+                                  ));
+                                }
+                              : null,
                           activeThumbColor: _baseAccent,
                         );
+                        if (!supported) {
+                          return Tooltip(message: 'Biometrics not available on this device', child: switchWidget);
+                        }
+                        return switchWidget;
                       }),
                       const SizedBox(width: 8),
                       Flexible(
                         fit: FlexFit.loose,
-                        child: Text('Biometric protection', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        child: Text(
+                          'Biometric protection',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: settings.biometricsSupported ? null : Colors.grey.shade600,
+                          ),
+                        ),
                       ),
                     ],
                   ),

@@ -162,9 +162,12 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    // Avatar (ancho fijo)
+                    // Avatar (ancho fijo) — add left padding
                     borderWrap(
-                      AccountTileUi.buildServiceAvatar(widget.item, color),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 12.0),
+                        child: AccountTileUi.buildServiceAvatar(widget.item, color),
+                      ),
                       padding: const EdgeInsets.all(2),
                     ),
                     const SizedBox(width: 8),
@@ -185,43 +188,46 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
 
                     // Código OTP (ocupa espacio necesario, sin recorte, alineado derecha)
                     borderWrap(
-                      IntrinsicWidth(
-                        child: Align(
-                          alignment: Alignment.centerRight,
-                          child: settings != null
-                              ? AnimatedBuilder(
-                                  animation: settings!,
-                                  builder: (context, _) {
-                                    return InkWell(
-                                      onTap: () => _copyToClipboard(
-                                          _otpService.currentCode),
-                                      child: Text(
-                                        AccountTileUtils.formatCode(
-                                            _otpService.currentCode, settings),
-                                        style: const TextStyle(
-                                          fontSize: 24,
-                                          fontWeight: FontWeight.w700,
+                      Padding(
+                        padding: const EdgeInsets.only(right: 12.0),
+                        child: IntrinsicWidth(
+                          child: Align(
+                            alignment: Alignment.centerRight,
+                            child: settings != null
+                                ? AnimatedBuilder(
+                                    animation: settings!,
+                                    builder: (context, _) {
+                                      return InkWell(
+                                        onTap: () => _copyToClipboard(
+                                            _otpService.currentCode),
+                                        child: Text(
+                                          AccountTileUtils.formatCode(
+                                              _otpService.currentCode, settings),
+                                          style: const TextStyle(
+                                            fontSize: 24,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.visible,
                                         ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.visible,
+                                      );
+                                    },
+                                  )
+                                : InkWell(
+                                    onTap: () =>
+                                        _copyToClipboard(_otpService.currentCode),
+                                    child: Text(
+                                      AccountTileUtils.formatCode(
+                                          _otpService.currentCode, null),
+                                      style: const TextStyle(
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.w700,
                                       ),
-                                    );
-                                  },
-                                )
-                              : InkWell(
-                                  onTap: () =>
-                                      _copyToClipboard(_otpService.currentCode),
-                                  child: Text(
-                                    AccountTileUtils.formatCode(
-                                        _otpService.currentCode, null),
-                                    style: const TextStyle(
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.w700,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.visible,
                                     ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.visible,
                                   ),
-                                ),
+                          ),
                         ),
                       ),
                       padding: const EdgeInsets.all(2),
@@ -239,7 +245,8 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
                     Expanded(
                       child: borderWrap(
                         Padding(
-                          padding: const EdgeInsets.only(left: 2.0),
+                          // add left padding so username is not flush with the tile edge
+                          padding: const EdgeInsets.only(left: 12.0),
                           child: Text(
                             widget.item.account,
                             style: TextStyle(
@@ -285,10 +292,13 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
 
                     const SizedBox(width: 12),
 
-                    // Línea de puntos (ancho fijo, alineado derecha)
+                    // Línea de puntos (ancho fijo, alineado derecha) — add right padding
                     borderWrap(
-                      AccountTileUi.buildProgressDots(
-                          _animations.animController),
+                      Padding(
+                        padding: const EdgeInsets.only(right: 12.0),
+                        child: AccountTileUi.buildProgressDots(
+                            _animations.animController),
+                      ),
                       padding: const EdgeInsets.all(2),
                     ),
                   ],

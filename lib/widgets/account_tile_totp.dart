@@ -120,129 +120,166 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
   Widget build(BuildContext context) {
     final color = AccountTileUtils.getServiceColor(widget.item.service);
     
+  // Debug flag: computed at runtime so analyzer doesn't treat branches as dead code.
+  // Set this expression to `false` or change the condition to disable debug borders quickly.
+  final showDebugBorders = MediaQuery.of(context).size.width > 0;
+
+    // Helper to wrap a widget with a visible border when debugging is enabled
+    Widget borderWrap(Widget child, {EdgeInsets? margin, EdgeInsets? padding}) {
+      if (!showDebugBorders) return child;
+      return Container(
+        margin: margin,
+        padding: padding,
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.redAccent, width: 1.0),
+        ),
+        child: child,
+      );
+    }
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final screenWidth = MediaQuery.of(context).size.width;
-        final tile = SizedBox(
-          height: 70,
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              const SizedBox(width: 12),
-              // Service and account column with new layout
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      vertical: 6.0, horizontal: 4.0),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // First row: Avatar and Service
-                      AccountTileUi.buildServiceInfoRow(widget.item, color),
-                      const SizedBox(height: 4),
-                      // Second row: Account
-                      AccountTileUi.buildAccountInfoRow(widget.item),
-                    ],
-                  ),
-                ),
-              ),
-
-              // Non-HOTP rendering: nextCode (small), spacer, main code + dots
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  SizedBox(
-                    width: 54,
-                    height: 60,
-                    child: Align(
-                      alignment: Alignment.bottomRight,
-                      child: AnimatedBuilder(
-                          animation: _animations.animController ?? Listenable.merge([]),
-                          builder: (context, _) {
-                            final anim = _animations.animController;
-                            final opacity = (anim != null)
-                                ? anim.value.clamp(0.0, 1.0)
-                                : 1.0;
-                            return Opacity(
-                                opacity: opacity,
-                                child: Text(AccountTileUtils.formatCode(_otpService.nextCode, settings),
-                                    style: TextStyle(
-                                        fontSize: 12, color: Colors.black)));
-                          }),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  ConstrainedBox(
-                    constraints:
-                        const BoxConstraints(minWidth: 100, maxWidth: 110),
-                    child: Container(
-                      padding: const EdgeInsets.only(right: 8.0),
+        final tile = borderWrap(
+          SizedBox(
+            height: 70,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                const SizedBox(width: 12),
+                // Service and account column with new layout
+                Expanded(
+                  child: borderWrap(
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 6.0, horizontal: 4.0),
                       child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                settings != null
-                                    ? AnimatedBuilder(
-                                        animation: settings!,
-                                        builder: (context, _) {
-                                          return InkWell(
-                                            onTap: () => _copyToClipboard(_otpService.currentCode),
-                                            child: Text(
-                                                AccountTileUtils.formatCode(_otpService.currentCode, settings),
-                                                style: const TextStyle(
-                                                    fontSize: 24,
-                                                    fontWeight:
-                                                        FontWeight.w700)),
-                                          );
-                                        },
-                                      )
-                                    : InkWell(
-                                        onTap: () => _copyToClipboard(_otpService.currentCode),
-                                        child: Text(AccountTileUtils.formatCode(_otpService.currentCode, null),
-                                            style: const TextStyle(
-                                                fontSize: 24,
-                                                fontWeight: FontWeight.w700)),
-                                      ),
-                                const SizedBox(width: 8),
-                                if ((widget.item.otpType ?? 'totp')
-                                        .toLowerCase() ==
-                                    'hotp')
-                                  Padding(
-                                    padding: const EdgeInsets.only(left: 4.0),
-                                    child: Tooltip(
-                                      message:
-                                          'HOTP deshabilitado hasta sincronización',
-                                      child: Icon(Icons.block,
-                                          size: 18,
-                                          color: Colors.grey.shade500),
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                AccountTileUi.buildProgressDots(_animations.animController),
-                              ],
-                            ),
-                          ),
+                          // First row: Avatar and Service
+                          borderWrap(AccountTileUi.buildServiceInfoRow(widget.item, color), padding: const EdgeInsets.all(2)),
+                          const SizedBox(height: 4),
+                          // Second row: Account
+                          borderWrap(AccountTileUi.buildAccountInfoRow(widget.item), padding: const EdgeInsets.all(2)),
                         ],
                       ),
                     ),
+                    padding: const EdgeInsets.all(2),
                   ),
-                ],
-              ),
-            ],
+                ),
+
+                // Non-HOTP rendering: nextCode (small), spacer, main code + dots
+                borderWrap(
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      borderWrap(
+                        SizedBox(
+                          width: 54,
+                          height: 60,
+                          child: Align(
+                            alignment: Alignment.bottomRight,
+                            child: AnimatedBuilder(
+                                animation: _animations.animController ?? Listenable.merge([]),
+                                builder: (context, _) {
+                                  final anim = _animations.animController;
+                                  final opacity = (anim != null)
+                                      ? anim.value.clamp(0.0, 1.0)
+                                      : 1.0;
+                                  return Opacity(
+                                      opacity: opacity,
+                                      child: Text(AccountTileUtils.formatCode(_otpService.nextCode, settings),
+                                          style: TextStyle(
+                                              fontSize: 12, color: Colors.black)));
+                                }),
+                          ),
+                        ),
+                        padding: const EdgeInsets.all(2),
+                      ),
+                      const SizedBox(width: 8),
+                      ConstrainedBox(
+                        constraints:
+                            const BoxConstraints(minWidth: 100, maxWidth: 110),
+                        child: borderWrap(
+                          Container(
+                            padding: const EdgeInsets.only(right: 8.0),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      settings != null
+                                          ? AnimatedBuilder(
+                                              animation: settings!,
+                                              builder: (context, _) {
+                                                return InkWell(
+                                                  onTap: () => _copyToClipboard(_otpService.currentCode),
+                                                  child: borderWrap(
+                                                    Text(
+                                                        AccountTileUtils.formatCode(_otpService.currentCode, settings),
+                                                        style: const TextStyle(
+                                                            fontSize: 24,
+                                                            fontWeight:
+                                                                FontWeight.w700)),
+                                                    padding: const EdgeInsets.all(4),
+                                                  ),
+                                                );
+                                              },
+                                            )
+                                          : InkWell(
+                                              onTap: () => _copyToClipboard(_otpService.currentCode),
+                                              child: borderWrap(
+                                                Text(AccountTileUtils.formatCode(_otpService.currentCode, null),
+                                                    style: const TextStyle(
+                                                        fontSize: 24,
+                                                        fontWeight: FontWeight.w700)),
+                                                padding: const EdgeInsets.all(4),
+                                              ),
+                                            ),
+                                      const SizedBox(width: 8),
+                                      if ((widget.item.otpType ?? 'totp')
+                                              .toLowerCase() ==
+                                          'hotp')
+                                        Padding(
+                                          padding: const EdgeInsets.only(left: 4.0),
+                                          child: Tooltip(
+                                            message:
+                                                'HOTP deshabilitado hasta sincronización',
+                                            child: Icon(Icons.block,
+                                                size: 18,
+                                                color: Colors.grey.shade500),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      borderWrap(AccountTileUi.buildProgressDots(_animations.animController), padding: const EdgeInsets.all(4)),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          padding: const EdgeInsets.all(2),
+                        ),
+                      ),
+                    ],
+                  ),
+                  padding: const EdgeInsets.all(2),
+                ),
+              ],
+            ),
           ),
         );
 

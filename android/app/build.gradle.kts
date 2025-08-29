@@ -9,7 +9,8 @@ import java.util.Properties
 import java.io.FileInputStream
 
 // Load signing properties from android/key.properties (if present)
-val keystorePropertiesFile = rootProject.file("key.properties")
+// key.properties lives in the android/ folder in this project
+val keystorePropertiesFile = rootProject.file("android/key.properties")
 val keystoreProperties = Properties()
 if (keystorePropertiesFile.exists()) {
     FileInputStream(keystorePropertiesFile).use { fis ->
@@ -42,52 +43,44 @@ android {
         versionName = flutter.versionName
     }
 
-    buildTypes {
-        release {
-            // Use signing config loaded from key.properties if available.
-            // Expected keys in `android/key.properties`: storeFile, storePassword, keyAlias, keyPassword
-            signingConfigs {
-                create("release") {
-                    // Prefer environment variables for sensitive data; fallback to key.properties if provided
-                    val envStorePath = System.getenv("KEYSTORE_PATH")
-                    val envStorePassword = System.getenv("KEYSTORE_PASSWORD")
-                    val envKeyAlias = System.getenv("KEY_ALIAS")
-                    val envKeyPassword = System.getenv("KEY_PASSWORD")
+    // Signing configs should be declared at the android level (not nested inside buildTypes)
+    signingConfigs {
+        create("release") {
+            // Prefer environment variables for sensitive data; fallback to android/key.properties if provided
+            val envStorePath = System.getenv("KEYSTORE_PATH")
+            val envStorePassword = System.getenv("KEYSTORE_PASSWORD")
+            val envKeyAlias = System.getenv("KEY_ALIAS")
+            val envKeyPassword = System.getenv("KEY_PASSWORD")
 
-                    val resolvedStoreFile = when {
-                        !envStorePath.isNullOrBlank() -> file(envStorePath)
-                        !keystoreProperties.getProperty("storeFile").isNullOrBlank() -> file(keystoreProperties.getProperty("storeFile"))
-                        else -> null
-                    }
-                    if (resolvedStoreFile != null) {
-                        println("Current directory: ${projectDir.absolutePath}")
-                        println("Keystore path from env: $envStorePath")
-                        println("Resolved keystore path: ${resolvedStoreFile.absolutePath}")
-                        storeFile = resolvedStoreFile
-                    }
-
-                    storePassword = when {
-                        !envStorePassword.isNullOrBlank() -> envStorePassword
-                        !keystoreProperties.getProperty("storePassword").isNullOrBlank() -> keystoreProperties.getProperty("storePassword")
-                        else -> null
-                    }
-
-                    keyAlias = when {
-                        !envKeyAlias.isNullOrBlank() -> envKeyAlias
-                        !keystoreProperties.getProperty("keyAlias").isNullOrBlank() -> keystoreProperties.getProperty("keyAlias")
-                        else -> null
-                    }
-
-                    keyPassword = when {
-                        !envKeyPassword.isNullOrBlank() -> envKeyPassword
-                        !keystoreProperties.getProperty("keyPassword").isNullOrBlank() -> keystoreProperties.getProperty("keyPassword")
-                        else -> null
-                    }
-                }
+            val resolvedStoreFile = when {
+                !envStorePath.isNullOrBlank() -> file(envStorePath)
+                !keystoreProperties.getProperty("storeFile").isNullOrBlank() -> file(keystoreProperties.getProperty("storeFile"))
+                else -> null
             }
-        }
-        debug {
-            signingConfig = signingConfigs.getByName("debug")
+            if (resolvedStoreFile != null) {
+                println("Current directory: ${projectDir.absolutePath}")
+                println("Keystore path from env: $envStorePath")
+                println("Resolved keystore path: ${resolvedStoreFile.absolutePath}")
+                storeFile = resolvedStoreFile
+            }
+
+            storePassword = when {
+                !envStorePassword.isNullOrBlank() -> envStorePassword
+                !keystoreProperties.getProperty("storePassword").isNullOrBlank() -> keystoreProperties.getProperty("storePassword")
+                else -> null
+            }
+
+            keyAlias = when {
+                !envKeyAlias.isNullOrBlank() -> envKeyAlias
+                !keystoreProperties.getProperty("keyAlias").isNullOrBlank() -> keystoreProperties.getProperty("keyAlias")
+                else -> null
+            }
+
+            keyPassword = when {
+                !envKeyPassword.isNullOrBlank() -> envKeyPassword
+                !keystoreProperties.getProperty("keyPassword").isNullOrBlank() -> keystoreProperties.getProperty("keyPassword")
+                else -> null
+            }
         }
     }
 

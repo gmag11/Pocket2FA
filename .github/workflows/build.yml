@@ -67,11 +67,13 @@ jobs:
           echo "KEYSTORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}" >> "$GITHUB_ENV"
           echo "KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> "$GITHUB_ENV"
           echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> "$GITHUB_ENV"
-          
+
       - name: Build Android App Bundle (release)
+        if: steps.detect_keystore.outputs.has_keystore == 'true'
         run: flutter build appbundle --release
 
       - name: Upload Android artifact
+        if: steps.detect_keystore.outputs.has_keystore == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: android-appbundle

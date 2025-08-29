@@ -143,140 +143,133 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
         final tile = borderWrap(
           SizedBox(
             height: 70,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const SizedBox(width: 12),
-                // Service and account column with new layout
-                Expanded(
-                  child: borderWrap(
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 6.0, horizontal: 4.0),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // First row: Avatar and Service
-                          borderWrap(AccountTileUi.buildServiceInfoRow(widget.item, color), padding: const EdgeInsets.all(2)),
-                          const SizedBox(height: 4),
-                          // Second row: Account
-                          borderWrap(AccountTileUi.buildAccountInfoRow(widget.item), padding: const EdgeInsets.all(2)),
-                        ],
+                // Fila superior: Avatar + Nombre servicio + Código OTP
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // Avatar (ancho fijo)
+                    borderWrap(
+                      AccountTileUi.buildServiceAvatar(widget.item, color),
+                      padding: const EdgeInsets.all(2),
+                    ),
+                    const SizedBox(width: 8),
+                    
+                    // Nombre del servicio (ancho flexible, recorte permitido, máximo espacio)
+                    Expanded(
+                      child: borderWrap(
+                        Text(
+                          widget.item.service,
+                          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w400),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        padding: const EdgeInsets.all(2),
                       ),
                     ),
-                    padding: const EdgeInsets.all(2),
-                  ),
+                    
+                    // Código OTP (ocupa espacio necesario, sin recorte, alineado derecha)
+                    borderWrap(
+                      IntrinsicWidth(
+                        child: Align(
+                          alignment: Alignment.centerRight,
+                          child: settings != null
+                              ? AnimatedBuilder(
+                                  animation: settings!,
+                                  builder: (context, _) {
+                                    return InkWell(
+                                      onTap: () => _copyToClipboard(_otpService.currentCode),
+                                      child: Text(
+                                        AccountTileUtils.formatCode(_otpService.currentCode, settings),
+                                        style: const TextStyle(
+                                          fontSize: 24,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.visible,
+                                      ),
+                                    );
+                                  },
+                                )
+                              : InkWell(
+                                  onTap: () => _copyToClipboard(_otpService.currentCode),
+                                  child: Text(
+                                    AccountTileUtils.formatCode(_otpService.currentCode, null),
+                                    style: const TextStyle(
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.visible,
+                                  ),
+                                ),
+                        ),
+                      ),
+                      padding: const EdgeInsets.all(2),
+                    ),
+                  ],
                 ),
-
-                // Non-HOTP rendering: nextCode (small), spacer, main code + dots
-                borderWrap(
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      borderWrap(
-                        SizedBox(
-                          width: 54,
-                          height: 60,
-                          child: Align(
-                            alignment: Alignment.bottomRight,
-                            child: AnimatedBuilder(
-                                animation: _animations.animController ?? Listenable.merge([]),
-                                builder: (context, _) {
-                                  final anim = _animations.animController;
-                                  final opacity = (anim != null)
-                                      ? anim.value.clamp(0.0, 1.0)
-                                      : 1.0;
-                                  return Opacity(
-                                      opacity: opacity,
-                                      child: Text(AccountTileUtils.formatCode(_otpService.nextCode, settings),
-                                          style: TextStyle(
-                                              fontSize: 12, color: Colors.black)));
-                                }),
+                
+                const SizedBox(height: 4),
+                
+                // Fila inferior: Usuario + Next OTP + Línea de puntos
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // Usuario de la cuenta (ancho flexible, recorte permitido, alineado izquierda)
+                    Expanded(
+                      child: borderWrap(
+                        Padding(
+                          padding: const EdgeInsets.only(left: 10.0),
+                          child: Text(
+                            widget.item.account,
+                            style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         padding: const EdgeInsets.all(2),
                       ),
-                      const SizedBox(width: 8),
-                      ConstrainedBox(
-                        constraints:
-                            const BoxConstraints(minWidth: 100, maxWidth: 110),
-                        child: borderWrap(
-                          Container(
-                            padding: const EdgeInsets.only(right: 8.0),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                Align(
-                                  alignment: Alignment.centerLeft,
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      settings != null
-                                          ? AnimatedBuilder(
-                                              animation: settings!,
-                                              builder: (context, _) {
-                                                return InkWell(
-                                                  onTap: () => _copyToClipboard(_otpService.currentCode),
-                                                  child: borderWrap(
-                                                    Text(
-                                                        AccountTileUtils.formatCode(_otpService.currentCode, settings),
-                                                        style: const TextStyle(
-                                                            fontSize: 24,
-                                                            fontWeight:
-                                                                FontWeight.w700)),
-                                                    padding: const EdgeInsets.all(4),
-                                                  ),
-                                                );
-                                              },
-                                            )
-                                          : InkWell(
-                                              onTap: () => _copyToClipboard(_otpService.currentCode),
-                                              child: borderWrap(
-                                                Text(AccountTileUtils.formatCode(_otpService.currentCode, null),
-                                                    style: const TextStyle(
-                                                        fontSize: 24,
-                                                        fontWeight: FontWeight.w700)),
-                                                padding: const EdgeInsets.all(4),
-                                              ),
-                                            ),
-                                      const SizedBox(width: 8),
-                                      if ((widget.item.otpType ?? 'totp')
-                                              .toLowerCase() ==
-                                          'hotp')
-                                        Padding(
-                                          padding: const EdgeInsets.only(left: 4.0),
-                                          child: Tooltip(
-                                            message:
-                                                'HOTP deshabilitado hasta sincronización',
-                                            child: Icon(Icons.block,
-                                                size: 18,
-                                                color: Colors.grey.shade500),
-                                          ),
-                                        ),
-                                    ],
-                                  ),
+                    ),
+                    
+                    // Next OTP (ocupa espacio necesario, sin recorte, alineado derecha)
+                    borderWrap(
+                      IntrinsicWidth(
+                        child: Align(
+                          alignment: Alignment.centerRight,
+                          child: AnimatedBuilder(
+                            animation: _animations.animController ?? Listenable.merge([]),
+                            builder: (context, _) {
+                              final anim = _animations.animController;
+                              final opacity = (anim != null)
+                                  ? anim.value.clamp(0.0, 1.0)
+                                  : 1.0;
+                              return Opacity(
+                                opacity: opacity,
+                                child: Text(
+                                  AccountTileUtils.formatCode(_otpService.nextCode, settings),
+                                  style: TextStyle(fontSize: 12, color: Colors.black),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.visible,
                                 ),
-                                const SizedBox(height: 8),
-                                Align(
-                                  alignment: Alignment.centerLeft,
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      borderWrap(AccountTileUi.buildProgressDots(_animations.animController), padding: const EdgeInsets.all(4)),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
+                              );
+                            },
                           ),
-                          padding: const EdgeInsets.all(2),
                         ),
                       ),
-                    ],
-                  ),
-                  padding: const EdgeInsets.all(2),
+                      padding: const EdgeInsets.all(2),
+                    ),
+                    
+                    const SizedBox(width: 8),
+                    
+                    // Línea de puntos (ancho fijo, alineado derecha)
+                    borderWrap(
+                      AccountTileUi.buildProgressDots(_animations.animController),
+                      padding: const EdgeInsets.all(2),
+                    ),
+                  ],
                 ),
               ],
             ),

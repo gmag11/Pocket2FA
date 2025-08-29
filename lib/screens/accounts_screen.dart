@@ -141,6 +141,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
             url: urlCtrl.text,
             apiKey: apiKeyText,
             accounts: initial?.accounts ?? [],
+            userEmail: initial?.userEmail ?? '',
           );
 
           try {
@@ -157,7 +158,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
               accounts: temp.accounts,
               userId: m['id'] is int ? m['id'] as int : int.tryParse(m['id'].toString()),
               userName: m['name'] as String?,
-              userEmail: m['email'] as String?,
+              userEmail: m['email'] as String? ?? '',
               oauthProvider: m['oauth_provider']?.toString(),
               authenticatedByProxy: m['authenticated_by_proxy'] as bool?,
               preferences: m['preferences'] != null ? UserPreferences.fromMap(Map<dynamic, dynamic>.from(m['preferences'] as Map)) : null,
@@ -353,7 +354,7 @@ class _ServerDetailScreenState extends State<_ServerDetailScreen> {
     if (res == true) {
   final item = AccountEntry(id: DateTime.now().millisecondsSinceEpoch, service: svc.text, account: acct.text, seed: seed.text, group: '');
       setState(() {
-        _server = ServerConnection(id: _server.id, name: _server.name, url: _server.url, apiKey: _server.apiKey, accounts: [..._server.accounts, item]);
+  _server = ServerConnection(id: _server.id, name: _server.name, url: _server.url, apiKey: _server.apiKey, accounts: [..._server.accounts, item], userEmail: _server.userEmail);
       });
       widget.onChanged(_server);
     }
@@ -362,7 +363,7 @@ class _ServerDetailScreenState extends State<_ServerDetailScreen> {
   void _removeAccount(int idx) {
     final l = List.of(_server.accounts);
     l.removeAt(idx);
-    setState(() => _server = ServerConnection(id: _server.id, name: _server.name, url: _server.url, apiKey: _server.apiKey, accounts: l));
+  setState(() => _server = ServerConnection(id: _server.id, name: _server.name, url: _server.url, apiKey: _server.apiKey, accounts: l, userEmail: _server.userEmail));
     widget.onChanged(_server);
   }
 

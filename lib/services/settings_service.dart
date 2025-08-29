@@ -7,6 +7,7 @@ enum CodeFormat { compact, spaced3, spaced2 }
 class SettingsService extends ChangeNotifier {
   static const _key = 'otp_format';
   static const _enabledKey = 'otp_format_enabled';
+  static const _biometricKey = 'biometric_protection_enabled';
 
   CodeFormat _format = CodeFormat.spaced3;
   CodeFormat get format => _format;
@@ -26,6 +27,7 @@ class SettingsService extends ChangeNotifier {
   final v = box.get(_key, defaultValue: 'spaced3') as String;
       _format = _fromString(v);
       _enabled = box.get(_enabledKey, defaultValue: true) as bool;
+  _biometricEnabled = box.get(_biometricKey, defaultValue: false) as bool;
       notifyListeners();
       return;
     }
@@ -63,6 +65,32 @@ class SettingsService extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_enabledKey, on);
     notifyListeners();
+  }
+
+  bool _biometricEnabled = false;
+  bool get biometricEnabled => _biometricEnabled;
+
+  /// Toggle biometric protection for local Hive key. This will call into
+  /// SettingsStorage to rewrap the key; no data should be lost during toggling.
+  Future<bool> setBiometricEnabled(bool on) async {
+    if (storage == null) return false;
+    final s = storage!;
+    bool ok = false;
+    if (on) {
+      ok = await s.enableBiometricProtection();
+    } else {
+      ok = await s.disableBiometricProtection();
+    }
+    if (ok) {
+      _biometricEnabled = on;
+      await s.box.put(_biometricKey, on);
+      notifyListeners();
+      return true;
+    } else {
+      // No change if operation failed.
+      notifyListeners();
+      return false;
+    }
   }
 
   static String _toString(CodeFormat f) {

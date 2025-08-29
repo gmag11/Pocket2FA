@@ -16,6 +16,7 @@ dependencies:
   hive: ^2.2.3
   hive_flutter: ^1.1.0
   flutter_secure_storage: ^9.2.4
+  local_auth: ^2.3.0
   dio: ^5.9.0
   path_provider: ^2.1.5
   flutter_svg: ^2.2.0

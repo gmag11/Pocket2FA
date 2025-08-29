@@ -22,28 +22,43 @@ class _AccountsScreenState extends State<AccountsScreen> {
   @override
   void initState() {
     super.initState();
-    _loadServers();
+    // Only load servers if the storage is already unlocked. If biometric
+    // protection is enabled and the store is locked, the UI will show an
+    // unlock screen and the user can attemptUnlock() manually.
+    if (widget.storage.isUnlocked) {
+      _loadServers();
+    }
   }
 
   void _loadServers() {
-    final box = widget.storage.box;
-    final raw = box.get('servers');
-    if (raw == null) {
-      // no servers stored yet
-      setState(() {
-        _servers = [];
-      });
+    try {
+      final box = widget.storage.box;
+      final raw = box.get('servers');
+      if (raw == null) {
+        // no servers stored yet
+        setState(() {
+          _servers = [];
+        });
+        return;
+      }
+      final list = (raw as List<dynamic>)
+          .map((e) => ServerConnection.fromMap(Map<dynamic, dynamic>.from(e)))
+          .toList();
+      setState(() => _servers = list);
+    } on StateError catch (_) {
+      // Storage locked; leave servers empty until unlocked.
+      setState(() => _servers = []);
       return;
     }
-    final list = (raw as List<dynamic>)
-        .map((e) => ServerConnection.fromMap(Map<dynamic, dynamic>.from(e)))
-        .toList();
-    setState(() => _servers = list);
   }
 
   Future<void> _saveServers() async {
-    final box = widget.storage.box;
-    await box.put('servers', _servers.map((s) => s.toMap()).toList());
+    try {
+      final box = widget.storage.box;
+      await box.put('servers', _servers.map((s) => s.toMap()).toList());
+    } on StateError catch (_) {
+      // Storage is locked; ignore save (it will be persisted when unlocked).
+    }
   }
 
   Future<void> _addServer() async {
@@ -219,6 +234,43 @@ class _AccountsScreenState extends State<AccountsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // If storage is locked, show an unlock screen instead of the list.
+    if (!widget.storage.isUnlocked) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Accounts / Servers')),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('Local data is protected', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                const Text('Authenticate with biometrics to unlock your local data.' , textAlign: TextAlign.center),
+                const SizedBox(height: 16),
+                ElevatedButton.icon(
+                  onPressed: () async {
+                    final messenger = ScaffoldMessenger.of(context);
+                    final ok = await widget.storage.attemptUnlock();
+                    if (ok) {
+                      // Reload servers and update UI
+                      _loadServers();
+                      if (!mounted) return;
+                      setState(() {});
+                    } else {
+                      messenger.showSnackBar(const SnackBar(content: Text('Authentication failed')));
+                    }
+                  },
+                  icon: const Icon(Icons.fingerprint),
+                  label: const Text('Unlock'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(title: const Text('Accounts / Servers')),
       body: ListView.builder(

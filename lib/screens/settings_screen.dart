@@ -15,15 +15,15 @@ class SettingsScreen extends StatelessWidget {
       appBar: AppBar(title: const Text('Settings')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            AnimatedBuilder(
-              animation: settings,
-              builder: (context, _) {
-                final enabled = settings.enabled;
-                return Row(
+        child: AnimatedBuilder(
+          animation: settings,
+          builder: (context, _) {
+            final enabled = settings.enabled;
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Switch(
@@ -36,35 +36,66 @@ class SettingsScreen extends StatelessWidget {
                       fit: FlexFit.loose,
                       child: Text('Code formatting', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: enabled ? null : Colors.grey.shade600)),
                     ),
-                    const SizedBox(width: 8),
-                    Opacity(
-                      opacity: enabled ? 1.0 : 0.45,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          _formatButton(context, settings.format == CodeFormat.spaced3, 'by Trio', '123 456', enabled ? () => settings.setFormat(CodeFormat.spaced3) : () {}),
-                          const SizedBox(width: 4),
-                          _formatButton(context, settings.format == CodeFormat.spaced2, 'by Pair', '12 34 56', enabled ? () => settings.setFormat(CodeFormat.spaced2) : () {}),
-                        ],
-                      ),
-                    ),
                   ],
-                );
-              },
-            ),
-          ],
+                ),
+                const SizedBox(height: 8),
+                Opacity(
+                  opacity: enabled ? 1.0 : 0.45,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _formatButton(context, settings.format == CodeFormat.spaced3, 'by Trio', '123 456', enabled ? () => settings.setFormat(CodeFormat.spaced3) : () {}),
+                      const SizedBox(width: 4),
+                      _formatButton(context, settings.format == CodeFormat.spaced2, 'by Pair', '12 34 56', enabled ? () => settings.setFormat(CodeFormat.spaced2) : () {}),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                // (removed duplicate upper biometric row)
+                  // Biometric toggle on its own line beneath the format controls.
+                  // This control is independent of the 'Code formatting' setting.
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Builder(builder: (ctx) {
+                        final messenger = ScaffoldMessenger.of(ctx);
+                        return Switch(
+                          value: settings.biometricEnabled,
+                          onChanged: (v) async {
+                            final ok = await settings.setBiometricEnabled(v);
+                            messenger.showSnackBar(SnackBar(
+                              content: Text(ok ? (v ? 'Biometric enabled' : 'Biometric disabled') : 'Operation failed'),
+                            ));
+                          },
+                          activeThumbColor: _baseAccent,
+                        );
+                      }),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        fit: FlexFit.loose,
+                        child: Text('Biometric protection', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      ),
+                    ],
+                  ),
+              ],
+            );
+          },
         ),
       ),
     );
   }
 
-  Widget _formatButton(BuildContext context, bool selected, String label, String sample, VoidCallback onTap) {
-  // Slightly lighten the selected background so the button reads as "selected"
-  // but less saturated than the raw accent color.
-  final bg = selected ? Color.lerp(_baseAccent, Colors.white, 0.22)! : Colors.white;
-  final fg = selected ? Colors.white : Colors.black87;
-  // Use a lighter border when selected to match the lighter background.
-  final borderColor = selected ? Color.lerp(_baseAccent, Colors.white, 0.18)! : Colors.grey.shade300;
+  Widget _formatButton(BuildContext context, bool selected, String label,
+      String sample, VoidCallback onTap) {
+    // Slightly lighten the selected background so the button reads as "selected"
+    // but less saturated than the raw accent color.
+    final bg =
+        selected ? Color.lerp(_baseAccent, Colors.white, 0.22)! : Colors.white;
+    final fg = selected ? Colors.white : Colors.black87;
+    // Use a lighter border when selected to match the lighter background.
+    final borderColor = selected
+        ? Color.lerp(_baseAccent, Colors.white, 0.18)!
+        : Colors.grey.shade300;
     return Material(
       color: bg,
       elevation: selected ? 2 : 0,
@@ -83,7 +114,9 @@ class SettingsScreen extends StatelessWidget {
             children: [
               Text(label, style: TextStyle(color: fg, fontSize: 12)),
               const SizedBox(height: 2),
-              Text(sample, style: TextStyle(color: fg, fontSize: 16, fontWeight: FontWeight.w600)),
+              Text(sample,
+                  style: TextStyle(
+                      color: fg, fontSize: 16, fontWeight: FontWeight.w600)),
             ],
           ),
         ),

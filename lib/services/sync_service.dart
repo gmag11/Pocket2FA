@@ -26,21 +26,36 @@ class SyncService {
   /// }
   Future<Map<String, dynamic>> syncIfNeeded(ServerConnection server, SettingsStorage storage, {CancelToken? cancelToken, int concurrency = 4}) async {
   final key = '$_lastSyncKeyPrefix${server.id}';
-    final box = storage.box;
-    final lastRaw = box.get(key);
+    // Guard against storage being locked (e.g. biometric auth cancelled).
     DateTime? last;
-    if (lastRaw != null) {
-      try {
-        last = DateTime.parse(lastRaw as String);
-      } catch (_) {}
+    try {
+      if (storage.isUnlocked) {
+        final box = storage.box;
+        final lastRaw = box.get(key);
+        if (lastRaw != null) {
+          try {
+            last = DateTime.parse(lastRaw as String);
+          } catch (_) {}
+        }
+      }
+    } on StateError catch (_) {
+      // storage locked; act as if never synced
+      last = null;
     }
-
   // Check whether the last sync was marked as forced. If it was forced we
   // ignore the throttle window for skipping (i.e. allow an automatic sync to
   // proceed even if the last recorded sync was a forced one).
   final forcedKey = '$_lastSyncForcedKeyPrefix${server.id}';
-  final forcedRaw = box.get(forcedKey);
-  final bool wasLastForced = forcedRaw == true;
+  bool wasLastForced = false;
+  try {
+    if (storage.isUnlocked) {
+      final box = storage.box;
+      final forcedRaw = box.get(forcedKey);
+      wasLastForced = forcedRaw == true;
+    }
+  } on StateError catch (_) {
+    wasLastForced = false;
+  }
 
     if (last != null && DateTime.now().difference(last) < _throttle) {
       if (wasLastForced) {
@@ -189,22 +204,6 @@ class SyncService {
   try {
       // Replace the server entry in persisted storage
       final box = storage.box;
-      // // If accounts include HOTP counters provided by the server, initialize
-      // // the persisted hotp_counter:<id> values when not already set so local
-      // // generation will prefer the persisted value.
-      // try {
-      //   for (var acc in accounts) {
-      //     if ((acc.otpType ?? '').toLowerCase() == 'hotp' && acc.counter != null) {
-      //       final key = 'hotp_counter:${acc.id}';
-      //       final existing = box.get(key);
-      //       if (existing == null) {
-      //         await box.put(key, acc.counter);
-      //       }
-      //     }
-      //   }
-      // } catch (e) {
-      //   developer.log('SyncService: failed to initialize HOTP counters: $e', name: 'SyncService');
-      // }
       final raw = box.get('servers');
       if (raw != null) {
         final list = (raw as List<dynamic>).map((e) => Map<dynamic, dynamic>.from(e)).toList();

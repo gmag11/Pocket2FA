@@ -132,24 +132,30 @@ class _HomePageState extends State<HomePage> {
     String? restoredServerId;
     int? restoredAccountIndex;
     if (storage != null) {
-      final box = storage.box;
-      final raw = box.get('servers');
-      if (raw != null) {
-        servers = (raw as List<dynamic>)
-            .map((e) => ServerConnection.fromMap(Map<dynamic, dynamic>.from(e)))
-            .toList();
-      }
-      // Try to restore previously selected server/account
-      final selRaw = box.get('selected');
-      if (selRaw != null) {
-        try {
-          final m = Map<dynamic, dynamic>.from(selRaw);
-          restoredServerId = m['serverId'] as String?;
-          restoredAccountIndex = m['accountIndex'] is int ? m['accountIndex'] as int : (m['accountIndex'] == null ? null : int.tryParse(m['accountIndex'].toString()));
-        } catch (_) {
-          restoredServerId = null;
-          restoredAccountIndex = null;
+      try {
+        if (storage.isUnlocked) {
+          final box = storage.box;
+          final raw = box.get('servers');
+          if (raw != null) {
+            servers = (raw as List<dynamic>)
+                .map((e) => ServerConnection.fromMap(Map<dynamic, dynamic>.from(e)))
+                .toList();
+          }
+          // Try to restore previously selected server/account
+          final selRaw = box.get('selected');
+          if (selRaw != null) {
+            try {
+              final m = Map<dynamic, dynamic>.from(selRaw);
+              restoredServerId = m['serverId'] as String?;
+              restoredAccountIndex = m['accountIndex'] is int ? m['accountIndex'] as int : (m['accountIndex'] == null ? null : int.tryParse(m['accountIndex'].toString()));
+            } catch (_) {
+              restoredServerId = null;
+              restoredAccountIndex = null;
+            }
+          }
         }
+      } on StateError catch (_) {
+        // Storage locked — behave as if no persistent servers available.
       }
     }
 
@@ -212,22 +218,28 @@ class _HomePageState extends State<HomePage> {
               if (mounted) setState(() { _serverReachable = true; });
             }
             // Reload servers from storage to pick up any updates (icons/local paths)
-            final raw2 = storage.box.get('servers');
-            if (raw2 != null) {
-              final servers2 = (raw2 as List<dynamic>)
-                  .map((e) => ServerConnection.fromMap(Map<dynamic, dynamic>.from(e)))
-                  .toList();
-              if (mounted) {
-                setState(() {
-                  _servers = servers2;
-                  final idx = _servers.indexWhere((s) => s.id == srv.id);
-                  if (idx != -1) {
-                    final updatedSrv = _servers[idx];
-                    _currentItems = updatedSrv.accounts;
-                    _selectedGroup = 'All (${_currentItems.length})';
+            try {
+              if (storage.isUnlocked) {
+                final raw2 = storage.box.get('servers');
+                if (raw2 != null) {
+                  final servers2 = (raw2 as List<dynamic>)
+                      .map((e) => ServerConnection.fromMap(Map<dynamic, dynamic>.from(e)))
+                      .toList();
+                  if (mounted) {
+                    setState(() {
+                      _servers = servers2;
+                      final idx = _servers.indexWhere((s) => s.id == srv.id);
+                      if (idx != -1) {
+                        final updatedSrv = _servers[idx];
+                        _currentItems = updatedSrv.accounts;
+                        _selectedGroup = 'All (${_currentItems.length})';
+                      }
+                    });
                   }
-                });
+                }
               }
+            } on StateError catch (_) {
+              // storage locked while refreshing; ignore and keep current display
             }
             if (mounted) {
               if (result['network_failed'] == true) {
@@ -329,9 +341,11 @@ class _HomePageState extends State<HomePage> {
       final storage = widget.settings.storage;
       if (storage != null) {
         try {
-          await storage.box.put('selected', {'serverId': serverId, 'accountIndex': accountIndex});
-        } catch (_) {
-          // Non-fatal: ignore persistence errors
+          if (storage.isUnlocked) {
+            await storage.box.put('selected', {'serverId': serverId, 'accountIndex': accountIndex});
+          }
+        } on StateError catch (_) {
+          // ignore persistence when locked
         }
       }
 
@@ -395,6 +409,35 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
   final groups = _groups();
+    // If storage exists but is locked (biometric required and not yet satisfied),
+    // show a minimal screen with a single centered 'Retry' button so the user
+    // can re-attempt authentication. This prevents the home UI from being
+    // visible while the local store is locked.
+    final storage = widget.settings.storage;
+    if (storage != null && !storage.isUnlocked) {
+      return Scaffold(
+        body: SafeArea(
+          child: Center(
+            child: ElevatedButton(
+              onPressed: () async {
+                final messenger = ScaffoldMessenger.of(context);
+                final ok = await storage.attemptUnlock();
+                if (ok) {
+                  // Reload servers from unlocked storage and rebuild UI
+                  await _loadServers();
+                  if (!mounted) return;
+                  setState(() {});
+                } else {
+                  messenger.showSnackBar(const SnackBar(content: Text('Authentication failed')));
+                }
+              },
+              child: const Text('Retry'),
+            ),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       body: SafeArea(
         child: Stack(

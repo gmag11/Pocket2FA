@@ -7,7 +7,7 @@ A mobile client application for managing two-factor authentication (2FA) codes, 
 This project complements the official 2FAuth web application by offering:
 
 - Native mobile experience for accessing your 2FA codes on the go
-- Secure local generation of TOTP/HOTP codes
+- Secure local generation of TOTP and STEAM codes
 - Synchronization with your self-hosted 2FAuth server
 - Offline access to your authentication codes
 

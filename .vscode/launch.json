@@ -20,6 +20,12 @@
             "request": "launch",
             "type": "dart",
             "flutterMode": "release"
+        },
+        {
+            "name": "2fauth (linux debug)",
+            "request": "launch",
+            "type": "dart",
+            "preLaunchTask": "flutter: build linux bundle"
         }
     ]
 }

@@ -11,7 +11,11 @@ class SettingsStorage {
   static const _hiveBox = 'app_settings_box';
   static const _keyName = 'hive_master_key';
 
-  final FlutterSecureStorage _secure = const FlutterSecureStorage();
+  AndroidOptions _getAndroidOptions() => const AndroidOptions(
+        encryptedSharedPreferences: true,
+      );
+
+  FlutterSecureStorage get _secure => FlutterSecureStorage(aOptions: _getAndroidOptions());
 
   /// Initialise Hive and the encrypted box. Call this early (before runApp)
   Future<void> init() async {

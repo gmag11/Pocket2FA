@@ -48,19 +48,64 @@ android {
             // Expected keys in `android/key.properties`: storeFile, storePassword, keyAlias, keyPassword
             signingConfigs {
                 create("release") {
-                    keyAlias = keystoreProperties.getProperty("keyAlias")
-                    keyPassword = keystoreProperties.getProperty("keyPassword")
-                    storePassword = keystoreProperties.getProperty("storePassword")
-                    val storeFileProp = keystoreProperties.getProperty("storeFile")
-                    storeFile = if (storeFileProp != null) file(storeFileProp) else file("keystore.jks")
+                    // Prefer environment variables for sensitive data; fallback to key.properties if provided
+                    val envStorePath = System.getenv("KEYSTORE_PATH")
+                    val envStorePassword = System.getenv("KEYSTORE_PASSWORD")
+                    val envKeyAlias = System.getenv("KEY_ALIAS")
+                    val envKeyPassword = System.getenv("KEY_PASSWORD")
+
+                    val resolvedStoreFile = when {
+                        !envStorePath.isNullOrBlank() -> file(envStorePath)
+                        !keystoreProperties.getProperty("storeFile").isNullOrBlank() -> file(keystoreProperties.getProperty("storeFile"))
+                        else -> null
+                    }
+                    if (resolvedStoreFile != null) {
+                        println("Current directory: ${projectDir.absolutePath}")
+                        println("Keystore path from env: $envStorePath")
+                        println("Resolved keystore path: ${resolvedStoreFile.absolutePath}")
+                        storeFile = resolvedStoreFile
+                    }
+
+                    storePassword = when {
+                        !envStorePassword.isNullOrBlank() -> envStorePassword
+                        !keystoreProperties.getProperty("storePassword").isNullOrBlank() -> keystoreProperties.getProperty("storePassword")
+                        else -> null
+                    }
+
+                    keyAlias = when {
+                        !envKeyAlias.isNullOrBlank() -> envKeyAlias
+                        !keystoreProperties.getProperty("keyAlias").isNullOrBlank() -> keystoreProperties.getProperty("keyAlias")
+                        else -> null
+                    }
+
+                    keyPassword = when {
+                        !envKeyPassword.isNullOrBlank() -> envKeyPassword
+                        !keystoreProperties.getProperty("keyPassword").isNullOrBlank() -> keystoreProperties.getProperty("keyPassword")
+                        else -> null
+                    }
                 }
             }
-            signingConfig = signingConfigs.getByName("release")
         }
         debug {
             signingConfig = signingConfigs.getByName("debug")
         }
     }
+
+    buildTypes {
+        release {
+            signingConfig = signingConfigs.getByName("release")
+            isMinifyEnabled = true // Activar ofuscación y optimización
+            isShrinkResources = true // Activar reducción de recursos
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+        }
+        debug {
+            signingConfig = signingConfigs.getByName("debug")
+        }
+    }
+
 
     dependenciesInfo {
         // Disables dependency metadata when building APKs (for IzzyOnDroid/F-Droid)

@@ -19,7 +19,7 @@ This project complements the official 2FAuth web application by offering:
 - **Server Synchronization**: Sync your accounts and icons from your 2FAuth instance
 - **Offline Access**: Access your codes even without internet connection
 - **Encrypted Storage**: Your secrets are stored securely using platform encryption
-- **Multi-Platform Support**: Runs on Android, iOS, and Windows
+- **Platform Support**: Primarily developed for Android; also compatible with Windows and Linux
 - **Real-time Updates**: Codes refresh automatically every 30 seconds
 - **Copy to Clipboard**: One-tap copying of generated codes
 - **Group Organization**: Browse accounts organized by groups

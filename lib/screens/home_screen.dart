@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:developer' as developer;
+import 'dart:io';
 import 'package:url_launcher/url_launcher.dart';
 import '../widgets/account_tile.dart';
 import '../services/settings_service.dart';
@@ -9,6 +10,28 @@ import '../models/server_connection.dart';
 import '../models/account_entry.dart';
 import '../services/api_service.dart';
 import '../services/sync_service.dart';
+
+// Top-level helper to open an external URL using the platform default, with
+// a Linux fallback to xdg-open when the platform opener fails.
+Future<void> _launchExternal(Uri uri, ScaffoldMessengerState messenger) async {
+  try {
+    if (await canLaunchUrl(uri)) {
+      final ok = await launchUrl(uri, mode: LaunchMode.platformDefault);
+      if (!ok && Platform.isLinux) {
+        await Process.run('xdg-open', [uri.toString()]);
+      }
+    } else if (Platform.isLinux) {
+      await Process.run('xdg-open', [uri.toString()]);
+    } else {
+      await launchUrl(uri);
+    }
+  } catch (e) {
+    developer.log('HomePage: cannot launch $uri: $e', name: 'HomePage');
+    messenger.showSnackBar(SnackBar(
+      content: Text('No se pudo abrir la URL: $e'),
+    ));
+  }
+}
 
 class HomePage extends StatefulWidget {
   final SettingsService settings;
@@ -704,6 +727,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       ),
     );
   }
+
+  
 }
 
 class _SearchBar extends StatelessWidget {
@@ -956,25 +981,14 @@ class _BottomBar extends StatelessWidget {
                   // Build /start URI and launch externally
                   final trimmed = urlStr.endsWith('/') ? urlStr.substring(0, urlStr.length - 1) : urlStr;
                   final uri = Uri.parse('$trimmed/start');
-                  try {
-                    if (await canLaunchUrl(uri)) {
-                      await launchUrl(uri, mode: LaunchMode.externalApplication);
-                    } else {
-                      await launchUrl(uri);
-                    }
-                  } catch (e) {
-                    developer.log('HomePage: cannot launch $uri: $e', name: 'HomePage');
-                    messenger.showSnackBar(SnackBar(
-                      content: Text('No se pudo abrir la URL: $e'),
-                    ));
-                  }
+                    await _launchExternal(uri, messenger);
                 },
                 icon: const Icon(Icons.qr_code, color: Colors.white),
                 style: ElevatedButton.styleFrom(
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                   backgroundColor: const Color(0xFF4F63E6), // custom blue to match design
                 ),
-                label: const Text('New', style: TextStyle(color: Colors.white)),
+                label: const Text('New (web)', style: TextStyle(color: Colors.white)),
               ),
               const SizedBox(width: 12),
               OutlinedButton(
@@ -1004,23 +1018,12 @@ class _BottomBar extends StatelessWidget {
                   // Launch base server url in external browser
                   final trimmed = urlStr.endsWith('/') ? urlStr.substring(0, urlStr.length - 1) : urlStr;
                   final uri = Uri.parse(trimmed);
-                  try {
-                    if (await canLaunchUrl(uri)) {
-                      await launchUrl(uri, mode: LaunchMode.externalApplication);
-                    } else {
-                      await launchUrl(uri);
-                    }
-                  } catch (e) {
-                    developer.log('HomePage: cannot launch $uri: $e', name: 'HomePage');
-                    messenger.showSnackBar(SnackBar(
-                      content: Text('No se pudo abrir la URL: $e'),
-                    ));
-                  }
+                  await _launchExternal(uri, messenger);
                 },
                 style: OutlinedButton.styleFrom(
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                 ),
-                child: const Text('Manage'),
+                child: const Text('2fauth web'),
               ),
             ],
           ),

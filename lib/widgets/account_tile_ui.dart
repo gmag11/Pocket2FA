@@ -140,8 +140,7 @@ class AccountTileUi {
                             return InkWell(
                               onTap: onCopy,
                               child: Text(
-                                AccountTileUtils.formatCode(
-                                    hotpCode ?? '', settings),
+                                AccountTileUtils.formatCode(hotpCode ?? '', settings),
                                 style: const TextStyle(
                                     fontSize: 24, fontWeight: FontWeight.w700),
                               ),

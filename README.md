@@ -19,7 +19,9 @@ This project complements the official 2FAuth web application by offering:
 - **Server Synchronization**: Sync your accounts and icons from your 2FAuth instance
 - **Offline Access**: Access your codes even without internet connection
 - **Encrypted Storage**: Your secrets are stored securely using platform encryption
-- **Platform Support**: Primarily developed for Android; also compatible with Windows and Linux
+- **Platform Support**: Native support for Android, Windows, and Linux
+- **Biometric Protection**: Optional biometric authentication (fingerprint/face) to protect local data
+- **Privacy Controls**: Option to hide OTP codes on screen for privacy, with long-press to reveal
 - **Real-time Updates**: Codes refresh automatically every 30 seconds
 - **Copy to Clipboard**: One-tap copying of generated codes
 - **Group Organization**: Browse accounts organized by groups
@@ -30,7 +32,7 @@ This project complements the official 2FAuth web application by offering:
 ### For End Users
 
 - A running instance of [2FAuth](https://github.com/Bubka/2FAuth) (version compatible with API specifications included in this project)
-- Mobile device (Android/iOS) or Windows PC
+- Mobile device (Android) or Windows/Linux PC
 - Internet connection for initial synchronization
 
 ### For Developers
@@ -39,7 +41,6 @@ This project complements the official 2FAuth web application by offering:
 - Android Studio or VS Code with Flutter extension
 - Platform-specific development tools:
   - Android: Android SDK and emulator/device
-  - iOS: Xcode and macOS (for iOS development)
   - Windows: Visual Studio with C++ development tools
 
 ## Installation
@@ -82,10 +83,12 @@ This project complements the official 2FAuth web application by offering:
 
 This application is in early development and may have bugs or incomplete features.
 
-- Synchronization is currently one-way (read-only).
-- Editing, creating, deleting, or managing accounts is not implemented.
-- Accounts cannot be reordered; the order present on the server is replicated.
-- Offline local generation of HOTP codes is not supported. You must synchronize the counter with the server to avoid breaking the HOTP sequence.
+- **Read-only Synchronization**: Synchronization is currently one-way (read-only)
+- **Account Management**: Editing, creating, deleting, or managing accounts is not implemented in the mobile client
+- **Web Redirection**: The "New" button redirects to the 2FAuth web interface; account creation must be done through the web application
+- **Fixed Order**: Accounts cannot be reordered; the order present on the server is replicated
+- **HOTP Limitations**: Offline local generation of HOTP codes is not supported. You must synchronize the counter with the server to avoid breaking the HOTP sequence
+- **Platform-specific Features**: Some features like biometric authentication may have limited availability depending on the platform and device capabilities
 
 ## License
 

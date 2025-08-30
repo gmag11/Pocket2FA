@@ -561,7 +561,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                 child: _SearchBar(
                                   controller: _searchController,
                                   focusNode: _searchFocus,
-                                  onChanged: (v) => setState(() => _searchQuery = v),
+                                  onChanged: (v) =>
+                                      setState(() => _searchQuery = v),
                                 ),
                               ),
                               const SizedBox(width: 8),
@@ -574,16 +575,22 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                         child: SizedBox(
                                           width: 20,
                                           height: 20,
-                                          child: const CircularProgressIndicator(strokeWidth: 2),
+                                          child:
+                                              const CircularProgressIndicator(
+                                                  strokeWidth: 2),
                                         ),
                                       ),
                                     )
-                                  : IconButton(
-                                      tooltip: 'Sync',
-                                      icon: const Icon(Icons.sync),
-                                      onPressed: () async {
-                                        await _manualSyncPressed();
-                                      },
+                                  : Semantics(
+                                      label: 'Synchronize',
+                                      button: true,
+                                      child: IconButton(
+                                        tooltip: 'Synchronize',
+                                        icon: const Icon(Icons.sync),
+                                        onPressed: () async {
+                                          await _manualSyncPressed();
+                                        },
+                                      ),
                                     ),
                             ],
                           ),

@@ -4,7 +4,7 @@ import '../services/settings_service.dart';
 /// Utilidades y helpers para AccountTile
 class AccountTileUtils {
   /// Formatea un código según la configuración
-  static String formatCode(String code, SettingsService? settings) {
+  static String formatCode(String code, SettingsService? settings, {bool forceVisible = false}) {
     // Si el tile muestra un indicador offline, devolverlo literalmente para que
     // no se agrupe/espacie como OTPs numéricos (arregla "off lin e").
     if (code.toLowerCase() == 'offline') return code;
@@ -27,9 +27,9 @@ class AccountTileUtils {
         break;
     }
 
-    // If the user has chosen to hide OTPs, mask all non-space characters
-    // with a bullet character while preserving spacing/grouping.
-    if (settings != null && settings.hideOtps) {
+    // If the user has chosen to hide OTPs and we are not forcing visibility,
+    // mask all non-space characters with a bullet while preserving spacing.
+    if (!forceVisible && settings != null && settings.hideOtps) {
       return result.replaceAll(RegExp(r'[^\s]'), '•');
     }
 

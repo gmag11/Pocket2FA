@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'package:flutter/services.dart';
 import '../models/account_entry.dart';
 import '../services/settings_service.dart';
@@ -22,6 +23,10 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
   SettingsService? get settings => widget.settings;
   late AccountTileAnimations _animations;
   late AccountTileOtpService _otpService;
+  Timer? _revealTimerCurrent;
+  Timer? _revealTimerNext;
+  bool _revealCurrent = false;
+  bool _revealNext = false;
 
   @override
   void initState() {
@@ -66,7 +71,9 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
 
   @override
   void dispose() {
-    _otpService.dispose();
+  _revealTimerCurrent?.cancel();
+  _revealTimerNext?.cancel();
+  _otpService.dispose();
     _animations.dispose();
     super.dispose();
   }
@@ -197,12 +204,20 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
                                 ? AnimatedBuilder(
                                     animation: settings!,
                                     builder: (context, _) {
-                                      return InkWell(
-                                        onTap: () => _copyToClipboard(
-                                            _otpService.currentCode),
+                                      return GestureDetector(
+                                        onTap: () => _copyToClipboard(_otpService.currentCode),
+                                        onLongPress: () {
+                                          if (settings?.hideOtps == true) {
+                                            setState(() { _revealCurrent = true; });
+                                            _revealTimerCurrent?.cancel();
+                                            _revealTimerCurrent = Timer(const Duration(seconds: 10), () {
+                                              if (mounted) setState(() { _revealCurrent = false; });
+                                            });
+                                          }
+                                        },
                                         child: Text(
                                           AccountTileUtils.formatCode(
-                                              _otpService.currentCode, settings),
+                                              _otpService.currentCode, settings, forceVisible: _revealCurrent),
                                           style: const TextStyle(
                                             fontSize: 24,
                                             fontWeight: FontWeight.w700,
@@ -274,11 +289,20 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
                                   : 1.0;
                               return Opacity(
                                 opacity: opacity,
-                                child: InkWell(
+                                child: GestureDetector(
                                   onTap: () => _copyToClipboard(_otpService.nextCode),
+                                  onLongPress: () {
+                                    if (settings?.hideOtps == true) {
+                                      setState(() { _revealNext = true; });
+                                      _revealTimerNext?.cancel();
+                                      _revealTimerNext = Timer(const Duration(seconds: 10), () {
+                                        if (mounted) setState(() { _revealNext = false; });
+                                      });
+                                    }
+                                  },
                                   child: Text(
                                     AccountTileUtils.formatCode(
-                                        _otpService.nextCode, settings),
+                                        _otpService.nextCode, settings, forceVisible: _revealNext),
                                     style: TextStyle(
                                         fontSize: 14, color: Colors.black),
                                     maxLines: 1,

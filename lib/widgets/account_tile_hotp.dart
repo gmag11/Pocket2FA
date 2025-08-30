@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'package:flutter/services.dart';
 import '../models/account_entry.dart';
 import '../services/settings_service.dart';
@@ -19,6 +20,8 @@ class AccountTileHOTP extends StatefulWidget {
 class _AccountTileHOTPState extends State<AccountTileHOTP> {
   SettingsService? get settings => widget.settings;
   late AccountTileOtpService _otpService;
+  Timer? _revealTimer;
+  bool _reveal = false;
 
   @override
   void initState() {
@@ -55,7 +58,8 @@ class _AccountTileHOTPState extends State<AccountTileHOTP> {
 
   @override
   void dispose() {
-    _otpService.dispose();
+  _revealTimer?.cancel();
+  _otpService.dispose();
     super.dispose();
   }
 
@@ -188,17 +192,25 @@ class _AccountTileHOTPState extends State<AccountTileHOTP> {
                       // OTP alineado a la derecha, sin recorte
                       Align(
                         alignment: Alignment.centerRight,
-                        child: settings != null
+                          child: settings != null
                             ? AnimatedBuilder(
                                 animation: settings!,
                                 builder: (context, _) {
-                                  return InkWell(
-                                    onTap: () => _copyToClipboard(
-                                        _otpService.hotpCode ?? ''),
+                                  return GestureDetector(
+                                    onTap: () => _copyToClipboard(_otpService.hotpCode ?? ''),
+                                    onLongPress: () {
+                                      if (settings?.hideOtps == true) {
+                                        setState(() { _reveal = true; });
+                                        _revealTimer?.cancel();
+                                        _revealTimer = Timer(const Duration(seconds: 10), () {
+                                          if (mounted) setState(() { _reveal = false; });
+                                        });
+                                      }
+                                    },
                                     child: Text(
                                       AccountTileUtils.formatCode(
                                           _otpService.hotpCode ?? '',
-                                          settings),
+                                          settings, forceVisible: _reveal),
                                       style: const TextStyle(
                                         fontSize: 24,
                                         fontWeight: FontWeight.w700,

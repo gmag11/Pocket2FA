@@ -1,0 +1,1 @@
+Mobile client for secure offline access to two-factor authentication codes with 2FAuth server synchronization

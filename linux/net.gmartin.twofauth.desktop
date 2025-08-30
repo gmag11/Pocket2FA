@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Two Factor Auth
+Comment=2FA manager based on 2FAuth web app
+Exec=twofauth
+Icon=net.gmartin.twofauth
+Categories=Utility;Security;
+Terminal=false
+StartupWMClass=twofauth

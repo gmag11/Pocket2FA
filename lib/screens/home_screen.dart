@@ -1131,7 +1131,7 @@ class _BottomBar extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: const [
-                    Icon(Icons.more_vert, size: 18, color: Colors.grey),
+                    Icon(Icons.menu, size: 18, color: Colors.grey),
                   ],
                 ),
               ),

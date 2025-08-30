@@ -2,6 +2,8 @@
 
 A mobile client application for managing two-factor authentication (2FA) codes, designed to work with the [2FAuth web application](https://github.com/Bubka/2FAuth). This Flutter-based client provides a native mobile experience while securely synchronizing with your self-hosted 2FAuth instance.
 
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
+
 ## Purpose
 
 This project complements the official 2FAuth web application by offering:

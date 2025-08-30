@@ -1090,12 +1090,8 @@ class _BottomBar extends StatelessWidget {
                                   Padding(
                                     padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                                     child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.end,
                                       children: [
-                                        Expanded(
-                                          child: Center(
-                                            child: Text('user@domain.com', style: TextStyle(color: Colors.grey)),
-                                          ),
-                                        ),
                                         IconButton(
                                           icon: const Icon(Icons.close, color: Colors.grey),
                                           onPressed: () => Navigator.of(ctx).pop(), // close without selecting

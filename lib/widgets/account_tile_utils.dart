@@ -14,14 +14,26 @@ class AccountTileUtils {
     if (settings != null && settings.enabled == false) return digits;
 
     final fmt = settings?.format ?? CodeFormat.compact;
+    String result;
     switch (fmt) {
       case CodeFormat.spaced3:
-        return _group(digits, [3, 3]);
+        result = _group(digits, [3, 3]);
+        break;
       case CodeFormat.spaced2:
-        return _group(digits, [2, 2, 2]);
+        result = _group(digits, [2, 2, 2]);
+        break;
       case CodeFormat.compact:
-        return digits;
+        result = digits;
+        break;
     }
+
+    // If the user has chosen to hide OTPs, mask all non-space characters
+    // with a bullet character while preserving spacing/grouping.
+    if (settings != null && settings.hideOtps) {
+      return result.replaceAll(RegExp(r'[^\s]'), '•');
+    }
+
+    return result;
   }
 
   /// Agrupa una cadena según los patrones especificados

@@ -91,6 +91,26 @@ class SettingsScreen extends StatelessWidget {
                       ),
                     ],
                   ),
+                const SizedBox(height: 12),
+                // Toggle to hide OTPs on the Home screen (mask codes)
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Switch(
+                      value: settings.hideOtps,
+                      onChanged: (v) => settings.setHideOtps(v),
+                      activeThumbColor: _baseAccent,
+                    ),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      fit: FlexFit.loose,
+                      child: Text(
+                        'Hide OTPs on Home screen',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: null),
+                      ),
+                    ),
+                  ],
+                ),
               ],
             );
           },

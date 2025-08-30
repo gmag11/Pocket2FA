@@ -8,6 +8,7 @@ class SettingsService extends ChangeNotifier {
   static const _key = 'otp_format';
   static const _enabledKey = 'otp_format_enabled';
   static const _biometricKey = 'biometric_protection_enabled';
+  static const _hideOtpsKey = 'hide_otps_enabled';
 
   CodeFormat _format = CodeFormat.spaced3;
   CodeFormat get format => _format;
@@ -32,6 +33,7 @@ class SettingsService extends ChangeNotifier {
       _format = _fromString(v);
       _enabled = box.get(_enabledKey, defaultValue: true) as bool;
   _biometricEnabled = box.get(_biometricKey, defaultValue: false) as bool;
+  _hideOtps = box.get(_hideOtpsKey, defaultValue: false) as bool;
       notifyListeners();
       return;
     }
@@ -40,6 +42,7 @@ class SettingsService extends ChangeNotifier {
   final v = prefs.getString(_key) ?? 'spaced3';
     _format = _fromString(v);
     _enabled = prefs.getBool(_enabledKey) ?? true;
+    _hideOtps = prefs.getBool(_hideOtpsKey) ?? false;
     notifyListeners();
   }
 
@@ -71,8 +74,25 @@ class SettingsService extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> setHideOtps(bool on) async {
+    _hideOtps = on;
+    if (storage != null) {
+      final box = storage!.box;
+      await box.put(_hideOtpsKey, on);
+      notifyListeners();
+      return;
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_hideOtpsKey, on);
+    notifyListeners();
+  }
+
   bool _biometricEnabled = false;
   bool get biometricEnabled => _biometricEnabled;
+
+  bool _hideOtps = false;
+  bool get hideOtps => _hideOtps;
 
   /// Toggle biometric protection for local Hive key. This will call into
   /// SettingsStorage to rewrap the key; no data should be lost during toggling.

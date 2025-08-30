@@ -17,11 +17,16 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   String _selectedGroup = 'All (0)';
   String _searchQuery = '';
   late final TextEditingController _searchController;
   late final FocusNode _searchFocus;
+  late final ScrollController _listScrollController;
+  late final AnimationController _headerController;
+  late final Animation<Offset> _headerSlide;
+  late final Animation<double> _headerSizeFactor;
+  double _lastScrollOffset = 0.0;
   List<ServerConnection> _servers = [];
   String? _selectedServerId;
   int? _selectedAccountIndex;
@@ -99,6 +104,19 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     _searchController = TextEditingController();
     _searchFocus = FocusNode();
+  _listScrollController = ScrollController();
+
+  // Slower animation so it's clear the header hides upwards and unfolds downwards
+  _headerController = AnimationController(vsync: this, duration: const Duration(milliseconds: 450));
+  _headerSlide = Tween<Offset>(begin: const Offset(0, -0.28), end: Offset.zero)
+    .animate(CurvedAnimation(parent: _headerController, curve: Curves.easeInOut));
+  _headerSizeFactor = CurvedAnimation(parent: _headerController, curve: Curves.easeInOut);
+
+  // Start visible
+  _headerController.value = 1.0;
+
+  // Register named listener so we can remove it on dispose
+  _listScrollController.addListener(_handleScroll);
     // Load servers and then perform an initial connectivity check for the selected server.
     _loadServers().then((_) async {
       try {
@@ -121,6 +139,45 @@ class _HomePageState extends State<HomePage> {
         }
       } catch (_) {}
     });
+  }
+
+  void _handleScroll() {
+    if (!_listScrollController.hasClients) return;
+    final offset = _listScrollController.offset;
+    final delta = offset - _lastScrollOffset;
+    const threshold = 6.0;
+
+    // Only allow hiding when the viewport height is smaller than 4 tiles.
+    // AccountTile height is 70 (as defined in account_tile_totp.dart)
+    const tileHeight = 70.0;
+    final viewport = _listScrollController.position.viewportDimension;
+    final allowHide = viewport < (tileHeight * 4);
+
+    if (!allowHide) {
+      // If there's enough vertical space, always show the header
+      if (_headerController.status != AnimationStatus.forward && _headerController.value < 1.0) {
+        _headerController.forward();
+      }
+    } else {
+      if (offset <= 0) {
+        // show at top
+        if (_headerController.status != AnimationStatus.forward && _headerController.value < 1.0) {
+          _headerController.forward();
+        }
+      } else if (delta > threshold) {
+        // scrolling up -> hide (animate upwards)
+        if (_headerController.status != AnimationStatus.reverse && _headerController.value > 0.0) {
+          _headerController.reverse();
+        }
+      } else if (delta < -threshold) {
+        // scrolling down -> show (unfold downward)
+        if (_headerController.status != AnimationStatus.forward && _headerController.value < 1.0) {
+          _headerController.forward();
+        }
+      }
+    }
+
+    _lastScrollOffset = offset.clamp(0.0, double.infinity);
   }
 
   Future<void> _loadServers() async {
@@ -408,6 +465,9 @@ class _HomePageState extends State<HomePage> {
   void dispose() {
     _searchController.dispose();
     _searchFocus.dispose();
+  _listScrollController.removeListener(_handleScroll);
+  _listScrollController.dispose();
+  _headerController.dispose();
     super.dispose();
   }
 
@@ -483,66 +543,78 @@ class _HomePageState extends State<HomePage> {
           children: [
             Column(
               children: [
-                const SizedBox(height: 12),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: _SearchBar(
-                          controller: _searchController,
-                          focusNode: _searchFocus,
-                          onChanged: (v) => setState(() => _searchQuery = v),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      // Manual sync button that performs the same action as pull-to-refresh
-                      _isSyncing
-                          ? SizedBox(
-                              width: 48,
-                              height: 48,
-                              child: Center(
-                                child: SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: const CircularProgressIndicator(strokeWidth: 2),
+                // Animated header: slide up when hiding, slide down when showing.
+                SizeTransition(
+                  sizeFactor: _headerSizeFactor,
+                  axisAlignment: -1.0,
+                  child: SlideTransition(
+                    position: _headerSlide,
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 12),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: _SearchBar(
+                                  controller: _searchController,
+                                  focusNode: _searchFocus,
+                                  onChanged: (v) => setState(() => _searchQuery = v),
                                 ),
                               ),
-                            )
-                          : IconButton(
-                              tooltip: 'Sync',
-                              icon: const Icon(Icons.sync),
-                              onPressed: () async {
-                                await _manualSyncPressed();
-                              },
+                              const SizedBox(width: 8),
+                              // Manual sync button that performs the same action as pull-to-refresh
+                              _isSyncing
+                                  ? SizedBox(
+                                      width: 48,
+                                      height: 48,
+                                      child: Center(
+                                        child: SizedBox(
+                                          width: 20,
+                                          height: 20,
+                                          child: const CircularProgressIndicator(strokeWidth: 2),
+                                        ),
+                                      ),
+                                    )
+                                  : IconButton(
+                                      tooltip: 'Sync',
+                                      icon: const Icon(Icons.sync),
+                                      onPressed: () async {
+                                        await _manualSyncPressed();
+                                      },
+                                    ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        // Group selector
+                        Center(
+                          child: PopupMenuButton<String>(
+                            initialValue: _selectedGroup,
+                            onSelected: (value) {
+                              setState(() {
+                                _selectedGroup = value;
+                              });
+                            },
+                            itemBuilder: (context) => groups
+                                .map((g) => PopupMenuItem(value: g, child: Text(g)))
+                                .toList(),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(_selectedGroup, style: TextStyle(color: Colors.grey.shade700)),
+                                const SizedBox(width: 6),
+                                Icon(Icons.keyboard_arrow_down, size: 18, color: Colors.grey.shade600),
+                              ],
                             ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 8),
-                // Group selector
-                Center(
-                  child: PopupMenuButton<String>(
-                    initialValue: _selectedGroup,
-                    onSelected: (value) {
-                      setState(() {
-                        _selectedGroup = value;
-                      });
-                    },
-                    itemBuilder: (context) => groups
-                        .map((g) => PopupMenuItem(value: g, child: Text(g)))
-                        .toList(),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(_selectedGroup, style: TextStyle(color: Colors.grey.shade700)),
-                        const SizedBox(width: 6),
-                        Icon(Icons.keyboard_arrow_down, size: 18, color: Colors.grey.shade600),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
                       ],
                     ),
                   ),
                 ),
-                const SizedBox(height: 8),
                 // Forzar Expanded y asegurar que la lista ocupa todo el espacio disponible
                 Expanded(
                   child: LayoutBuilder(
@@ -559,6 +631,7 @@ class _HomePageState extends State<HomePage> {
                                 settings: widget.settings,
                                 items: _currentItems,
                                 onRefresh: _onRefreshFromPull,
+                                scrollController: _listScrollController,
                               ),
                             ),
                           ),
@@ -570,7 +643,8 @@ class _HomePageState extends State<HomePage> {
                           searchQuery: _searchQuery,
                           settings: widget.settings,
                           items: _currentItems,
-                            onRefresh: _onRefreshFromPull,
+                          onRefresh: _onRefreshFromPull,
+                          scrollController: _listScrollController,
                         ),
                       );
                     },
@@ -686,8 +760,9 @@ class _AccountList extends StatelessWidget {
   final SettingsService settings;
   final List<AccountEntry> items;
   final Future<void> Function()? onRefresh;
+  final ScrollController? scrollController;
 
-  const _AccountList({required this.selectedGroup, required this.searchQuery, required this.settings, required this.items, this.onRefresh});
+  const _AccountList({required this.selectedGroup, required this.searchQuery, required this.settings, required this.items, this.onRefresh, this.scrollController});
 
   @override
   Widget build(BuildContext context) {
@@ -703,6 +778,7 @@ class _AccountList extends StatelessWidget {
       return RefreshIndicator(
         onRefresh: handleRefresh,
         child: ListView(
+          controller: scrollController,
           physics: const AlwaysScrollableScrollPhysics(),
           children: const [
             SizedBox(height: 120),
@@ -730,6 +806,7 @@ class _AccountList extends StatelessWidget {
       return RefreshIndicator(
         onRefresh: handleRefresh,
         child: ListView(
+          controller: scrollController,
           physics: const AlwaysScrollableScrollPhysics(),
           children: const [
             SizedBox(height: 120),
@@ -753,6 +830,7 @@ class _AccountList extends StatelessWidget {
       return RefreshIndicator(
         onRefresh: handleRefresh,
         child: ListView.separated(
+          controller: scrollController,
           physics: const AlwaysScrollableScrollPhysics(),
           itemCount: filtered.length,
           separatorBuilder: (context, index) => Divider(indent: 20, endIndent: 20,),
@@ -778,7 +856,8 @@ class _AccountList extends StatelessWidget {
     return RefreshIndicator(
       onRefresh: handleRefresh,
       child: GridView.builder(
-        physics: const AlwaysScrollableScrollPhysics(),
+  controller: scrollController,
+  physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: columns,

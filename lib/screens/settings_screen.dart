@@ -111,6 +111,14 @@ class SettingsScreen extends StatelessWidget {
                     ),
                   ],
                 ),
+                const SizedBox(height: 6),
+                Padding(
+                  padding: const EdgeInsets.only(left: 56.0),
+                  child: Text(
+                    'Long-press an OTP on the Home screen to reveal it for 10 seconds.',
+                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                ),
               ],
             );
           },

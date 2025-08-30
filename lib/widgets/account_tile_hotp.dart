@@ -196,27 +196,34 @@ class _AccountTileHOTPState extends State<AccountTileHOTP> {
                             ? AnimatedBuilder(
                                 animation: settings!,
                                 builder: (context, _) {
-                                  return GestureDetector(
-                                    onTap: () => _copyToClipboard(_otpService.hotpCode ?? ''),
-                                    onLongPress: () {
-                                      if (settings?.hideOtps == true) {
-                                        setState(() { _reveal = true; });
-                                        _revealTimer?.cancel();
-                                        _revealTimer = Timer(const Duration(seconds: 10), () {
-                                          if (mounted) setState(() { _reveal = false; });
-                                        });
-                                      }
-                                    },
-                                    child: Text(
-                                      AccountTileUtils.formatCode(
-                                          _otpService.hotpCode ?? '',
-                                          settings, forceVisible: _reveal),
-                                      style: const TextStyle(
-                                        fontSize: 24,
-                                        fontWeight: FontWeight.w700,
+                                  return Material(
+                                    color: Colors.transparent,
+                                    child: InkWell(
+                                      borderRadius: BorderRadius.zero,
+                                      onTap: () => _copyToClipboard(_otpService.hotpCode ?? ''),
+                                      onLongPress: () {
+                                        if (settings?.hideOtps == true) {
+                                          setState(() { _reveal = true; });
+                                          _revealTimer?.cancel();
+                                          _revealTimer = Timer(const Duration(seconds: 10), () {
+                                            if (mounted) setState(() { _reveal = false; });
+                                          });
+                                        }
+                                      },
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(vertical: 0.0, horizontal: 2.0),
+                                        child: Text(
+                                          AccountTileUtils.formatCode(
+                                              _otpService.hotpCode ?? '',
+                                              settings, forceVisible: _reveal),
+                                          style: const TextStyle(
+                                            fontSize: 24,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.visible,
+                                        ),
                                       ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.visible,
                                     ),
                                   );
                                 },

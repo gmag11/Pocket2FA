@@ -107,7 +107,7 @@ class _AccountTileHOTPState extends State<AccountTileHOTP> {
   @override
   Widget build(BuildContext context) {
     final color = AccountTileUtils.getServiceColor(widget.item.service);
-    
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final screenWidth = MediaQuery.of(context).size.width;
@@ -116,39 +116,129 @@ class _AccountTileHOTPState extends State<AccountTileHOTP> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const SizedBox(width: 12),
-              // Service and account column with new layout
+              // Columna izquierda: Avatar + Nombre servicio + Usuario
               Expanded(
                 child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      vertical: 6.0, horizontal: 4.0),
+                  padding: const EdgeInsets.symmetric(vertical: 6.0),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // First row: Avatar and Service
-                      AccountTileUi.buildServiceInfoRow(widget.item, color),
+                      // Primera fila: Avatar y Nombre del servicio
+                      Row(
+                        children: [
+                          const SizedBox(width: 10),
+                          AccountTileUi.buildServiceAvatar(widget.item, color),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              widget.item.service,
+                              style: const TextStyle(
+                                  fontSize: 24, fontWeight: FontWeight.w400),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
                       const SizedBox(height: 4),
-                      // Second row: Account
-                      AccountTileUi.buildAccountInfoRow(widget.item),
+                      // Segunda fila: Usuario de la cuenta
+                      Padding(
+                        padding: const EdgeInsets.only(left: 12.0),
+                        child: Text(
+                          widget.item.account,
+                          style: TextStyle(
+                              fontSize: 14, color: Colors.grey.shade600),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
                     ],
                   ),
                 ),
               ),
 
-              // HOTP rendering: either button or display
+              // Columna derecha: Estados HOTP (ocupa espacio mínimo)
               (() {
                 if (_otpService.hotpCode == null) {
-                  return AccountTileUi.buildHotpButton(_otpService.requestHotp);
+                  // Estado 1: Botón "Generate" centrado verticalmente
+                  return Container(
+                    padding: const EdgeInsets.only(right: 12.0),
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 180),
+                        child: ElevatedButton(
+                          onPressed: _otpService.requestHotp,
+                          style: ElevatedButton.styleFrom(
+                              minimumSize: const Size(0, 36)),
+                          child: const Text('Generate'),
+                        ),
+                      ),
+                    ),
+                  );
                 }
 
-                // When a HOTP has been requested, display it using the same
-                // styling and positioning as the main OTP code for consistency.
-                return AccountTileUi.buildHotpDisplay(
-                  hotpCode: _otpService.hotpCode,
-                  hotpCounter: _otpService.hotpCounter,
-                  settings: settings,
-                  onCopy: () => _copyToClipboard(_otpService.hotpCode ?? ''),
+                // Estado 2: OTP + Contador
+                return Container(
+                  padding: const EdgeInsets.only(right: 12.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // OTP alineado a la derecha, sin recorte
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: settings != null
+                            ? AnimatedBuilder(
+                                animation: settings!,
+                                builder: (context, _) {
+                                  return InkWell(
+                                    onTap: () => _copyToClipboard(
+                                        _otpService.hotpCode ?? ''),
+                                    child: Text(
+                                      AccountTileUtils.formatCode(
+                                          _otpService.hotpCode ?? '',
+                                          settings),
+                                      style: const TextStyle(
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.visible,
+                                    ),
+                                  );
+                                },
+                              )
+                            : InkWell(
+                                onTap: () => _copyToClipboard(
+                                    _otpService.hotpCode ?? ''),
+                                child: Text(
+                                  AccountTileUtils.formatCode(
+                                      _otpService.hotpCode ?? '', null),
+                                  style: const TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.visible,
+                                ),
+                              ),
+                      ),
+                      const SizedBox(height: 4),
+                      // Contador centrado horizontalmente
+                      if (_otpService.hotpCounter != null)
+                        Align(
+                          alignment: Alignment.center,
+                          child: Text(
+                            'counter ${_otpService.hotpCounter}',
+                            style: TextStyle(
+                                fontSize: 12, color: Colors.grey.shade500),
+                            maxLines: 1,
+                            overflow: TextOverflow.visible,
+                          ),
+                        ),
+                    ],
+                  ),
                 );
               }()),
             ],

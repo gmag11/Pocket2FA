@@ -971,7 +971,45 @@ class _BottomBar extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               OutlinedButton(
-                onPressed: () {}, // active but no-op for now
+                onPressed: () async {
+                  final messenger = ScaffoldMessenger.of(context);
+
+                  if (servers.isEmpty) {
+                    messenger.showSnackBar(const SnackBar(
+                      content: Text('No hay servidores configurados'),
+                    ));
+                    return;
+                  }
+
+                  final srv = selectedServerId != null
+                      ? servers.firstWhere((s) => s.id == selectedServerId, orElse: () => servers.first)
+                      : servers.first;
+
+                  final urlStr = srv.url.trim();
+                  final parsed = Uri.tryParse(urlStr);
+                  if (parsed == null || parsed.scheme.isEmpty || !(parsed.scheme == 'http' || parsed.scheme == 'https') || parsed.host.isEmpty) {
+                    messenger.showSnackBar(const SnackBar(
+                      content: Text('URL del servidor inválida (falta http/https)'),
+                    ));
+                    return;
+                  }
+
+                  // Launch base server url in external browser
+                  final trimmed = urlStr.endsWith('/') ? urlStr.substring(0, urlStr.length - 1) : urlStr;
+                  final uri = Uri.parse(trimmed);
+                  try {
+                    if (await canLaunchUrl(uri)) {
+                      await launchUrl(uri, mode: LaunchMode.externalApplication);
+                    } else {
+                      await launchUrl(uri);
+                    }
+                  } catch (e) {
+                    developer.log('HomePage: cannot launch $uri: $e', name: 'HomePage');
+                    messenger.showSnackBar(SnackBar(
+                      content: Text('No se pudo abrir la URL: $e'),
+                    ));
+                  }
+                },
                 style: OutlinedButton.styleFrom(
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                 ),

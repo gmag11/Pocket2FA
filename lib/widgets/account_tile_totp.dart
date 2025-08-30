@@ -274,13 +274,16 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
                                   : 1.0;
                               return Opacity(
                                 opacity: opacity,
-                                child: Text(
-                                  AccountTileUtils.formatCode(
-                                      _otpService.nextCode, settings),
-                                  style: TextStyle(
-                                      fontSize: 12, color: Colors.black),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.visible,
+                                child: InkWell(
+                                  onTap: () => _copyToClipboard(_otpService.nextCode),
+                                  child: Text(
+                                    AccountTileUtils.formatCode(
+                                        _otpService.nextCode, settings),
+                                    style: TextStyle(
+                                        fontSize: 14, color: Colors.black),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.visible,
+                                  ),
                                 ),
                               );
                             },

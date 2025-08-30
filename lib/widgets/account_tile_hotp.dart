@@ -232,7 +232,7 @@ class _AccountTileHOTPState extends State<AccountTileHOTP> {
                           child: Text(
                             'counter ${_otpService.hotpCounter}',
                             style: TextStyle(
-                                fontSize: 12, color: Colors.grey.shade500),
+                                fontSize: 14, color: Colors.grey.shade500),
                             maxLines: 1,
                             overflow: TextOverflow.visible,
                           ),

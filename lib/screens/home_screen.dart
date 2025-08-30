@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:developer' as developer;
+import 'package:url_launcher/url_launcher.dart';
 import '../widgets/account_tile.dart';
 import '../services/settings_service.dart';
 import 'settings_screen.dart';
@@ -919,7 +920,48 @@ class _BottomBar extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               ElevatedButton.icon(
-                onPressed: () {}, // active but no-op for now
+                onPressed: () async {
+                  final messenger = ScaffoldMessenger.of(context);
+                  // Validate servers exist
+                  if (servers.isEmpty) {
+                    messenger.showSnackBar(const SnackBar(
+                      content: Text('No hay servidores configurados'),
+                    ));
+                    return;
+                  }
+
+                  // Select active server
+                  final srv = selectedServerId != null
+                      ? servers.firstWhere((s) => s.id == selectedServerId, orElse: () => servers.first)
+                      : servers.first;
+
+                  final urlStr = srv.url.trim();
+                  final parsed = Uri.tryParse(urlStr);
+
+                  // Validate that the URL has an http/https scheme and a host
+                  if (parsed == null || parsed.scheme.isEmpty || !(parsed.scheme == 'http' || parsed.scheme == 'https') || parsed.host.isEmpty) {
+                    messenger.showSnackBar(const SnackBar(
+                      content: Text('URL del servidor inválida (falta http/https)'),
+                    ));
+                    return;
+                  }
+
+                  // Build /start URI and launch externally
+                  final trimmed = urlStr.endsWith('/') ? urlStr.substring(0, urlStr.length - 1) : urlStr;
+                  final uri = Uri.parse('$trimmed/start');
+                  try {
+                    if (await canLaunchUrl(uri)) {
+                      await launchUrl(uri, mode: LaunchMode.externalApplication);
+                    } else {
+                      await launchUrl(uri);
+                    }
+                  } catch (e) {
+                    developer.log('HomePage: cannot launch $uri: $e', name: 'HomePage');
+                    messenger.showSnackBar(SnackBar(
+                      content: Text('No se pudo abrir la URL: $e'),
+                    ));
+                  }
+                },
                 icon: const Icon(Icons.qr_code, color: Colors.white),
                 style: ElevatedButton.styleFrom(
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),

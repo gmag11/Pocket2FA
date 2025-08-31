@@ -23,6 +23,15 @@ android {
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
+    // Load keystore properties if present
+    val keystoreProperties = Properties().apply {
+        // IMPORTANT: resolve relative to the :app module directory
+        val keystoreFile = file("../key.properties")
+        if (keystoreFile.exists()) {
+            keystoreFile.inputStream().use { this.load(it) }
+        }
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11

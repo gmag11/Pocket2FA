@@ -5,9 +5,9 @@ import '../models/account_entry.dart';
 import '../services/settings_service.dart';
 import 'account_tile_utils.dart';
 
-/// Componentes UI reutilizables para AccountTile
+/// Reusable UI components for AccountTile
 class AccountTileUi {
-  /// Construye el avatar del servicio
+  /// Builds the service avatar
   static Widget buildServiceAvatar(AccountEntry item, Color color) {
     const double radius = 14.0;
 
@@ -61,7 +61,7 @@ class AccountTileUi {
     return fallbackAvatar();
   }
 
-  /// Construye la fila de información del servicio
+  /// Builds the service info row
   static Widget buildServiceInfoRow(AccountEntry item, Color color) {
     return Row(
       children: [
@@ -79,7 +79,7 @@ class AccountTileUi {
     );
   }
 
-  /// Construye la fila de información de la cuenta
+  /// Builds the account info row
   static Widget buildAccountInfoRow(AccountEntry item) {
     return Padding(
       padding: const EdgeInsets.only(left: 10.0),
@@ -92,7 +92,7 @@ class AccountTileUi {
     );
   }
 
-  /// Construye el botón de generación HOTP
+  /// Builds the HOTP generation button
   static Widget buildHotpButton(VoidCallback onPressed) {
     return Expanded(
       child: Align(
@@ -112,7 +112,7 @@ class AccountTileUi {
     );
   }
 
-  /// Construye el display HOTP
+  /// Builds the HOTP display
   static Widget buildHotpDisplay({
     required String? hotpCode,
     required int? hotpCounter,
@@ -175,7 +175,7 @@ class AccountTileUi {
     );
   }
 
-  /// Construye los puntos de progreso de tiempo
+  /// Builds the time progress dots
   static Widget buildProgressDots(AnimationController? animController) {
     const int dotsCount = 10;
     const double dotSize = 5.0;

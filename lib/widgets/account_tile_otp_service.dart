@@ -5,7 +5,7 @@ import '../services/api_service.dart';
 import '../models/account_entry.dart';
 import '../services/settings_service.dart';
 
-/// Maneja la lógica de generación y refresco de códigos OTP para AccountTile
+/// Manages generation and refresh logic for OTP codes used by AccountTile
 class AccountTileOtpService {
   final AccountEntry account;
   final SettingsService? settings;
@@ -24,28 +24,28 @@ class AccountTileOtpService {
     this.startAnimationCallback,
   });
 
-  /// Código actual OTP
+  /// Current OTP code
   String currentCode = '------';
 
-  /// Código siguiente OTP
+  /// Next OTP code
   String nextCode = '------';
 
-  /// Código HOTP transitorio
+  /// Transient HOTP code
   String? get hotpCode => _hotpCode;
 
-  /// Contador HOTP
+  /// HOTP counter
   int? get hotpCounter => _hotpCounter;
 
-  /// Cancela todos los timers
+  /// Cancels all timers
   void dispose() {
     _timer?.cancel();
     _hotpTimer?.cancel();
   }
 
-  /// Refresca los códigos OTP y programa el próximo refresco
+  /// Refreshes OTP codes and schedules the next refresh
   Future<void> refreshCodes() async {
-    // compute current and next codes, then schedule next refresh at the
-    // period boundary using AccountEntry.period (seconds).
+  // Compute current and next codes, then schedule next refresh at the
+  // period boundary using AccountEntry.period (seconds).
     final acct = account;
     final type = (acct.otpType ?? 'totp').toLowerCase();
 
@@ -54,8 +54,8 @@ class AccountTileOtpService {
     _timer = null;
 
     if (type == 'steamtotp') {
-      // Generate Steam TOTP locally (no network). Use the same generateOtp
-      // helper that handles 'steamtotp' via OtpService.
+  // Generate Steam TOTP locally (no network). Use the same generateOtp
+  // helper that handles 'steamtotp' via OtpService.
       final c = OtpService.generateOtp(acct,
           timeOffsetSeconds: 0, storage: settings?.storage);
       final period = acct.period ?? 30;
@@ -87,7 +87,7 @@ class AccountTileOtpService {
       return;
     }
 
-    // current (non-STEAM)
+  // current (non-STEAM)
     final c = OtpService.generateOtp(acct,
         timeOffsetSeconds: 0, storage: settings?.storage);
     // next period: use period or default 30
@@ -99,8 +99,8 @@ class AccountTileOtpService {
     nextCode = n;
     refreshUi();
 
-    // Schedule next refresh at the period boundary. Use milliseconds to avoid
-    // drift. Add a small epsilon to ensure the code has actually advanced.
+  // Schedule next refresh at the period boundary. Use milliseconds to avoid
+  // drift. Add a small epsilon to ensure the code has actually advanced.
     try {
       final periodSec =
           (acct.period != null && acct.period! > 0) ? acct.period! : 30;
@@ -121,7 +121,7 @@ class AccountTileOtpService {
     }
   }
 
-  /// Solicita un código HOTP
+  /// Requests a HOTP code from the server
   Future<void> requestHotp() async {
     try {
       final resp = await ApiService.instance.fetchAccountOtp(account.id);
@@ -143,7 +143,7 @@ class AccountTileOtpService {
         refreshUi();
       });
     } catch (_) {
-      // On error, show 'offline' in the HOTP display area (transient)
+  // On error, show 'offline' in the HOTP display area (transient)
       _hotpCode = 'offline';
       _hotpCounter = null;
       refreshUi();

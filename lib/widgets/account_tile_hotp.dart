@@ -32,7 +32,7 @@ class _AccountTileHOTPState extends State<AccountTileHOTP> {
       refreshUi: () {
         if (mounted) setState(() {});
       },
-      // HOTP no necesita animaciones
+          // HOTP does not require animations
       startAnimationCallback: null,
     );
     _otpService.refreshCodes();
@@ -120,7 +120,7 @@ class _AccountTileHOTPState extends State<AccountTileHOTP> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Columna izquierda: Avatar + Nombre servicio + Usuario
+              // Left column: Avatar + Service name + Account user
               Expanded(
                 child: Container(
                   padding: const EdgeInsets.symmetric(vertical: 6.0),
@@ -128,7 +128,7 @@ class _AccountTileHOTPState extends State<AccountTileHOTP> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Primera fila: Avatar y Nombre del servicio
+                      // First row: Avatar and service name
                       Row(
                         children: [
                           const SizedBox(width: 10),
@@ -146,7 +146,7 @@ class _AccountTileHOTPState extends State<AccountTileHOTP> {
                         ],
                       ),
                       const SizedBox(height: 4),
-                      // Segunda fila: Usuario de la cuenta
+                      // Second row: Account username
                       Padding(
                         padding: const EdgeInsets.only(left: 12.0),
                         child: Text(
@@ -162,10 +162,10 @@ class _AccountTileHOTPState extends State<AccountTileHOTP> {
                 ),
               ),
 
-              // Columna derecha: Estados HOTP (ocupa espacio mínimo)
+              // Right column: HOTP states (takes minimal space)
               (() {
                 if (_otpService.hotpCode == null) {
-                  // Estado 1: Botón "Generate" centrado verticalmente
+                  // State 1: "Generate" button centered vertically
                   return Container(
                     padding: const EdgeInsets.only(right: 12.0),
                     child: Center(
@@ -182,14 +182,14 @@ class _AccountTileHOTPState extends State<AccountTileHOTP> {
                   );
                 }
 
-                // Estado 2: OTP + Contador
+                // State 2: OTP + Counter
                 return Container(
                   padding: const EdgeInsets.only(right: 12.0),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // OTP alineado a la derecha, sin recorte
+                      // OTP right-aligned, no clipping
                       Align(
                         alignment: Alignment.centerRight,
                           child: settings != null
@@ -244,7 +244,7 @@ class _AccountTileHOTPState extends State<AccountTileHOTP> {
                               ),
                       ),
                       const SizedBox(height: 4),
-                      // Contador centrado horizontalmente
+                      // Counter centered horizontally
                       if (_otpService.hotpCounter != null)
                         Align(
                           alignment: Alignment.center,

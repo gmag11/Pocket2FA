@@ -27,8 +27,8 @@ Future<void> _launchExternal(Uri uri, ScaffoldMessengerState messenger) async {
     }
   } catch (e) {
     developer.log('HomePage: cannot launch $uri: $e', name: 'HomePage');
-    messenger.showSnackBar(SnackBar(
-      content: Text('No se pudo abrir la URL: $e'),
+        messenger.showSnackBar(SnackBar(
+          content: Text('Could not open URL: $e'),
     ));
   }
 }
@@ -519,9 +519,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
   final groups = _groups();
     // If storage exists but is locked (biometric required and not yet satisfied),
-    // show a minimal screen with a single centered 'Retry' button so the user
-    // can re-attempt authentication. This prevents the home UI from being
-    // visible while the local store is locked.
+  // If storage exists but is locked (biometric required and not yet satisfied),
+  // show a minimal screen with a single centered 'Retry' button so the user
+  // can re-attempt authentication. This prevents the home UI from being
+  // visible while the local store is locked.
     final storage = widget.settings.storage;
   if (storage != null && !storage.isUnlocked) {
       return Scaffold(
@@ -957,7 +958,7 @@ class _BottomBar extends StatelessWidget {
                   // Validate servers exist
                   if (servers.isEmpty) {
                     messenger.showSnackBar(const SnackBar(
-                      content: Text('No hay servidores configurados'),
+                      content: Text('No servers configured'),
                     ));
                     return;
                   }
@@ -973,7 +974,7 @@ class _BottomBar extends StatelessWidget {
                   // Validate that the URL has an http/https scheme and a host
                   if (parsed == null || parsed.scheme.isEmpty || !(parsed.scheme == 'http' || parsed.scheme == 'https') || parsed.host.isEmpty) {
                     messenger.showSnackBar(const SnackBar(
-                      content: Text('URL del servidor inválida (falta http/https)'),
+                      content: Text('Invalid server URL (missing http/https)'),
                     ));
                     return;
                   }
@@ -997,7 +998,7 @@ class _BottomBar extends StatelessWidget {
 
                   if (servers.isEmpty) {
                     messenger.showSnackBar(const SnackBar(
-                      content: Text('No hay servidores configurados'),
+                      content: Text('No servers configured'),
                     ));
                     return;
                   }
@@ -1010,7 +1011,7 @@ class _BottomBar extends StatelessWidget {
                   final parsed = Uri.tryParse(urlStr);
                   if (parsed == null || parsed.scheme.isEmpty || !(parsed.scheme == 'http' || parsed.scheme == 'https') || parsed.host.isEmpty) {
                     messenger.showSnackBar(const SnackBar(
-                      content: Text('URL del servidor inválida (falta http/https)'),
+                      content: Text('Invalid server URL (missing http/https)'),
                     ));
                     return;
                   }

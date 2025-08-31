@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import '../services/settings_service.dart';
 
-/// Utilidades y helpers para AccountTile
+/// Utilities and helpers for AccountTile
 class AccountTileUtils {
-  /// Formatea un código según la configuración
+  /// Formats a code according to settings
   static String formatCode(String code, SettingsService? settings, {bool forceVisible = false}) {
-    // Si el tile muestra un indicador offline, devolverlo literalmente para que
-    // no se agrupe/espacie como OTPs numéricos (arregla "off lin e").
+  // If the tile shows an 'offline' indicator, return it as-is so it
+  // is not grouped/spaced like numeric OTPs (fixes "off lin e").
     if (code.toLowerCase() == 'offline') return code;
 
     final digits = code.replaceAll(RegExp(r'\s+'), '');
-    // Si el formato está deshabilitado, siempre devolver dígitos compactos
+  // If formatting is disabled, always return compact digits
     if (settings != null && settings.enabled == false) return digits;
 
     final fmt = settings?.format ?? CodeFormat.compact;
@@ -36,7 +36,7 @@ class AccountTileUtils {
     return result;
   }
 
-  /// Agrupa una cadena según los patrones especificados
+  /// Groups a string according to the specified patterns
   static String _group(String s, List<int> groups) {
     final parts = <String>[];
     var i = 0;
@@ -49,7 +49,7 @@ class AccountTileUtils {
     return parts.join(' ');
   }
 
-  /// Obtiene un color basado en el nombre del servicio
+  /// Returns a color based on the service name
   static Color getServiceColor(String serviceName) {
     final index = serviceName.length % Colors.primaries.length;
     return Colors.primaries[index];

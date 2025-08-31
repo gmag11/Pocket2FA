@@ -4,11 +4,11 @@ import 'dart:typed_data';
 import 'dart:developer' as developer;
 import '../models/server_connection.dart';
 
-/// Servicio centralizado para llamadas a la API de 2fauth.
+/// Centralized service for 2fauth API calls.
 ///
-/// - Mantiene una única instancia activa de `Dio`.
-/// - Use `setServer` para configurar el servidor (base URL y Authorization).
-/// - Provee métodos HTTP privados convenientes: `_get`/`_post`/`_put`/`_delete`.
+/// - Keeps a single active `Dio` instance.
+/// - Call `setServer` to configure the server (base URL and Authorization).
+/// - Provides convenient private HTTP helpers: `_get`/`_post`/`_put`/`_delete`.
 ///
 /// Ejemplo de uso:
 ///
@@ -26,18 +26,18 @@ class ApiService {
   Dio? _dio;
   ServerConnection? _server;
 
-  /// Tiempo por defecto para conexiones y recepción.
-  /// Se usan Durations porque Dio 5.x los acepta.
+  /// Default timeouts for connect and receive.
+  /// Durations are used because Dio 5.x accepts them.
   static const Duration _connectTimeout = Duration(seconds: 10);
   static const Duration _receiveTimeout = Duration(seconds: 20);
 
-  /// Indica si hay una conexión activa configurada.
+  /// Indicates whether a server connection is configured.
   bool get isReady => _dio != null && _server != null;
 
-  /// Configura el servidor y (re)crea la instancia de Dio.
+  /// Configure the server and (re)create the Dio instance.
   ///
-  /// Cierra/limpia la instancia anterior si existía.
-  /// La [server.url] se limpia sólo de barras finales, no se toca scheme ni path.
+  /// Closes/cleans the previous instance if present.
+  /// The [server.url] is trimmed of trailing slashes only; scheme and path are preserved.
   void setServer(ServerConnection server, {bool enableLogging = true}) {
     // Compare with previous server (do not log the API key value)
     final prev = _server;
@@ -121,7 +121,7 @@ class ApiService {
             'id=${server.id} name=${server.name} base=$base authorization=${server.apiKey.isNotEmpty ? 'present' : 'absent'}');
   }
 
-  /// Cierra la conexión activa y limpia el estado.
+  /// Closes the active connection and clears state.
   void close() {
     developer.log('ApiService: close() called', name: 'ApiService');
     if (_dio != null) {
@@ -133,8 +133,8 @@ class ApiService {
     _server = null;
   }
 
-  /// Añade un interceptor a la instancia activa.
-  /// Lanza [StateError] si no hay servidor configurado.
+  /// Adds an interceptor to the active instance.
+  /// Throws [StateError] if no server is configured.
   void addInterceptor(Interceptor interceptor) {
     _ensureReady();
     _dio!.interceptors.add(interceptor);
@@ -146,8 +146,8 @@ class ApiService {
     return _dio!.interceptors;
   }
 
-  /// GET request (método privado).
-  /// El caller externo debe implementar wrappers públicos si lo desea.
+  /// GET request (private method).
+  /// External callers should implement public wrappers if desired.
   // ignore: unused_element
   Future<Response<T>> _get<T>(
     String path, {
@@ -163,7 +163,7 @@ class ApiService {
         cancelToken: cancelToken);
   }
 
-  /// POST request (método privado).
+  /// POST request (private method).
   // ignore: unused_element
   Future<Response<T>> _post<T>(
     String path, {
@@ -181,7 +181,7 @@ class ApiService {
         cancelToken: cancelToken);
   }
 
-  /// PUT request (método privado).
+  /// PUT request (private method).
   // ignore: unused_element
   Future<Response<T>> _put<T>(
     String path, {
@@ -199,7 +199,7 @@ class ApiService {
         cancelToken: cancelToken);
   }
 
-  /// DELETE request (método privado).
+  /// DELETE request (private method).
   // ignore: unused_element
   Future<Response<T>> _delete<T>(
     String path, {
@@ -217,7 +217,7 @@ class ApiService {
         cancelToken: cancelToken);
   }
 
-  /// Devuelve la instancia Dio (para usos avanzados). Lanza si no está lista.
+  /// Returns the Dio instance (for advanced uses). Throws if not ready.
   Dio get dio {
     _ensureReady();
     return _dio!;
@@ -228,7 +228,7 @@ class ApiService {
   void _ensureReady() {
     if (_dio == null || _server == null) {
       throw StateError(
-          'ApiService: servidor no configurado. Llama a setServer(...) antes de hacer peticiones.');
+          'ApiService: server not configured. Call setServer(...) before making requests.');
     }
   }
 
@@ -248,7 +248,7 @@ class ApiService {
     // and keep the path part relative to base. Simpler: disallow absolute full URLs to avoid surprises.
     if (p.startsWith('http://') || p.startsWith('https://')) {
       throw ArgumentError(
-          'Las rutas deben ser relativas al base (/api/v1/). Pasa solo el path relativo, p.ej. "accounts" o "accounts/1".');
+          'Paths must be relative to the base (/api/v1/). Pass only the relative path, e.g. "accounts" or "accounts/1".');
     }
     // remove leading slashes so baseUrl + path concatenation works as intended
     while (p.startsWith('/')) {
@@ -257,15 +257,14 @@ class ApiService {
     return p;
   }
 
-  /// Valida un servidor (GET /api/v1/user) usando los datos del [server] pasado.
+  /// Validate a server (GET /api/v1/user) using the provided [server] data.
   ///
-  /// Este método no requiere que `setServer` haya sido llamado; crea una
-  /// instancia temporal de Dio con timeouts cortos para validar la conexión y
-  /// devolverá el body decodificado como Map&lt;String, dynamic&gt; cuando el
-  /// endpoint responda con 200.
+  /// This method does not require `setServer` to have been called; it creates a
+  /// temporary Dio instance with short timeouts to validate connectivity and
+  /// returns the decoded body as Map<String, dynamic> when the endpoint responds with 200.
   ///
-  /// Lanza [DioException] para errores de conexión/respuesta y [StateError]
-  /// para respuestas inesperadas.
+  /// Throws [DioException] for connection/response errors and [StateError]
+  /// for unexpected responses.
   Future<Map<String, dynamic>> validateServer(ServerConnection server,
       {Duration connectTimeout = const Duration(seconds: 6),
       Duration receiveTimeout = const Duration(seconds: 6)}) async {
@@ -311,7 +310,7 @@ class ApiService {
   Future<Map<String, dynamic>> fetchAccountOtp(int accountId,
       {CancelToken? cancelToken}) async {
     _ensureReady();
-    if (accountId <= 0) throw ArgumentError('accountId debe ser mayor que 0');
+  if (accountId <= 0) throw ArgumentError('accountId must be greater than 0');
     final path = 'twofaccounts/$accountId/otp';
     final resp = await _dio!.get(path, cancelToken: cancelToken);
     if (resp.statusCode == 200 && resp.data != null) {

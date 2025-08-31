@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 
-/// Maneja la lógica de animaciones para AccountTile
+/// Handles animation logic for AccountTile
 class AccountTileAnimations {
   AnimationController? _animController;
   final TickerProvider vsync;
 
   AccountTileAnimations({required this.vsync});
 
-  /// Detiene y elimina la animación actual
+  /// Stops and disposes the current animation
   void stopAnimation() {
     try {
       _animController?.stop();
@@ -18,7 +18,7 @@ class AccountTileAnimations {
     _animController = null;
   }
 
-  /// Inicia la animación para un período específico
+  /// Starts the animation for a specific period
   void startAnimation(int periodSec) {
     final periodMs = (periodSec > 0 ? periodSec : 30) * 1000;
     final nowMs = DateTime.now().toUtc().millisecondsSinceEpoch;
@@ -27,7 +27,7 @@ class AccountTileAnimations {
     if (progress < 0) progress = 0;
     if (progress > 1) progress = 0;
 
-    // Recrear controller para reflejar posibles cambios de período
+  // Recreate controller to reflect possible period changes
     try {
       _animController?.dispose();
     } catch (_) {}
@@ -62,10 +62,10 @@ class AccountTileAnimations {
     }
   }
 
-  /// Obtiene el controlador de animación
+  /// Returns the animation controller
   AnimationController? get animController => _animController;
 
-  /// Elimina los recursos de animación
+  /// Disposes animation resources
   void dispose() {
     stopAnimation();
   }

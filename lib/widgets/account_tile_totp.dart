@@ -165,7 +165,7 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Fila superior: Avatar + Nombre servicio + Código OTP
+                              // Top row: Avatar + Service name + OTP code
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
@@ -179,7 +179,7 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
                     ),
                     const SizedBox(width: 8),
                     
-                    // Nombre del servicio (ancho flexible, recorte permitido, máximo espacio)
+                    // Service name (flexible width, allow ellipsis)
                     Expanded(
                       child: borderWrap(
                         Text(
@@ -193,7 +193,7 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
                       ),
                     ),
 
-                    // Código OTP (ocupa espacio necesario, sin recorte, alineado derecha)
+                    // OTP code (takes needed space, no clipping, right aligned)
                     borderWrap(
                       Padding(
                         padding: const EdgeInsets.only(right: 12.0),
@@ -259,11 +259,11 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
 
                 const SizedBox(height: 6),
 
-                // Fila inferior: Usuario + Next OTP + Línea de puntos
+                // Bottom row: Account user + Next OTP + Progress dots
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    // Usuario de la cuenta (ancho flexible, recorte permitido, alineado izquierda)
+                    // Account username (flexible width, allow ellipsis, left aligned)
                     Expanded(
                       child: borderWrap(
                         Padding(
@@ -281,7 +281,7 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
                       ),
                     ),
 
-                    // Next OTP (ocupa espacio necesario, sin recorte, alineado derecha)
+                    // Next OTP (takes needed space, no clipping, right aligned)
                     borderWrap(
                       IntrinsicWidth(
                         child: Align(
@@ -332,7 +332,7 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
 
                     const SizedBox(width: 12),
 
-                    // Línea de puntos (ancho fijo, alineado derecha) — add right padding
+                    // Progress dots (fixed width, right aligned) — add right padding
                     borderWrap(
                       Padding(
                         padding: const EdgeInsets.only(right: 12.0),

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'advanced_form_screen.dart';
 
 class NewCodeScreen extends StatelessWidget {
   final String userEmail;
   final String serverHost;
+  final List<dynamic>? groups; // GroupEntry-like maps may be passed from storage
 
-  const NewCodeScreen({Key? key, required this.userEmail, required this.serverHost}) : super(key: key);
+  const NewCodeScreen({Key? key, required this.userEmail, required this.serverHost, this.groups}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +43,9 @@ class NewCodeScreen extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             ElevatedButton.icon(
-              onPressed: () {},
+              onPressed: () {
+                Navigator.of(context).push(MaterialPageRoute(builder: (c) => AdvancedFormScreen(userEmail: userEmail, serverHost: serverHost)));
+              },
               icon: const Icon(Icons.edit),
               label: const Text('Use the advanced form'),
             ),

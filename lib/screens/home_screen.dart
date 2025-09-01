@@ -967,16 +967,16 @@ class _BottomBar extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               ElevatedButton.icon(
-                onPressed: () async {
-                  // Open the new code screen. Actions inside are not implemented yet.
-          // Compute display values to pass to the new screen
-          final srv = selectedServerId != null
-            ? servers.firstWhere((s) => s.id == selectedServerId, orElse: () => servers.first)
-            : servers.first;
-          final acct = (srv.userEmail.isNotEmpty) ? srv.userEmail : 'no email';
-          final host = Uri.parse(srv.url).host;
-          Navigator.of(context).push(MaterialPageRoute(builder: (c) => NewCodeScreen(userEmail: acct, serverHost: host)));
-                },
+                    onPressed: () async {
+                      // Open the new code screen. Actions inside are not implemented yet.
+                      // Compute display values to pass to the new screen
+                      final srv = selectedServerId != null
+                        ? servers.firstWhere((s) => s.id == selectedServerId, orElse: () => servers.first)
+                        : servers.first;
+                      final acct = (srv.userEmail.isNotEmpty) ? srv.userEmail : 'no email';
+                      final host = Uri.parse(srv.url).host;
+                      Navigator.of(context).push(MaterialPageRoute(builder: (c) => NewCodeScreen(userEmail: acct, serverHost: host, groups: srv.groups)));
+                    },
                 icon: const Icon(Icons.qr_code, color: Colors.white),
                 style: ElevatedButton.styleFrom(
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),

@@ -1,7 +1,7 @@
 ; Inno Setup script for 2FAuth
 [Setup]
 AppName=2FAuth
-AppVersion=0.5.2
+AppVersion=0.5.3
 DefaultDirName={autopf}\2FAuth
 DefaultGroupName=2FAuth
 OutputBaseFilename=2FAuth_Installer

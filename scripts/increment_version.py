@@ -93,6 +93,36 @@ def increment_version_code_in_gradle(path: str) -> Tuple[int, str]:
     return current_code, new_code
 
 
+def update_iss_version(path: str, new_version: str) -> bool:
+    """If present, update windows/installer/TwoFactorAuth.iss AppVersion to new_version.
+
+    Creates a .bak backup before writing. Returns True if file existed and was
+    modified, False if file not present.
+    """
+    iss_path = os.path.join(path, 'windows', 'installer', 'TwoFactorAuth.iss')
+    if not os.path.exists(iss_path):
+        return False
+    text = open(iss_path, 'r', encoding='utf-8').read()
+    bak_path = iss_path + '.bak'
+    shutil.copyfile(iss_path, bak_path)
+
+    # Replace existing AppVersion line if present, otherwise try to insert
+    # it under the [Setup] header; if neither, append at EOF.
+    if re.search(r"(?m)^(AppVersion\s*=\s*).*$", text):
+        new_text = re.sub(r"(?m)^(AppVersion\s*=\s*).*$", lambda m: m.group(1) + new_version, text)
+    else:
+        # Try insert after [Setup] header
+        if re.search(r"(?m)^\[Setup\]\s*$", text):
+            new_text = re.sub(r"(?m)^(\[Setup\]\s*$)", lambda m: m.group(1) + '\nAppVersion=' + new_version, text, count=1)
+        else:
+            new_text = text + '\nAppVersion=' + new_version + '\n'
+
+    with open(iss_path, 'w', encoding='utf-8') as f:
+        f.write(new_text)
+
+    return True
+
+
 def main(argv: List[str]) -> int:
     parser = argparse.ArgumentParser(description="Increment Flutter project version (pubspec + android versionCode)")
     parser.add_argument("--path", "-p", default=".", help="Path to project root (default: current directory)")
@@ -141,6 +171,15 @@ def main(argv: List[str]) -> int:
     print("Update complete:")
     print(f" - pubspec.yaml: {current_version} -> {new_version} (backup at pubspec.yaml.bak)")
     print(f" - android/app/build.gradle.kts: versionCode {old_code} -> {new_code} (backup at android/app/build.gradle.kts.bak)")
+    # Update Inno Setup script if present
+    try:
+        modified = update_iss_version(root, new_version)
+        if modified:
+            print(f" - windows/installer/TwoFactorAuth.iss: AppVersion updated to {new_version} (backup at windows/installer/TwoFactorAuth.iss.bak)")
+        else:
+            print(" - windows/installer/TwoFactorAuth.iss: not found, skipping")
+    except Exception as e:
+        print(f" - Warning: failed to update TwoFactorAuth.iss: {e}")
     return 0
 
 

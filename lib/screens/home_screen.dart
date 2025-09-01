@@ -212,15 +212,25 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   final previousServers = List<ServerConnection>.from(_servers);
     String? restoredServerId;
     int? restoredAccountIndex;
+    // Track whether storage actually provided a value. We only want to
+    // fallback to the in-memory cached servers when storage did not provide
+    // a value (for example the key is missing or the store is locked). If
+    // storage returned an empty list that means the user intentionally
+    // removed all servers and we should respect that.
+    bool storageProvided = false;
     if (storage != null) {
       try {
         if (storage.isUnlocked) {
           final box = storage.box;
           final raw = box.get('servers');
           if (raw != null) {
+            storageProvided = true;
             servers = (raw as List<dynamic>)
                 .map((e) => ServerConnection.fromMap(Map<dynamic, dynamic>.from(e)))
                 .toList();
+          } else {
+            // raw == null -> storage had no key for 'servers'
+            storageProvided = false;
           }
           // Try to restore previously selected server/account
           final selRaw = box.get('selected');
@@ -237,12 +247,15 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         }
       } on StateError catch (_) {
         // Storage locked — behave as if no persistent servers available.
+        storageProvided = false;
       }
     }
 
-    // If storage returned no servers but we had servers previously, keep
-    // showing the cached servers instead of clearing the UI.
-    final usedCachedFallback = servers.isEmpty && previousServers.isNotEmpty;
+    // Only fallback to the previously cached in-memory servers when storage
+    // did not provide any value (null or locked). If storage returned an
+    // empty list that's an intentional state (e.g. user deleted all servers)
+    // and we should not restore the old entries.
+    final usedCachedFallback = !storageProvided && previousServers.isNotEmpty;
     if (usedCachedFallback) {
       servers = previousServers;
     }

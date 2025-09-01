@@ -1,0 +1,3 @@
+[submodule "2FAuth-API"]
+	path = 2FAuth-API
+	url = https://github.com/Bubka/2FAuth-API.git

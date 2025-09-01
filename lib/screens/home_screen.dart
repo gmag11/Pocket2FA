@@ -6,6 +6,7 @@ import '../widgets/account_tile.dart';
 import '../services/settings_service.dart';
 import 'settings_screen.dart';
 import 'accounts_screen.dart';
+import 'new_code_screen.dart';
 import '../models/server_connection.dart';
 import '../models/account_entry.dart';
 import '../services/api_service.dart';
@@ -967,42 +968,21 @@ class _BottomBar extends StatelessWidget {
             children: [
               ElevatedButton.icon(
                 onPressed: () async {
-                  final messenger = ScaffoldMessenger.of(context);
-                  // Validate servers exist
-                  if (servers.isEmpty) {
-                    messenger.showSnackBar(const SnackBar(
-                      content: Text('No servers configured'),
-                    ));
-                    return;
-                  }
-
-                  // Select active server
-                  final srv = selectedServerId != null
-                      ? servers.firstWhere((s) => s.id == selectedServerId, orElse: () => servers.first)
-                      : servers.first;
-
-                  final urlStr = srv.url.trim();
-                  final parsed = Uri.tryParse(urlStr);
-
-                  // Validate that the URL has an http/https scheme and a host
-                  if (parsed == null || parsed.scheme.isEmpty || !(parsed.scheme == 'http' || parsed.scheme == 'https') || parsed.host.isEmpty) {
-                    messenger.showSnackBar(const SnackBar(
-                      content: Text('Invalid server URL (missing http/https)'),
-                    ));
-                    return;
-                  }
-
-                  // Build /start URI and launch externally
-                  final trimmed = urlStr.endsWith('/') ? urlStr.substring(0, urlStr.length - 1) : urlStr;
-                  final uri = Uri.parse('$trimmed/start');
-                    await _launchExternal(uri, messenger);
+                  // Open the new code screen. Actions inside are not implemented yet.
+          // Compute display values to pass to the new screen
+          final srv = selectedServerId != null
+            ? servers.firstWhere((s) => s.id == selectedServerId, orElse: () => servers.first)
+            : servers.first;
+          final acct = (srv.userEmail.isNotEmpty) ? srv.userEmail : 'no email';
+          final host = Uri.parse(srv.url).host;
+          Navigator.of(context).push(MaterialPageRoute(builder: (c) => NewCodeScreen(userEmail: acct, serverHost: host)));
                 },
                 icon: const Icon(Icons.qr_code, color: Colors.white),
                 style: ElevatedButton.styleFrom(
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                   backgroundColor: const Color(0xFF4F63E6), // custom blue to match design
                 ),
-                label: const Text('New (web)', style: TextStyle(color: Colors.white)),
+                label: const Text('New', style: TextStyle(color: Colors.white)),
               ),
               const SizedBox(width: 12),
               OutlinedButton(

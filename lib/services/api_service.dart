@@ -261,7 +261,7 @@ class ApiService {
   ///
   /// This method does not require `setServer` to have been called; it creates a
   /// temporary Dio instance with short timeouts to validate connectivity and
-  /// returns the decoded body as Map<String, dynamic> when the endpoint responds with 200.
+  /// returns the decoded body as `Map<String, dynamic>` when the endpoint responds with 200.
   ///
   /// Throws [DioException] for connection/response errors and [StateError]
   /// for unexpected responses.

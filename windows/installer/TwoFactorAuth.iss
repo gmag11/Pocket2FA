@@ -1,10 +1,10 @@
-; Inno Setup script for TwoFactorAuth
+; Inno Setup script for 2FAuth
 [Setup]
-AppName=TwoFactorAuth
+AppName=2FAuth
 AppVersion=0.5.2
-DefaultDirName={autopf}\TwoFactorAuth
-DefaultGroupName=TwoFactorAuth
-OutputBaseFilename=TwoFactorAuth_Installer
+DefaultDirName={autopf}\2FAuth
+DefaultGroupName=2FAuth
+OutputBaseFilename=2FAuth_Installer
 Compression=lzma
 SolidCompression=yes
 PrivilegesRequired=admin
@@ -16,14 +16,14 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Source: "..\\..\\build\\windows\\x64\\runner\\Release\\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
-Name: "{group}\\TwoFactorAuth"; Filename: "{app}\\twofauth.exe"; WorkingDir: "{app}"
-Name: "{commondesktop}\\TwoFactorAuth"; Filename: "{app}\\twofauth.exe"; Tasks: desktopicon
+Name: "{group}\\2FAuth"; Filename: "{app}\\2fauth.exe"; WorkingDir: "{app}"
+Name: "{commondesktop}\\2FAuth"; Filename: "{app}\\2fauth.exe"; Tasks: desktopicon
 
 [Tasks]
 Name: "desktopicon"; Description: "Create a &desktop icon"; GroupDescription: "Additional icons:"; Flags: unchecked
 
 [Run]
-Filename: "{app}\\twofauth.exe"; Description: "Launch TwoFactorAuth"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\\2FAuth.exe"; Description: "Launch 2FAuth"; Flags: nowait postinstall skipifsilent
 
 [Code]
 procedure InitializeWizard();

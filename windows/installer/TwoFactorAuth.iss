@@ -7,7 +7,12 @@ DefaultGroupName=2FAuth
 OutputBaseFilename=2FAuth_Installer
 Compression=lzma
 SolidCompression=yes
-PrivilegesRequired=admin
+PrivilegesRequired=lowest
+AllowNoIcons=yes
+UsePreviousAppDir=yes
+AppPublisher=gmartin
+AppPublisherURL=https://github.com/gmag11/2fauthApp
+PrivilegesRequiredOverridesAllowed=dialog
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -17,10 +22,13 @@ Source: "..\\..\\build\\windows\\x64\\runner\\Release\\*"; DestDir: "{app}"; Fla
 
 [Icons]
 Name: "{group}\\2FAuth"; Filename: "{app}\\2fauth.exe"; WorkingDir: "{app}"
-Name: "{commondesktop}\\2FAuth"; Filename: "{app}\\2fauth.exe"; Tasks: desktopicon
+Name: "{autodesktop}\\2FAuth"; Filename: "{app}\\2fauth.exe"; Tasks: desktopicon
 
 [Tasks]
 Name: "desktopicon"; Description: "Create a &desktop icon"; GroupDescription: "Additional icons:"; Flags: unchecked
+
+[Dirs]
+Name: "{app}"; Permissions: users-full
 
 [Run]
 Filename: "{app}\\2FAuth.exe"; Description: "Launch 2FAuth"; Flags: nowait postinstall skipifsilent
@@ -28,4 +36,17 @@ Filename: "{app}\\2FAuth.exe"; Description: "Launch 2FAuth"; Flags: nowait posti
 [Code]
 procedure InitializeWizard();
 begin
+end;
+
+function IsNonAdminInstallMode: Boolean;
+begin
+  Result := not IsAdminInstallMode;
+end;
+
+function GetInstallModeString(Param: String): String;
+begin
+  if IsNonAdminInstallMode then
+    Result := 'Current User'
+  else
+    Result := 'All Users';
 end;

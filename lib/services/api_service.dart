@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'dart:developer' as developer;
 import '../models/server_connection.dart';
+import '../models/account_entry.dart';
 
 /// Centralized service for 2fauth API calls.
 ///
@@ -350,6 +351,40 @@ class ApiService {
       throw StateError('Invalid OTP response shape');
     }
     throw StateError('Unexpected OTP response: ${resp.statusCode}');
+  }
+
+  /// Create a 2FA account on the server (POST /twofaccounts).
+  ///
+  /// The [body] must follow the 2FAccountStore shape (see API spec). Returns
+  /// the decoded server response as a Map when the server responds with 201.
+  Future<Map<String, dynamic>> createAccount(Map<String, dynamic> body,
+      {CancelToken? cancelToken}) async {
+    _ensureReady();
+    final resp = await _dio!.post('twofaccounts', data: body, cancelToken: cancelToken);
+    if (resp.statusCode == 201 && resp.data != null && resp.data is Map) {
+      return Map<String, dynamic>.from(resp.data as Map);
+    }
+    throw StateError('Unexpected create account response: ${resp.statusCode}');
+  }
+
+  /// Convenience wrapper to create an account from an [AccountEntry]. If you
+  /// have a server-side group id, pass it as [groupId]; otherwise the wrapper
+  /// will omit group_id and the server will treat it as ungrouped.
+  Future<Map<String, dynamic>> createAccountFromEntry(AccountEntry entry, {int? groupId, CancelToken? cancelToken}) async {
+    final Map<String, dynamic> payload = {
+      if (entry.service.isNotEmpty) 'service': entry.service,
+      'account': entry.account,
+      'secret': entry.seed,
+      'otp_type': entry.otpType ?? 'totp',
+      if (entry.digits != null) 'digits': entry.digits,
+      if (entry.algorithm != null) 'algorithm': entry.algorithm,
+      if (entry.period != null) 'period': entry.period,
+      if (groupId != null) 'group_id': groupId,
+    };
+    // Remove nulls/empty
+    payload.removeWhere((k, v) => v == null);
+    final resp = await createAccount(payload, cancelToken: cancelToken);
+    return resp;
   }
 
   /// Produce a user-friendly, localized-ish message from a [DioException].

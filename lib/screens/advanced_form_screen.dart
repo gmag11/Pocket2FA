@@ -20,6 +20,7 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
   final _formKey = GlobalKey<FormState>();
   final _serviceCtrl = TextEditingController();
   final _accountCtrl = TextEditingController();
+  final _secretCtrl = TextEditingController();
   String _selectedGroup = '- No group -';
   String _otpType = 'TOTP';
   // Advanced options state
@@ -34,6 +35,7 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
     _accountCtrl.dispose();
     _periodCtrl.dispose();
     _counterCtrl.dispose();
+  _secretCtrl.dispose();
     super.dispose();
   }
 
@@ -82,6 +84,21 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildSecretField() {
+    return TextFormField(
+      controller: _secretCtrl,
+      decoration: const InputDecoration(hintText: ''),
+      validator: (v) {
+        final s = v?.trim() ?? '';
+        if (s.isEmpty) return 'Secret is required';
+        // allow typical Base32 (A-Z2-7 and =), hex and common alphanumerics
+        final cleaned = s.replaceAll(' ', '');
+        if (!RegExp(r'^[A-Za-z0-9=]+$').hasMatch(cleaned)) return 'Invalid characters in secret';
+        return null;
+      },
     );
   }
 
@@ -144,6 +161,7 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
                       controller: _serviceCtrl,
                       decoration: const InputDecoration(
                           hintText: 'Google, Twitter, Apple'),
+                      validator: (v) => (v == null || v.trim().isEmpty) ? 'Service is required' : null,
                     ),
                     const SizedBox(height: 20),
                     const Text('Account',
@@ -152,6 +170,7 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
                     TextFormField(
                       controller: _accountCtrl,
                       decoration: const InputDecoration(hintText: 'John DOE'),
+                      validator: (v) => (v == null || v.trim().isEmpty) ? 'Account is required' : null,
                     ),
                     const SizedBox(height: 20),
                     const Text('Group',
@@ -194,9 +213,7 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
                       const Text('Secret',
                           style: TextStyle(
                               fontWeight: FontWeight.w600, fontSize: 20)),
-                      TextFormField(
-                        decoration: const InputDecoration(hintText: ''),
-                      ),
+                      _buildSecretField(),
                       const SizedBox(height: 4),
                       const Text(
                         'The key used to generate your security codes',
@@ -239,8 +256,13 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
                       const SizedBox(height: 8),
                       TextFormField(
                           controller: _periodCtrl,
+                          keyboardType: TextInputType.number,
                           decoration:
-                              const InputDecoration(hintText: 'Default is 30')),
+                              const InputDecoration(hintText: 'Default is 30'),
+                          validator: (v) {
+                            if (v == null || v.trim().isEmpty) return null;
+                            return int.tryParse(v.trim()) == null ? 'Period must be a number' : null;
+                          }),
                       const SizedBox(height: 4),
                       const Text(
                         'The period of validity of the generated security codes in second',
@@ -251,9 +273,7 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
                       const Text('Secret',
                           style: TextStyle(
                               fontWeight: FontWeight.w600, fontSize: 20)),
-                      TextFormField(
-                        decoration: const InputDecoration(hintText: ''),
-                      ),
+                      _buildSecretField(),
                       const SizedBox(height: 4),
                       const Text(
                         'The key used to generate your security codes',
@@ -293,8 +313,13 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
                       const SizedBox(height: 8),
                       TextFormField(
                           controller: _counterCtrl,
+                          keyboardType: TextInputType.number,
                           decoration:
-                              const InputDecoration(hintText: 'Default is 0')),
+                              const InputDecoration(hintText: 'Default is 0'),
+                          validator: (v) {
+                            if (v == null || v.trim().isEmpty) return null;
+                            return int.tryParse(v.trim()) == null ? 'Counter must be a number' : null;
+                          }),
                               const SizedBox(height: 4),
                       const Text(
                         'The initial counter value',
@@ -305,9 +330,7 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
                       const Text('Secret',
                           style: TextStyle(
                               fontWeight: FontWeight.w600, fontSize: 20)),
-                      TextFormField(
-                        decoration: const InputDecoration(hintText: ''),
-                      ),
+                      _buildSecretField(),
                       const SizedBox(height: 4),
                       const Text(
                         'The key used to generate your security codes',

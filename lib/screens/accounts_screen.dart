@@ -352,12 +352,12 @@ class _ServerDetailScreenState extends State<_ServerDetailScreen> {
     );
 
     if (res == true) {
-  final item = AccountEntry(id: DateTime.now().millisecondsSinceEpoch, service: svc.text, account: acct.text, seed: seed.text, group: '');
-      setState(() {
-  _server = ServerConnection(id: _server.id, name: _server.name, url: _server.url, apiKey: _server.apiKey, accounts: [..._server.accounts, item], userEmail: _server.userEmail);
-      });
-      widget.onChanged(_server);
-    }
+    final item = AccountEntry(id: DateTime.now().millisecondsSinceEpoch, service: svc.text, account: acct.text, seed: seed.text, group: '', synchronized: false);
+        setState(() {
+    _server = ServerConnection(id: _server.id, name: _server.name, url: _server.url, apiKey: _server.apiKey, accounts: [..._server.accounts, item], userEmail: _server.userEmail);
+        });
+        widget.onChanged(_server);
+      }
   }
 
   void _removeAccount(int idx) {

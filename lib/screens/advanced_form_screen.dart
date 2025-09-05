@@ -377,6 +377,7 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
                         algorithm: _algorithm,
                         period: _periodCtrl.text.trim().isEmpty ? null : int.tryParse(_periodCtrl.text.trim()),
                         localIcon: null,
+                        synchronized: false,
                       );
                       developer.log('AdvancedForm: created AccountEntry: ${entry.toMap()}', name: 'AdvancedForm');
                       Navigator.of(context).pop(entry);
@@ -393,13 +394,13 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
                         child: Text('Create')),
                   ),
                   const SizedBox(width: 12),
-                  OutlinedButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Padding(
-                        padding: EdgeInsets.symmetric(
-                            horizontal: 16.0, vertical: 12.0),
-                        child: Text('Cancel')),
-                  ),
+          OutlinedButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: 16.0, vertical: 12.0),
+              child: Text('Cancel')),
+          ),
                 ],
               ),
               const SizedBox(height: 12),

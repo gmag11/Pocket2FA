@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'dart:developer' as developer;
 import '../models/group_entry.dart';
+import '../models/account_entry.dart';
 
 class AdvancedFormScreen extends StatefulWidget {
   final String userEmail;
@@ -359,11 +361,25 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
                 children: [
                   ElevatedButton(
                     onPressed: () {
-                      if (_formKey.currentState?.validate() ?? true) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                content: Text('Create not implemented')));
-                      }
+                      final ok = _formKey.currentState?.validate() ?? false;
+                      if (!ok) return;
+                      // Build AccountEntry with id -1 to mark unsynced
+                      final entry = AccountEntry(
+                        id: -1,
+                        service: _serviceCtrl.text.trim(),
+                        account: _accountCtrl.text.trim(),
+                        seed: _secretCtrl.text.trim(),
+                        group: _selectedGroup == '- No group -' ? '' : _selectedGroup,
+                        groupId: null,
+                        otpType: _otpType.toLowerCase(),
+                        icon: null,
+                        digits: _digits,
+                        algorithm: _algorithm,
+                        period: _periodCtrl.text.trim().isEmpty ? null : int.tryParse(_periodCtrl.text.trim()),
+                        localIcon: null,
+                      );
+                      developer.log('AdvancedForm: created AccountEntry: ${entry.toMap()}', name: 'AdvancedForm');
+                      Navigator.of(context).pop(entry);
                     },
                     style: ElevatedButton.styleFrom(
                       shape: RoundedRectangleBorder(

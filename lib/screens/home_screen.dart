@@ -712,6 +712,27 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Storage not available')));
                     }
                   },
+                  onNewAccount: (acct) {
+                    // Add new unsynced account to the currently selected server in memory
+                    if (_selectedServerId != null) {
+                      final idx = _servers.indexWhere((s) => s.id == _selectedServerId);
+                      if (idx != -1) {
+                        final srv = _servers[idx];
+                        srv.accounts.add(acct);
+                        // also update _currentItems and UI
+                        setState(() {
+                          _currentItems = srv.accounts;
+                          _selectedGroup = 'All (${_currentItems.length})';
+                        });
+                      }
+                    } else {
+                      // If no server selected, append to in-memory list only
+                      setState(() {
+                        _currentItems.add(acct);
+                        _selectedGroup = 'All (${_currentItems.length})';
+                      });
+                    }
+                  },
                 ),
               ],
             ),
@@ -952,8 +973,9 @@ class _BottomBar extends StatelessWidget {
   final bool serverReachable;
   final VoidCallback onOpenSelector;
   final VoidCallback? onOpenAccounts;
+  final ValueChanged<AccountEntry>? onNewAccount;
 
-  const _BottomBar({required this.settings, required this.servers, required this.selectedServerId, required this.selectedAccountIndex, required this.onOpenSelector, this.onOpenAccounts, required this.serverReachable});
+  const _BottomBar({required this.settings, required this.servers, required this.selectedServerId, required this.selectedAccountIndex, required this.onOpenSelector, this.onOpenAccounts, this.onNewAccount, required this.serverReachable});
 
   @override
   Widget build(BuildContext context) {
@@ -968,14 +990,16 @@ class _BottomBar extends StatelessWidget {
             children: [
               ElevatedButton.icon(
                     onPressed: () async {
-                      // Open the new code screen. Actions inside are not implemented yet.
-                      // Compute display values to pass to the new screen
+                      // Open the new code screen and wait for a created AccountEntry
                       final srv = selectedServerId != null
                         ? servers.firstWhere((s) => s.id == selectedServerId, orElse: () => servers.first)
                         : servers.first;
                       final acct = (srv.userEmail.isNotEmpty) ? srv.userEmail : 'no email';
                       final host = Uri.parse(srv.url).host;
-                      Navigator.of(context).push(MaterialPageRoute(builder: (c) => NewCodeScreen(userEmail: acct, serverHost: host, groups: srv.groups)));
+                      final result = await Navigator.of(context).push(MaterialPageRoute(builder: (c) => NewCodeScreen(userEmail: acct, serverHost: host, groups: srv.groups)));
+                      if (result is AccountEntry && onNewAccount != null) {
+                        onNewAccount!(result);
+                      }
                     },
                 icon: const Icon(Icons.qr_code, color: Colors.white),
                 style: ElevatedButton.styleFrom(

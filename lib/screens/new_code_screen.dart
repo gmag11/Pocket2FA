@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/group_entry.dart';
+import '../models/account_entry.dart';
 import 'advanced_form_screen.dart';
 
 class NewCodeScreen extends StatelessWidget {
@@ -44,8 +45,12 @@ class NewCodeScreen extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             ElevatedButton.icon(
-              onPressed: () {
-                Navigator.of(context).push(MaterialPageRoute(builder: (c) => AdvancedFormScreen(userEmail: userEmail, serverHost: serverHost, groups: groups)));
+              onPressed: () async {
+                final result = await Navigator.of(context).push(MaterialPageRoute(builder: (c) => AdvancedFormScreen(userEmail: userEmail, serverHost: serverHost, groups: groups)));
+                if (result is AccountEntry) {
+                  // Forward created entry back to HomePage
+                  Navigator.of(context).pop(result);
+                }
               },
               icon: const Icon(Icons.edit),
               label: const Text('Use the advanced form'),

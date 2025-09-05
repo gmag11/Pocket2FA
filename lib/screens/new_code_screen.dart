@@ -46,10 +46,11 @@ class NewCodeScreen extends StatelessWidget {
             const SizedBox(height: 12),
             ElevatedButton.icon(
               onPressed: () async {
-                final result = await Navigator.of(context).push(MaterialPageRoute(builder: (c) => AdvancedFormScreen(userEmail: userEmail, serverHost: serverHost, groups: groups)));
+                final navigator = Navigator.of(context);
+                final result = await navigator.push(MaterialPageRoute(builder: (c) => AdvancedFormScreen(userEmail: userEmail, serverHost: serverHost, groups: groups)));
                 if (result is AccountEntry) {
-                  // Forward created entry back to HomePage
-                  Navigator.of(context).pop(result);
+                  // Forward created entry back to HomePage using saved NavigatorState
+                  navigator.pop(result);
                 }
               },
               icon: const Icon(Icons.edit),

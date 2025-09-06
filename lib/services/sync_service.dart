@@ -291,7 +291,22 @@ class SyncService {
         if (resp.containsKey('id')) {
       developer.log('SyncService._uploadPendingAccounts: server created account id=${resp['id']} for local index=$accIdx', name: 'SyncService');
           // Build a new AccountEntry from response and mark synchronized
-          final created = AccountEntry.fromMap(Map<dynamic, dynamic>.from(resp)).copyWith(synchronized: true);
+          var created = AccountEntry.fromMap(Map<dynamic, dynamic>.from(resp)).copyWith(synchronized: true);
+          // If server returned only group_id and not the group name, try to
+          // populate the group name from the local server.groups so UI updates
+          // immediately without requiring a subsequent full sync.
+          try {
+            final groups = localServer.groups;
+            if ((created.group.isEmpty || created.group.trim().isEmpty) && created.groupId != null && groups != null && groups.isNotEmpty) {
+              GroupEntry? match;
+              try {
+                match = groups.firstWhere((g) => g.id == created.groupId);
+              } catch (_) {
+                match = null;
+              }
+              if (match != null) created = created.copyWith(group: match.name);
+            }
+          } catch (_) {}
           // replace in localServer.accounts
           final updatedAccounts = List<AccountEntry>.from(localServer.accounts);
           updatedAccounts[accIdx] = created;

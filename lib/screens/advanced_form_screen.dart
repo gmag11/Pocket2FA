@@ -411,7 +411,22 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
                       try {
                         final resp = await ApiService.instance.createAccountFromEntry(entry, groupId: entry.groupId);
                         if (resp.containsKey('id')) {
-                          final created = AccountEntry.fromMap(Map<dynamic, dynamic>.from(resp)).copyWith(synchronized: true);
+                          var created = AccountEntry.fromMap(Map<dynamic, dynamic>.from(resp)).copyWith(synchronized: true);
+                          // If the server returned only group_id but not the group name,
+                          // fill the `group` field from the dropdown list passed to this
+                          // screen so the UI reflects the assigned group immediately.
+                          try {
+                            if ((created.group.isEmpty || created.group.trim().isEmpty) && created.groupId != null && widget.groups != null) {
+                              String name = '';
+                              for (final g in widget.groups!) {
+                                if (g.id == created.groupId) {
+                                  name = g.name;
+                                  break;
+                                }
+                              }
+                              if (name.isNotEmpty) created = created.copyWith(group: name);
+                            }
+                          } catch (_) {}
                           developer.log('AdvancedForm: created on server id=${created.id}', name: 'AdvancedForm');
                           navigator.pop(created);
                           return;

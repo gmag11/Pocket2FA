@@ -62,25 +62,61 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
       final otpType = uri.host.toLowerCase();
       final params = uri.queryParameters;
 
+      // Log decoded URL and parsed fields (mask secret to avoid leaking sensitive data)
+      try {
+        String maskSecret(String s) {
+          final key = 'secret=';
+          final lower = s.toLowerCase();
+          final idx = lower.indexOf(key);
+          if (idx == -1) return s;
+          final start = idx + key.length;
+          var end = s.indexOf('&', start);
+          if (end == -1) end = s.length;
+          return '${s.substring(0, start)}***REDACTED***${s.substring(end)}';
+        }
+        final masked = maskSecret(uri.toString());
+        developer.log('QrScannerScreen: decoded URL: $masked', name: 'QrScannerScreen');
+        developer.log('QrScannerScreen: parsed query fields: issuer=${params['issuer']}, label_query=${params['label']}, algorithm=${params['algorithm']}, digits=${params['digits']}, period=${params['period']}, counter=${params['counter']}', name: 'QrScannerScreen');
+      } catch (_) {
+        developer.log('QrScannerScreen: decoded URL and parsing fields logging failed', name: 'QrScannerScreen');
+      }
+
       // Extract secret (required)
       final secret = params['secret']?.trim();
       if (secret == null || secret.isEmpty || !_isValidBase32(secret)) {
         throw Exception('Invalid or missing secret (must be uppercase Base32)');
       }
 
-      // Parse label: issuer:account (e.g., "Example:hello@example.com" -> group="Example", account="hello@example.com")
-      final label = params['label'] ?? '';
-      String service = '', account = label, group = '';
-      if (label.contains(':')) {
-        final parts = label.split(':');
-        service = parts.first.trim(); // issuer as service/group
-        account = parts.sublist(1).join(':').trim();
-        group = service; // Use issuer as group if present
+      // Parse label and issuer: prefer `issuer` query param for the service name.
+      // Use the path component as the account when present; support labels
+      // in the form "Issuer:account" too.
+      final issuer = params['issuer']?.trim() ?? '';
+      String label = '';
+      if (uri.path.isNotEmpty && uri.path != '/') {
+        label = uri.path.startsWith('/') ? uri.path.substring(1) : uri.path;
+        try { label = Uri.decodeComponent(label); } catch (_) {}
       } else {
-        account = label.trim();
-        if (account.isEmpty) account = 'Unknown';
+        label = params['label'] ?? '';
       }
-      if (service.isEmpty) service = account.split('@').firstOrNull ?? 'Unknown';
+
+      String service = issuer.isNotEmpty ? issuer : '';
+      String account = label.trim();
+      String group = ''; // No group info in otpauth URL
+
+      // If label contains colon and no issuer, split for service:account
+      if (label.contains(':') && service.isEmpty) {
+        final parts = label.split(':');
+        service = parts.first.trim();
+        account = parts.sublist(1).join(':').trim();
+      }
+
+      if (account.isEmpty) account = 'Unknown';
+      if (service.isEmpty) {
+        service = account.split('@').firstOrNull ?? account;
+      }
+
+      // Log the final parsed values for verification
+      developer.log('QrScannerScreen: final parsed - service="$service" account="$account" group="$group" (empty for QR)', name: 'QrScannerScreen');
 
       // Defaults and params
       final algorithm = params['algorithm']?.toUpperCase() ?? 'SHA1';
@@ -94,7 +130,7 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
         account: account,
         seed: secret,
         group: group,
-        groupId: null, // Will be set if groups provided and group matches
+        groupId: null, // No group for QR creates
         otpType: otpType.toUpperCase(),
         icon: null,
         digits: digits,
@@ -103,17 +139,6 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
         localIcon: null,
         synchronized: false,
       );
-
-      // If groups provided, try to find matching groupId
-      if (widget.groups != null && group.isNotEmpty) {
-        final matchingGroup = widget.groups!.firstWhere(
-          (g) => g.name.toLowerCase() == group.toLowerCase(),
-          orElse: () => GroupEntry(id: 0, name: group, twofaccountsCount: 0),
-        );
-        if (matchingGroup.id != 0) {
-          entry = entry.copyWith(groupId: matchingGroup.id);
-        }
-      }
 
       // Attempt immediate upload if server host implies online (or check connectivity)
       if (widget.serverHost.isNotEmpty) {
@@ -162,10 +187,8 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
     final barcode = capture.barcodes.first;
     if (barcode.rawValue != null) {
       final entry = await _parseAndCreateEntry(barcode.rawValue!);
-      if (entry != null) {
-        if (mounted) {
-          Navigator.of(context).pop(entry);
-        }
+      if (entry != null && mounted) {
+        Navigator.of(context).pop(entry);
       }
     }
 

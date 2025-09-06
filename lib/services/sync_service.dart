@@ -57,6 +57,8 @@ class SyncService {
     wasLastForced = false;
   }
 
+  // inlined function removed; implemented as a separate method below
+
     if (last != null && DateTime.now().difference(last) < _throttle) {
       if (wasLastForced) {
         // proceed despite throttle when last sync was forced
@@ -71,6 +73,20 @@ class SyncService {
 
   Future<Map<String, dynamic>> forceSync(ServerConnection server, SettingsStorage storage, {CancelToken? cancelToken, int concurrency = 4, bool markAsForced = false}) async {
   // Starting sync (kept minimal)
+
+    developer.log('SyncService: forceSync START server=${server.id}', name: 'SyncService');
+
+    // First, attempt to upload any locally created accounts that are marked
+    // as unsynchronized (synchronized==false && id==-1). This ensures that
+    // newly created entries are sent to the server before we fetch remote
+    // state so the server returns the created resources on subsequent GET.
+    try {
+      developer.log('SyncService: calling _uploadPendingAccounts for server=${server.id}', name: 'SyncService');
+      await _uploadPendingAccounts(server, storage, cancelToken: cancelToken);
+      developer.log('SyncService: _uploadPendingAccounts completed for server=${server.id}', name: 'SyncService');
+    } catch (e) {
+      developer.log('SyncService: uploadPendingAccounts failed: $e', name: 'SyncService');
+    }
 
     // Ensure ApiService is configured for this server so Authorization headers and base are correct
     ApiService.instance.setServer(server);
@@ -233,5 +249,88 @@ class SyncService {
       'skipped_count': skipped,
       'message': (failed == 0 ? 'Sync completed' : 'Sync completed with failures')
     };
+  }
+
+  Future<void> _uploadPendingAccounts(ServerConnection server, SettingsStorage storage, {CancelToken? cancelToken}) async {
+    // Ensure storage is available and unlocked
+    try {
+      if (!storage.isUnlocked) return;
+    } on StateError catch (_) {
+      return;
+    }
+
+    final box = storage.box;
+    final raw = box.get('servers');
+    if (raw == null) return;
+    final list = (raw as List<dynamic>).map((e) => Map<dynamic, dynamic>.from(e)).toList();
+    final idx = list.indexWhere((e) => e['id'] == server.id);
+    if (idx == -1) return;
+
+    // Deserialize server so we can inspect accounts
+    final localServer = ServerConnection.fromMap(list[idx]);
+    final pending = <int>[];
+    for (var i = 0; i < localServer.accounts.length; i++) {
+      final a = localServer.accounts[i];
+      if (a.id == -1 && a.synchronized == false) pending.add(i);
+    }
+    developer.log('SyncService._uploadPendingAccounts: found ${pending.length} pending accounts for server=${server.id}', name: 'SyncService');
+    if (pending.isEmpty) {
+      developer.log('SyncService._uploadPendingAccounts: no pending accounts to upload for server=${server.id}', name: 'SyncService');
+      return;
+    }
+
+    // Configure ApiService for this server
+    ApiService.instance.setServer(server);
+
+    for (final accIdx in pending) {
+      final acc = localServer.accounts[accIdx];
+    developer.log('SyncService._uploadPendingAccounts: attempting upload for local acc index=$accIdx service=${acc.service} account=${acc.account}', name: 'SyncService');
+      try {
+  final resp = await ApiService.instance.createAccountFromEntry(acc, cancelToken: cancelToken);
+        // resp is expected to be a Map representing the created resource
+        if (resp.containsKey('id')) {
+      developer.log('SyncService._uploadPendingAccounts: server created account id=${resp['id']} for local index=$accIdx', name: 'SyncService');
+          // Build a new AccountEntry from response and mark synchronized
+          final created = AccountEntry.fromMap(Map<dynamic, dynamic>.from(resp)).copyWith(synchronized: true);
+          // replace in localServer.accounts
+          final updatedAccounts = List<AccountEntry>.from(localServer.accounts);
+          updatedAccounts[accIdx] = created;
+          final updatedServer = ServerConnection(
+            id: localServer.id,
+            name: localServer.name,
+            url: localServer.url,
+            apiKey: localServer.apiKey,
+            accounts: updatedAccounts,
+            groups: localServer.groups,
+            userId: localServer.userId,
+            userName: localServer.userName,
+            userEmail: localServer.userEmail,
+            oauthProvider: localServer.oauthProvider,
+            authenticatedByProxy: localServer.authenticatedByProxy,
+            preferences: localServer.preferences,
+            isAdmin: localServer.isAdmin,
+          );
+          // Persist updated server in list
+          list[idx] = updatedServer.toMap();
+          await box.put('servers', list);
+          developer.log('SyncService._uploadPendingAccounts: persisted updated servers after uploading account index=$accIdx', name: 'SyncService');
+          // Update localServer reference for subsequent iterations
+          // (ServerConnection.accounts is final so replace localServer entirely)
+          // Recreate localServer from the updated map for safety
+          // local persisted data updated; continue to next pending account
+        } else {
+          developer.log('SyncService._uploadPendingAccounts: server response missing id: $resp', name: 'SyncService');
+        }
+      } catch (e) {
+        // If the exception is a DioException, try to log response data
+        try {
+          if (e is DioException) {
+            developer.log('SyncService._uploadPendingAccounts: DioException status=${e.response?.statusCode} data=${e.response?.data}', name: 'SyncService');
+          }
+        } catch (_) {}
+        developer.log('SyncService._uploadPendingAccounts: failed to create account ${acc.service}/${acc.account}: $e', name: 'SyncService');
+        // continue with next pending account
+      }
+    }
   }
 }

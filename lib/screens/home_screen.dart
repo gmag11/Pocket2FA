@@ -724,6 +724,22 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           _currentItems = srv.accounts;
                           _selectedGroup = 'All (${_currentItems.length})';
                         });
+
+                        // Best-effort persist to storage in background.
+                        final storage = widget.settings.storage;
+                        if (storage != null) {
+                          Future.microtask(() async {
+                            try {
+                              if (storage.isUnlocked) {
+                                await storage.box.put('servers', _servers.map((s) => s.toMap()).toList());
+                              }
+                            } on StateError catch (_) {
+                              // ignore when storage is locked
+                            } catch (e) {
+                              developer.log('HomePage: failed to persist servers after new account: $e', name: 'HomePage');
+                            }
+                          });
+                        }
                       }
                     } else {
                       // If no server selected, append to in-memory list only
@@ -731,6 +747,22 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         _currentItems.add(acct);
                         _selectedGroup = 'All (${_currentItems.length})';
                       });
+
+                      // Attempt to persist as well (will write current _servers list)
+                      final storage = widget.settings.storage;
+                      if (storage != null) {
+                        Future.microtask(() async {
+                          try {
+                            if (storage.isUnlocked) {
+                              await storage.box.put('servers', _servers.map((s) => s.toMap()).toList());
+                            }
+                          } on StateError catch (_) {
+                            // ignore when storage is locked
+                          } catch (e) {
+                            developer.log('HomePage: failed to persist servers after new account (no selected server): $e', name: 'HomePage');
+                          }
+                        });
+                      }
                     }
                   },
                 ),

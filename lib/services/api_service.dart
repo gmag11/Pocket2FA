@@ -360,11 +360,23 @@ class ApiService {
   Future<Map<String, dynamic>> createAccount(Map<String, dynamic> body,
       {CancelToken? cancelToken}) async {
     _ensureReady();
-    final resp = await _dio!.post('twofaccounts', data: body, cancelToken: cancelToken);
-    if (resp.statusCode == 201 && resp.data != null && resp.data is Map) {
-      return Map<String, dynamic>.from(resp.data as Map);
+    developer.log('ApiService: createAccount payload keys=${body.keys.toList()}', name: 'ApiService');
+    try {
+      final resp = await _dio!.post('twofaccounts', data: body, cancelToken: cancelToken);
+      developer.log('ApiService: createAccount response status=${resp.statusCode}', name: 'ApiService');
+      if (resp.statusCode == 201 && resp.data != null && resp.data is Map) {
+        developer.log('ApiService: createAccount returned body keys=${(resp.data as Map).keys.toList()}', name: 'ApiService');
+        return Map<String, dynamic>.from(resp.data as Map);
+      }
+      developer.log('ApiService: createAccount unexpected response body=${resp.data}', name: 'ApiService');
+      throw StateError('Unexpected create account response: ${resp.statusCode}');
+    } on DioException catch (e) {
+      // Log response body if present to aid debugging (may contain validation errors)
+      try {
+        developer.log('ApiService: createAccount DioException status=${e.response?.statusCode} data=${e.response?.data}', name: 'ApiService');
+      } catch (_) {}
+      rethrow;
     }
-    throw StateError('Unexpected create account response: ${resp.statusCode}');
   }
 
   /// Convenience wrapper to create an account from an [AccountEntry]. If you
@@ -383,8 +395,21 @@ class ApiService {
     };
     // Remove nulls/empty
     payload.removeWhere((k, v) => v == null);
-    final resp = await createAccount(payload, cancelToken: cancelToken);
-    return resp;
+    try {
+      developer.log('ApiService: createAccountFromEntry service=${entry.service} account=${entry.account} groupId=$groupId', name: 'ApiService');
+    } catch (_) {}
+    try {
+      final resp = await createAccount(payload, cancelToken: cancelToken);
+      try {
+        developer.log('ApiService: createAccountFromEntry response keys=${resp.keys.toList()}', name: 'ApiService');
+      } catch (_) {}
+      return resp;
+    } on DioException catch (e) {
+      try {
+        developer.log('ApiService: createAccountFromEntry DioException status=${e.response?.statusCode} data=${e.response?.data}', name: 'ApiService');
+      } catch (_) {}
+      rethrow;
+    }
   }
 
   /// Produce a user-friendly, localized-ish message from a [DioException].

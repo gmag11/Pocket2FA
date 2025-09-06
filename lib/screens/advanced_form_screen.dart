@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'dart:developer' as developer;
+import 'package:dio/dio.dart';
 import '../models/group_entry.dart';
 import '../models/account_entry.dart';
+import '../services/api_service.dart';
 
 class AdvancedFormScreen extends StatefulWidget {
   final String userEmail;
@@ -96,9 +98,13 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
       validator: (v) {
         final s = v?.trim() ?? '';
         if (s.isEmpty) return 'Secret is required';
-        // allow typical Base32 (A-Z2-7 and =), hex and common alphanumerics
+        // Normalize by removing spaces but do NOT change case; Base32 must be uppercase
         final cleaned = s.replaceAll(' ', '');
-        if (!RegExp(r'^[A-Za-z0-9=]+$').hasMatch(cleaned)) return 'Invalid characters in secret';
+        // Base32: letters A-Z and digits 2-7, optionally padded with '=' characters at the end
+        final base32Regex = RegExp(r'^[A-Z2-7]+=*$');
+        if (!base32Regex.hasMatch(cleaned)) {
+          return 'Secret must be Base32 (uppercase letters A-Z and digits 2-7)';
+        }
         return null;
       },
     );
@@ -360,10 +366,10 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   ElevatedButton(
-                    onPressed: () {
+                    onPressed: () async {
                       final ok = _formKey.currentState?.validate() ?? false;
                       if (!ok) return;
-                      // Build AccountEntry with id -1 to mark unsynced
+                      // Build AccountEntry with id -1 to mark unsynced initially
                       final entry = AccountEntry(
                         id: -1,
                         service: _serviceCtrl.text.trim(),
@@ -379,8 +385,41 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
                         localIcon: null,
                         synchronized: false,
                       );
-                      developer.log('AdvancedForm: created AccountEntry: ${entry.toMap()}', name: 'AdvancedForm');
-                      Navigator.of(context).pop(entry);
+
+                      // Log creation of local entry (redact secret)
+                      try {
+                        developer.log('AdvancedForm: local entry created service=${entry.service} account=${entry.account} id=${entry.id} synchronized=${entry.synchronized}', name: 'AdvancedForm');
+                      } catch (_) {}
+
+                      // Attempt to create on server immediately. If ApiService is
+                      // configured and the call succeeds, use the returned
+                      // representation (with server id) and mark synchronized=true.
+                      // If it fails, swallow the error and keep the local unsynced entry.
+                      developer.log('AdvancedForm: attempting immediate server create for service=${entry.service} account=${entry.account}', name: 'AdvancedForm');
+                      final navigator = Navigator.of(context);
+                      try {
+                        final resp = await ApiService.instance.createAccountFromEntry(entry);
+                        if (resp.containsKey('id')) {
+                          final created = AccountEntry.fromMap(Map<dynamic, dynamic>.from(resp)).copyWith(synchronized: true);
+                          developer.log('AdvancedForm: created on server id=${created.id}', name: 'AdvancedForm');
+                          navigator.pop(created);
+                          return;
+                        } else {
+                          developer.log('AdvancedForm: server create returned no id, returning local entry', name: 'AdvancedForm');
+                        }
+                      } catch (e) {
+                        // Log response details when available (DioException may contain server response)
+                        try {
+                          if (e is DioException) {
+                            developer.log('AdvancedForm: server create DioException status=${e.response?.statusCode} data=${e.response?.data}', name: 'AdvancedForm');
+                          }
+                        } catch (_) {}
+                        developer.log('AdvancedForm: server create failed (ignored): $e', name: 'AdvancedForm');
+                        // ignore and fallback to returning the local unsynced entry
+                      }
+
+                      developer.log('AdvancedForm: created local AccountEntry: ${entry.toMap()}', name: 'AdvancedForm');
+                      navigator.pop(entry);
                     },
                     style: ElevatedButton.styleFrom(
                       shape: RoundedRectangleBorder(

@@ -62,6 +62,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   int _loadServerAttempts = 0;
   static const int _maxLoadServerAttempts = 6;
   bool _suppressFullScreenSyncIndicator = false;
+  bool _skipSyncOnLoad = false;
 
   Future<void> _onRefreshFromPull() async {
     // Called by RefreshIndicator's onRefresh. Suppress the fullscreen overlay
@@ -97,6 +98,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   if (mounted) setState(() { _serverReachable = true; });
   // After forcing sync, reload servers but suppress the automatic sync snackbar
   _suppressNextSyncSnack = true;
+  // Prevent the subsequent _loadServers() call from triggering a second network
+  // syncIfNeeded immediately after a forced sync. This avoids double network
+  // requests when the UI reloads servers right after forcing a sync.
+  _skipSyncOnLoad = true;
   await _loadServers();
       if (mounted) {
         if (result['network_failed'] == true) {
@@ -300,12 +305,22 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         final srv = _servers.firstWhere((s) => s.id == _selectedServerId);
         ApiService.instance.setServer(srv);
         // Attempt a throttled sync to refresh accounts/icons (if we have persistent storage)
-        if (storage != null) {
+            if (storage != null) {
           try {
             // Do not show the fullscreen sync overlay when a pull-to-refresh
             // is active; the RefreshIndicator already shows a spinner.
             if (mounted && !_suppressFullScreenSyncIndicator) setState(() { _isSyncing = true; });
-            final result = await SyncService.instance.syncIfNeeded(srv, storage);
+            Map<String, dynamic> result;
+            if (_skipSyncOnLoad) {
+              // consume the flag and skip the automatic throttled sync because
+              // a forceSync just ran and already refreshed server state.
+              _skipSyncOnLoad = false;
+              developer.log('HomePage: skipping syncIfNeeded because a recent forced sync ran', name: 'HomePage');
+              result = {'skipped': true, 'success': true, 'downloaded': 0, 'failed': 0};
+            } else {
+              final tmp = await SyncService.instance.syncIfNeeded(srv, storage);
+              result = tmp;
+            }
             // If syncIfNeeded actually performed a network sync, it will not set
             // 'skipped' to true. Only update reachability state when a network
             // attempt occurred and succeeded.

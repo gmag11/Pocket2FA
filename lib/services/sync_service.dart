@@ -282,11 +282,11 @@ class SyncService {
     // Configure ApiService for this server
     ApiService.instance.setServer(server);
 
-    for (final accIdx in pending) {
-      final acc = localServer.accounts[accIdx];
-    developer.log('SyncService._uploadPendingAccounts: attempting upload for local acc index=$accIdx service=${acc.service} account=${acc.account}', name: 'SyncService');
-      try {
-  final resp = await ApiService.instance.createAccountFromEntry(acc, cancelToken: cancelToken);
+      for (final accIdx in pending) {
+        final acc = localServer.accounts[accIdx];
+        developer.log('SyncService._uploadPendingAccounts: attempting upload for local acc index=$accIdx service=${acc.service} account=${acc.account} groupId=${acc.groupId}', name: 'SyncService');
+        try {
+          final resp = await ApiService.instance.createAccountFromEntry(acc, groupId: acc.groupId, cancelToken: cancelToken);
         // resp is expected to be a Map representing the created resource
         if (resp.containsKey('id')) {
       developer.log('SyncService._uploadPendingAccounts: server created account id=${resp['id']} for local index=$accIdx', name: 'SyncService');

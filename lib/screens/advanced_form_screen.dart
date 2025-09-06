@@ -369,6 +369,17 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
                     onPressed: () async {
                       final ok = _formKey.currentState?.validate() ?? false;
                       if (!ok) return;
+                      // Determine the selected group's id (if any)
+                      int? selectedGroupId;
+                      if (_selectedGroup != '- No group -' && widget.groups != null) {
+                        for (final g in widget.groups!) {
+                          if (g.name == _selectedGroup) {
+                            selectedGroupId = g.id;
+                            break;
+                          }
+                        }
+                      }
+
                       // Build AccountEntry with id -1 to mark unsynced initially
                       final entry = AccountEntry(
                         id: -1,
@@ -376,7 +387,7 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
                         account: _accountCtrl.text.trim(),
                         seed: _secretCtrl.text.trim(),
                         group: _selectedGroup == '- No group -' ? '' : _selectedGroup,
-                        groupId: null,
+                        groupId: selectedGroupId,
                         otpType: _otpType.toLowerCase(),
                         icon: null,
                         digits: _digits,
@@ -398,7 +409,7 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
                       developer.log('AdvancedForm: attempting immediate server create for service=${entry.service} account=${entry.account}', name: 'AdvancedForm');
                       final navigator = Navigator.of(context);
                       try {
-                        final resp = await ApiService.instance.createAccountFromEntry(entry);
+                        final resp = await ApiService.instance.createAccountFromEntry(entry, groupId: entry.groupId);
                         if (resp.containsKey('id')) {
                           final created = AccountEntry.fromMap(Map<dynamic, dynamic>.from(resp)).copyWith(synchronized: true);
                           developer.log('AdvancedForm: created on server id=${created.id}', name: 'AdvancedForm');

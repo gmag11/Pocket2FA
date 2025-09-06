@@ -4,6 +4,8 @@
          in debug/profile. Adding it to the main manifest ensures it's merged for
          all build types. -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Required for QR code scanning via camera -->
+    <uses-permission android:name="android.permission.CAMERA" />
 
     <application
         android:label="two_factor_ui"

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/group_entry.dart';
 import '../models/account_entry.dart';
 import 'advanced_form_screen.dart';
+import 'qr_scanner_screen.dart';
 
 class NewCodeScreen extends StatelessWidget {
   final String userEmail;
@@ -13,7 +14,7 @@ class NewCodeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-  appBar: AppBar(title: const Text('Create new code')),
+      appBar: AppBar(title: const Text('Create new code')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -26,7 +27,20 @@ class NewCodeScreen extends StatelessWidget {
             SizedBox(
               height: 62,
               child: ElevatedButton.icon(
-                onPressed: () {}, // not implemented yet
+                onPressed: () async {
+                  final navigator = Navigator.of(context);
+                  final result = await navigator.push(MaterialPageRoute(
+                    builder: (c) => QrScannerScreen(
+                      userEmail: userEmail,
+                      serverHost: serverHost,
+                      groups: groups,
+                    ),
+                  ));
+                  if (result is AccountEntry) {
+                    // Forward created entry back to HomePage using saved NavigatorState
+                    navigator.pop(result);
+                  }
+                },
                 icon: const Icon(Icons.qr_code_scanner, size: 28, color: Colors.white),
                 label: const Text('Scan a QR code', style: TextStyle(fontSize: 16, color: Colors.white)),
                 style: ElevatedButton.styleFrom(

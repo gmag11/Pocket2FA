@@ -951,9 +951,10 @@ class _AccountList extends StatelessWidget {
           itemCount: filtered.length,
           separatorBuilder: (context, index) => Divider(indent: 20, endIndent: 20,),
           itemBuilder: (context, index) {
-            try {
+              try {
               final item = filtered[index];
-              return AccountTile(item: item, settings: settings);
+              final key = ValueKey(item.id != -1 ? 'acct-${item.id}' : 'local-${item.hashCode}');
+              return AccountTile(key: key, item: item, settings: settings);
             } catch (e) {
               return ListTile(
                 leading: const Icon(Icons.error, color: Colors.red),
@@ -982,13 +983,14 @@ class _AccountList extends StatelessWidget {
         ),
         itemCount: filtered.length,
         itemBuilder: (context, index) {
-          try {
+            try {
             final item = filtered[index];
+            final key = ValueKey(item.id != -1 ? 'acct-${item.id}' : 'local-${item.hashCode}');
             return Container(
               decoration: const BoxDecoration(
                 border: Border(bottom: BorderSide(color: Color(0xFFE0E0E0))),
               ),
-              child: AccountTile(item: item, settings: settings),
+              child: AccountTile(key: key, item: item, settings: settings),
             );
           } catch (e) {
             return Container(

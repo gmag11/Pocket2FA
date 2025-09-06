@@ -988,7 +988,7 @@ class _AccountList extends StatelessWidget {
               decoration: const BoxDecoration(
                 border: Border(bottom: BorderSide(color: Color(0xFFE0E0E0))),
               ),
-              child: AccountTile(item: item, settings: settings),
+              child: AccountTile(key: ValueKey(item.id), item: item, settings: settings),
             );
           } catch (e) {
             return Container(

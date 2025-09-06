@@ -8,16 +8,16 @@ class AccountTile extends StatelessWidget {
   final AccountEntry item;
   final SettingsService? settings;
 
-  const AccountTile({required this.item, this.settings, super.key});
+  const AccountTile({super.key, required this.item, this.settings});
 
   @override
   Widget build(BuildContext context) {
     final isHotp = (item.otpType ?? 'totp').toLowerCase() == 'hotp';
     Widget child;
     if (isHotp) {
-      child = AccountTileHOTP(item: item, settings: settings);
+      child = AccountTileHOTP(key: key, item: item, settings: settings);
     } else {
-      child = AccountTileTOTP(item: item, settings: settings);
+      child = AccountTileTOTP(key: key, item: item, settings: settings);
     }
 
     // If the entry is not synchronized, overlay a small indicator badge.

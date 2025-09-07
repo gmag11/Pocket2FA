@@ -2,9 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../models/group_entry.dart';
 import '../models/account_entry.dart';
-import '../services/api_service.dart';
+import '../services/entry_creation_service.dart';
 import 'dart:developer' as developer;
-import 'dart:convert'; // for Base32 validation helper
 
 class QrScannerScreen extends StatefulWidget {
   final String userEmail;
@@ -38,146 +37,38 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
     super.dispose();
   }
 
-  // Helper to validate Base32 (uppercase, only A-Z 2-7)
-  bool _isValidBase32(String secret) {
-    final cleaned = secret.toUpperCase().replaceAll(RegExp(r'[^A-Z2-7]'), '');
-    if (cleaned.length < 16 || cleaned.length % 8 != 0) return false;
-    try {
-      // Simple check; for full validation, could use a Base32 decoder
-      base64Url.decode(cleaned.replaceAll('=', '').padRight((cleaned.length + 7) ~/ 8 * 8, '='));
-      return true;
-    } catch (_) {
-      return false;
-    }
-  }
-
-  // Parse otpauth URL and build AccountEntry
+  // Parse otpauth URL and build AccountEntry using the service
   Future<AccountEntry?> _parseAndCreateEntry(String qrContent) async {
-    try {
-      final uri = Uri.parse(qrContent);
-      if (uri.scheme != 'otpauth' || (uri.host != 'totp' && uri.host != 'hotp')) {
-        throw Exception('Not a valid TOTP/HOTP QR code (expected otpauth://totp/ or hotp/)');
-      }
-
-      final otpType = uri.host.toLowerCase();
-      final params = uri.queryParameters;
-
-      // Log decoded URL and parsed fields (mask secret to avoid leaking sensitive data)
+    // Parse QR content to create entry
+    var entry = await EntryCreationService.parseOtpAuthUrl(
+      qrContent, 
+      context,
+      sourceTag: 'QrScannerScreen'
+    );
+    
+    if (entry == null) return null;
+    
+    // Attempt immediate upload if server host present
+    if (widget.serverHost.isNotEmpty && mounted) {
       try {
-        String maskSecret(String s) {
-          final key = 'secret=';
-          final lower = s.toLowerCase();
-          final idx = lower.indexOf(key);
-          if (idx == -1) return s;
-          final start = idx + key.length;
-          var end = s.indexOf('&', start);
-          if (end == -1) end = s.length;
-          return '${s.substring(0, start)}***REDACTED***${s.substring(end)}';
-        }
-        final masked = maskSecret(uri.toString());
-        developer.log('QrScannerScreen: decoded URL: $masked', name: 'QrScannerScreen');
-        developer.log('QrScannerScreen: parsed query fields: issuer=${params['issuer']}, label_query=${params['label']}, algorithm=${params['algorithm']}, digits=${params['digits']}, period=${params['period']}, counter=${params['counter']}', name: 'QrScannerScreen');
-      } catch (_) {
-        developer.log('QrScannerScreen: decoded URL and parsing fields logging failed', name: 'QrScannerScreen');
-      }
-
-      // Extract secret (required)
-      final secret = params['secret']?.trim();
-      if (secret == null || secret.isEmpty || !_isValidBase32(secret)) {
-        throw Exception('Invalid or missing secret (must be uppercase Base32)');
-      }
-
-      // Parse label and issuer: prefer `issuer` query param for the service name.
-      // Use the path component as the account when present; support labels
-      // in the form "Issuer:account" too.
-      final issuer = params['issuer']?.trim() ?? '';
-      String label = '';
-      if (uri.path.isNotEmpty && uri.path != '/') {
-        label = uri.path.startsWith('/') ? uri.path.substring(1) : uri.path;
-        try { label = Uri.decodeComponent(label); } catch (_) {}
-      } else {
-        label = params['label'] ?? '';
-      }
-
-      String service = issuer.isNotEmpty ? issuer : '';
-      String account = label.trim();
-      String group = ''; // No group info in otpauth URL
-
-      // If label contains colon and no issuer, split for service:account
-      if (label.contains(':') && service.isEmpty) {
-        final parts = label.split(':');
-        service = parts.first.trim();
-        account = parts.sublist(1).join(':').trim();
-      }
-
-      if (account.isEmpty) account = 'Unknown';
-      if (service.isEmpty) {
-        service = account.split('@').firstOrNull ?? account;
-      }
-
-      // Log the final parsed values for verification
-      developer.log('QrScannerScreen: final parsed - service="$service" account="$account" group="$group" (empty for QR)', name: 'QrScannerScreen');
-
-      // Defaults and params
-      final algorithm = params['algorithm']?.toUpperCase() ?? 'SHA1';
-      final digits = int.tryParse(params['digits'] ?? '6') ?? 6;
-      final period = int.tryParse(params['period'] ?? (otpType == 'totp' ? '30' : '0')) ?? (otpType == 'totp' ? 30 : 0);
-
-      // Build local entry
-      var entry = AccountEntry(
-        id: -1,
-        service: service,
-        account: account,
-        seed: secret,
-        group: group,
-        groupId: null, // No group for QR creates
-        otpType: otpType.toUpperCase(),
-        icon: null,
-        digits: digits,
-        algorithm: algorithm,
-        period: period,
-        localIcon: null,
-        synchronized: false,
-      );
-
-      // Attempt immediate upload if server host implies online (or check connectivity)
-      if (widget.serverHost.isNotEmpty) {
-        try {
-          developer.log('QrScannerScreen: Attempting immediate create for ${entry.service}', name: 'QrScannerScreen');
-          final response = await ApiService.instance.createAccountFromEntry(entry, groupId: entry.groupId);
-          // On success, update with server data
-          var serverEntry = AccountEntry.fromMap(response).copyWith(synchronized: true);
-          // Populate group name if server returned group_id but not group
-          if (serverEntry.group.isEmpty && serverEntry.groupId != null && widget.groups != null) {
-            final groupMatch = widget.groups!.firstWhere(
-              (g) => g.id == serverEntry.groupId,
-              orElse: () => GroupEntry(id: serverEntry.groupId!, name: group, twofaccountsCount: 0),
-            );
-            if (groupMatch.name.isNotEmpty) {
-              serverEntry = serverEntry.copyWith(group: groupMatch.name);
-            }
-          }
-          if (mounted) {
-            Navigator.of(context).pop(serverEntry); // Return synced entry
-          }
-          return null; // Already popped
-        } catch (e) {
-          developer.log('QrScannerScreen: Immediate create failed: $e (keeping local unsynced)', name: 'QrScannerScreen');
-          // Fall through to local entry
-        }
-      }
-
-      // Return local unsynced entry on failure or no server
-      return entry;
-    } catch (e) {
-      developer.log('QrScannerScreen: Parsing failed: $e', name: 'QrScannerScreen');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error parsing QR: $e'), backgroundColor: Colors.red),
+        final serverEntry = await EntryCreationService.createEntryOnServer(
+          entry,
+          serverHost: widget.serverHost,
+          groups: widget.groups,
+          context: context,
+          sourceTag: 'QrScannerScreen'
         );
+        
+        if (serverEntry != null && serverEntry.synchronized && mounted) {
+          Navigator.of(context).pop(serverEntry);
+          return null;
+        }
+      } catch (e) {
+        developer.log('QrScannerScreen: Error handling server entry: $e', name: 'QrScannerScreen');
       }
-      return null;
     }
+    
+    return entry;
   }
 
   void _onQrDetected(BarcodeCapture capture) async {

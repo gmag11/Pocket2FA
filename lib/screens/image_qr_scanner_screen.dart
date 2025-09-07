@@ -3,7 +3,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../models/group_entry.dart';
 import '../models/account_entry.dart';
-import '../services/api_service.dart';
+import '../services/entry_creation_service.dart';
 import 'dart:developer' as developer;
 
 class ImageQrScannerScreen extends StatefulWidget {
@@ -68,114 +68,38 @@ class _ImageQrScannerScreenState extends State<ImageQrScannerScreen> {
     }
   }
 
-  // Parse otpauth URL and build AccountEntry (adapted from QrScannerScreen, no group)
+  // Parse otpauth URL and build AccountEntry using our service
   Future<AccountEntry?> _parseAndCreateEntry(String qrContent) async {
-    try {
-      final uri = Uri.parse(qrContent);
-      if (uri.scheme != 'otpauth' || (uri.host != 'totp' && uri.host != 'hotp')) {
-        throw Exception('Not a valid TOTP/HOTP QR code (expected otpauth://totp/ or hotp/)');
-      }
-
-      final otpType = uri.host.toLowerCase();
-      final params = uri.queryParameters;
-
-      // Log decoded URL and parsed fields (mask secret)
+    // Parse QR content to create entry
+    var entry = await EntryCreationService.parseOtpAuthUrl(
+      qrContent, 
+      context,
+      sourceTag: 'ImageQrScannerScreen'
+    );
+    
+    if (entry == null) return null;
+    
+    // Attempt immediate upload if server host present
+    if (widget.serverHost.isNotEmpty && mounted) {
       try {
-        String maskSecret(String s) {
-          final key = 'secret=';
-          final lower = s.toLowerCase();
-          final idx = lower.indexOf(key);
-          if (idx == -1) return s;
-          final start = idx + key.length;
-          var end = s.indexOf('&', start);
-          if (end == -1) end = s.length;
-          return '${s.substring(0, start)}***REDACTED***${s.substring(end)}';
-        }
-        final masked = maskSecret(uri.toString());
-        developer.log('ImageQrScannerScreen: decoded URL from image: $masked', name: 'ImageQrScannerScreen');
-        developer.log('ImageQrScannerScreen: parsed query fields: issuer=${params['issuer']}, label_query=${params['label']}, algorithm=${params['algorithm']}, digits=${params['digits']}, period=${params['period']}, counter=${params['counter']}', name: 'ImageQrScannerScreen');
-      } catch (_) {
-        developer.log('ImageQrScannerScreen: logging failed', name: 'ImageQrScannerScreen');
-      }
-
-      // Extract secret (required)
-      final secret = params['secret']?.trim();
-      if (secret == null || secret.isEmpty || RegExp(r'^[A-Z2-7]+$').hasMatch(secret.toUpperCase()) == false) {
-        throw Exception('Invalid or missing secret (must be uppercase Base32)');
-      }
-
-      // Parse label and issuer
-      final issuer = params['issuer']?.trim() ?? '';
-      String label = '';
-      if (uri.path.isNotEmpty && uri.path != '/') {
-        label = uri.path.startsWith('/') ? uri.path.substring(1) : uri.path;
-        try { label = Uri.decodeComponent(label); } catch (_) {}
-      } else {
-        label = params['label'] ?? '';
-      }
-
-      String service = issuer.isNotEmpty ? issuer : '';
-      String account = label.trim();
-      String group = ''; // No group for QR/image creates
-
-      // If label contains colon and no issuer, split for service:account
-      if (label.contains(':') && service.isEmpty) {
-        final parts = label.split(':');
-        service = parts.first.trim();
-        account = parts.sublist(1).join(':').trim();
-      }
-
-      if (account.isEmpty) account = 'Unknown';
-      if (service.isEmpty) {
-        service = account.split('@').firstOrNull ?? account;
-      }
-
-      // Log final parsed values
-      developer.log('ImageQrScannerScreen: final parsed - service="$service" account="$account" group="$group"', name: 'ImageQrScannerScreen');
-
-      // Defaults and params
-      final algorithm = params['algorithm']?.toUpperCase() ?? 'SHA1';
-      final digits = int.tryParse(params['digits'] ?? '6') ?? 6;
-      final period = int.tryParse(params['period'] ?? (otpType == 'totp' ? '30' : '0')) ?? (otpType == 'totp' ? 30 : 0);
-
-      // Build local entry (no group)
-      var entry = AccountEntry(
-        id: -1,
-        service: service,
-        account: account,
-        seed: secret,
-        group: group,
-        groupId: null,
-        otpType: otpType.toUpperCase(),
-        icon: null,
-        digits: digits,
-        algorithm: algorithm,
-        period: period,
-        localIcon: null,
-        synchronized: false,
-      );
-
-      // Attempt immediate upload if server host present
-      if (widget.serverHost.isNotEmpty) {
-        try {
-          developer.log('ImageQrScannerScreen: Attempting immediate create for ${entry.service}', name: 'ImageQrScannerScreen');
-          final response = await ApiService.instance.createAccountFromEntry(entry, groupId: entry.groupId);
-          var serverEntry = AccountEntry.fromMap(response).copyWith(synchronized: true);
-          if (mounted) Navigator.of(context).pop(serverEntry);
+        final serverEntry = await EntryCreationService.createEntryOnServer(
+          entry,
+          serverHost: widget.serverHost,
+          groups: widget.groups,
+          context: context,
+          sourceTag: 'ImageQrScannerScreen'
+        );
+        
+        if (serverEntry != null && serverEntry.synchronized && mounted) {
+          Navigator.of(context).pop(serverEntry);
           return null;
-        } catch (e) {
-          developer.log('ImageQrScannerScreen: Immediate create failed: $e (keeping local unsynced)', name: 'ImageQrScannerScreen');
         }
+      } catch (e) {
+        developer.log('ImageQrScannerScreen: Error handling server entry: $e', name: 'ImageQrScannerScreen');
       }
-
-      return entry;
-    } catch (e) {
-      developer.log('ImageQrScannerScreen: Parsing failed: $e', name: 'ImageQrScannerScreen');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error parsing QR from image: $e'), backgroundColor: Colors.red));
-      }
-      return null;
     }
+    
+    return entry;
   }
 
   @override

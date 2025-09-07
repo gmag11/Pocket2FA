@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:developer' as developer;
 import 'package:dio/dio.dart';
 import '../models/group_entry.dart';
-import '../models/account_entry.dart';
-import '../services/api_service.dart';
+import '../services/entry_creation_service.dart';
 
 class AdvancedFormScreen extends StatefulWidget {
   final String userEmail;
@@ -380,21 +379,19 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
                         }
                       }
 
-                      // Build AccountEntry with id -1 to mark unsynced initially
-                      final entry = AccountEntry(
-                        id: -1,
+                      // Build AccountEntry using our service
+                      final entry = EntryCreationService.buildManualEntry(
                         service: _serviceCtrl.text.trim(),
                         account: _accountCtrl.text.trim(),
-                        seed: _secretCtrl.text.trim(),
+                        secret: _secretCtrl.text.trim(),
                         group: _selectedGroup == '- No group -' ? '' : _selectedGroup,
                         groupId: selectedGroupId,
-                        otpType: _otpType.toLowerCase(),
-                        icon: null,
+                        otpType: _otpType,
                         digits: _digits,
                         algorithm: _algorithm,
-                        period: _periodCtrl.text.trim().isEmpty ? null : int.tryParse(_periodCtrl.text.trim()),
-                        localIcon: null,
-                        synchronized: false,
+                        period: _periodCtrl.text.trim().isEmpty ? 
+                          (_otpType == 'TOTP' ? 30 : 0) : 
+                          int.tryParse(_periodCtrl.text.trim()) ?? (_otpType == 'TOTP' ? 30 : 0),
                       );
 
                       // Log creation of local entry (redact secret)
@@ -402,33 +399,23 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
                         developer.log('AdvancedForm: local entry created service=${entry.service} account=${entry.account} id=${entry.id} synchronized=${entry.synchronized}', name: 'AdvancedForm');
                       } catch (_) {}
 
-                      // Attempt to create on server immediately. If ApiService is
-                      // configured and the call succeeds, use the returned
-                      // representation (with server id) and mark synchronized=true.
-                      // If it fails, swallow the error and keep the local unsynced entry.
+                      // Use our service to attempt server creation
                       developer.log('AdvancedForm: attempting immediate server create for service=${entry.service} account=${entry.account}', name: 'AdvancedForm');
                       final navigator = Navigator.of(context);
+                      
                       try {
-                        final resp = await ApiService.instance.createAccountFromEntry(entry, groupId: entry.groupId);
-                        if (resp.containsKey('id')) {
-                          var created = AccountEntry.fromMap(Map<dynamic, dynamic>.from(resp)).copyWith(synchronized: true);
-                          // If the server returned only group_id but not the group name,
-                          // fill the `group` field from the dropdown list passed to this
-                          // screen so the UI reflects the assigned group immediately.
-                          try {
-                            if ((created.group.isEmpty || created.group.trim().isEmpty) && created.groupId != null && widget.groups != null) {
-                              String name = '';
-                              for (final g in widget.groups!) {
-                                if (g.id == created.groupId) {
-                                  name = g.name;
-                                  break;
-                                }
-                              }
-                              if (name.isNotEmpty) created = created.copyWith(group: name);
-                            }
-                          } catch (_) {}
-                          developer.log('AdvancedForm: created on server id=${created.id}', name: 'AdvancedForm');
-                          navigator.pop(created);
+                        // Use our service to create entry on server
+                        final serverEntry = await EntryCreationService.createEntryOnServer(
+                          entry,
+                          serverHost: widget.serverHost,
+                          groups: widget.groups,
+                          context: context,
+                          sourceTag: 'AdvancedForm'
+                        );
+                        
+                        if (serverEntry != null && serverEntry.synchronized) {
+                          developer.log('AdvancedForm: created on server id=${serverEntry.id}', name: 'AdvancedForm');
+                          navigator.pop(serverEntry);
                           return;
                         } else {
                           developer.log('AdvancedForm: server create returned no id, returning local entry', name: 'AdvancedForm');

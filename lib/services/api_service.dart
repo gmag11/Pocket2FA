@@ -505,7 +505,11 @@ class ApiService {
       'otp_type': entry.otpType ?? 'totp',
       if (entry.digits != null) 'digits': entry.digits,
       if (entry.algorithm != null) 'algorithm': entry.algorithm,
-      if (entry.period != null) 'period': entry.period,
+      // Para HOTP, enviar counter (que almacenamos en period) y para TOTP enviar period
+      if (entry.otpType?.toLowerCase() == 'hotp' && entry.period != null) 
+        'counter': entry.period
+      else if (entry.period != null) 
+        'period': entry.period,
       if (groupId != null) 'group_id': groupId,
     };
     // Remove nulls/empty

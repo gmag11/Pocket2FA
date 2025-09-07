@@ -1,38 +1,14 @@
 import 'package:flutter/material.dart';
 import 'dart:developer' as developer;
-import 'dart:io';
-import 'package:url_launcher/url_launcher.dart';
-import '../widgets/account_tile.dart';
 import '../services/settings_service.dart';
-import 'settings_screen.dart';
 import 'accounts_screen.dart';
-import 'new_code_screen.dart';
 import '../models/server_connection.dart';
 import '../models/account_entry.dart';
 import '../services/api_service.dart';
 import '../services/sync_service.dart';
-
-// Top-level helper to open an external URL using the platform default, with
-// a Linux fallback to xdg-open when the platform opener fails.
-Future<void> _launchExternal(Uri uri, ScaffoldMessengerState messenger) async {
-  try {
-    if (await canLaunchUrl(uri)) {
-      final ok = await launchUrl(uri, mode: LaunchMode.platformDefault);
-      if (!ok && Platform.isLinux) {
-        await Process.run('xdg-open', [uri.toString()]);
-      }
-    } else if (Platform.isLinux) {
-      await Process.run('xdg-open', [uri.toString()]);
-    } else {
-      await launchUrl(uri);
-    }
-  } catch (e) {
-    developer.log('HomePage: cannot launch $uri: $e', name: 'HomePage');
-        messenger.showSnackBar(SnackBar(
-          content: Text('Could not open URL: $e'),
-    ));
-  }
-}
+import 'search_bar.dart';
+import 'account_list.dart';
+import 'bottom_bar.dart';
 
 class HomePage extends StatefulWidget {
   final SettingsService settings;
@@ -67,7 +43,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Future<void> _onRefreshFromPull() async {
     // Called by RefreshIndicator's onRefresh. Suppress the fullscreen overlay
     // because RefreshIndicator already shows a spinner.
-  _suppressFullScreenSyncIndicator = true; // Suppress fullscreen sync overlay
+    _suppressFullScreenSyncIndicator = true; // Suppress fullscreen sync overlay
     try {
       await _forceSyncCurrentServer();
     } finally {
@@ -93,16 +69,16 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     final srv = _servers.firstWhere((s) => s.id == _selectedServerId, orElse: () => _servers.first);
     try {
       if (mounted) setState(() { if (!_suppressFullScreenSyncIndicator) _isSyncing = true; });
-  final result = await SyncService.instance.forceSync(srv, storage, markAsForced: true);
-  // Force sync attempted network operations; success means server reachable
-  if (mounted) setState(() { _serverReachable = true; });
-  // After forcing sync, reload servers but suppress the automatic sync snackbar
-  _suppressNextSyncSnack = true;
-  // Prevent the subsequent _loadServers() call from triggering a second network
-  // syncIfNeeded immediately after a forced sync. This avoids double network
-  // requests when the UI reloads servers right after forcing a sync.
-  _skipSyncOnLoad = true;
-  await _loadServers();
+      final result = await SyncService.instance.forceSync(srv, storage, markAsForced: true);
+      // Force sync attempted network operations; success means server reachable
+      if (mounted) setState(() { _serverReachable = true; });
+      // After forcing sync, reload servers but suppress the automatic sync snackbar
+      _suppressNextSyncSnack = true;
+      // Prevent the subsequent _loadServers() call from triggering a second network
+      // syncIfNeeded immediately after a forced sync. This avoids double network
+      // requests when the UI reloads servers right after forcing a sync.
+      _skipSyncOnLoad = true;
+      await _loadServers();
       if (mounted) {
         if (result['network_failed'] == true) {
           setState(() { _serverReachable = false; });
@@ -134,19 +110,19 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     super.initState();
     _searchController = TextEditingController();
     _searchFocus = FocusNode();
-  _listScrollController = ScrollController();
+    _listScrollController = ScrollController();
 
-  // Slower animation so it's clear the header hides upwards and unfolds downwards
-  _headerController = AnimationController(vsync: this, duration: const Duration(milliseconds: 450));
-  _headerSlide = Tween<Offset>(begin: const Offset(0, -0.28), end: Offset.zero)
-    .animate(CurvedAnimation(parent: _headerController, curve: Curves.easeInOut));
-  _headerSizeFactor = CurvedAnimation(parent: _headerController, curve: Curves.easeInOut);
+    // Slower animation so it's clear the header hides upwards and unfolds downwards
+    _headerController = AnimationController(vsync: this, duration: const Duration(milliseconds: 450));
+    _headerSlide = Tween<Offset>(begin: const Offset(0, -0.28), end: Offset.zero)
+        .animate(CurvedAnimation(parent: _headerController, curve: Curves.easeInOut));
+    _headerSizeFactor = CurvedAnimation(parent: _headerController, curve: Curves.easeInOut);
 
-  // Start visible
-  _headerController.value = 1.0;
+    // Start visible
+    _headerController.value = 1.0;
 
-  // Register named listener so we can remove it on dispose
-  _listScrollController.addListener(_handleScroll);
+    // Register named listener so we can remove it on dispose
+    _listScrollController.addListener(_handleScroll);
     // Load servers and then perform an initial connectivity check for the selected server.
     _loadServers().then((_) async {
       try {
@@ -211,11 +187,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   Future<void> _loadServers() async {
-  final storage = widget.settings.storage;
-  List<ServerConnection> servers = [];
-  // Keep a copy of the currently displayed servers so we can fall back to them
-  // if storage returns empty due to a failed/partial sync while offline.
-  final previousServers = List<ServerConnection>.from(_servers);
+    final storage = widget.settings.storage;
+    List<ServerConnection> servers = [];
+    // Keep a copy of the currently displayed servers so we can fall back to them
+    // if storage returns empty due to a failed/partial sync while offline.
+    final previousServers = List<ServerConnection>.from(_servers);
     String? restoredServerId;
     int? restoredAccountIndex;
     // Track whether storage actually provided a value. We only want to
@@ -305,7 +281,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         final srv = _servers.firstWhere((s) => s.id == _selectedServerId);
         ApiService.instance.setServer(srv);
         // Attempt a throttled sync to refresh accounts/icons (if we have persistent storage)
-            if (storage != null) {
+        if (storage != null) {
           try {
             // Do not show the fullscreen sync overlay when a pull-to-refresh
             // is active; the RefreshIndicator already shows a spinner.
@@ -443,7 +419,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       setState(() {
         _selectedServerId = serverId;
         _selectedAccountIndex = accountIndex;
-  _currentItems = server.accounts;
+        _currentItems = server.accounts;
         _selectedGroup = 'All (${_currentItems.length})';
       });
 
@@ -498,18 +474,18 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     // small spinner in the sync button.
     if (mounted) {
       setState(() {
-      _suppressFullScreenSyncIndicator = true;
-      _isSyncing = true;
-    });
+        _suppressFullScreenSyncIndicator = true;
+        _isSyncing = true;
+      });
     }
     try {
       await _onRefreshFromPull();
     } finally {
       if (mounted) {
         setState(() {
-        _isSyncing = false;
-        _suppressFullScreenSyncIndicator = false;
-      });
+          _isSyncing = false;
+          _suppressFullScreenSyncIndicator = false;
+        });
       }
     }
   }
@@ -518,9 +494,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   void dispose() {
     _searchController.dispose();
     _searchFocus.dispose();
-  _listScrollController.removeListener(_handleScroll);
-  _listScrollController.dispose();
-  _headerController.dispose();
+    _listScrollController.removeListener(_handleScroll);
+    _listScrollController.dispose();
+    _headerController.dispose();
     super.dispose();
   }
 
@@ -546,14 +522,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-  final groups = _groups();
+    final groups = _groups();
     // If storage exists but is locked (biometric required and not yet satisfied),
-  // If storage exists but is locked (biometric required and not yet satisfied),
-  // show a minimal screen with a single centered 'Retry' button so the user
-  // can re-attempt authentication. This prevents the home UI from being
-  // visible while the local store is locked.
+    // show a minimal screen with a single centered 'Retry' button so the user
+    // can re-attempt authentication. This prevents the home UI from being
+    // visible while the local store is locked.
     final storage = widget.settings.storage;
-  if (storage != null && !storage.isUnlocked) {
+    if (storage != null && !storage.isUnlocked) {
       return Scaffold(
         body: SafeArea(
           child: Center(
@@ -612,7 +587,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                             children: [
                               if (_servers.isNotEmpty)
                                 Expanded(
-                                  child: _SearchBar(
+                                  child: HomeSearchBar(
                                     controller: _searchController,
                                     focusNode: _searchFocus,
                                     onChanged: (v) => setState(() => _searchQuery = v),
@@ -690,7 +665,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           child: ConstrainedBox(
                             constraints: const BoxConstraints(maxWidth: 1400),
                             child: SizedBox.expand(
-                              child: _AccountList(
+                              child: AccountList(
                                 selectedGroup: _groupKey(_selectedGroup),
                                 searchQuery: _searchQuery,
                                 settings: widget.settings,
@@ -703,7 +678,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         );
                       }
                       return SizedBox.expand(
-                        child: _AccountList(
+                        child: AccountList(
                           selectedGroup: _groupKey(_selectedGroup),
                           searchQuery: _searchQuery,
                           settings: widget.settings,
@@ -715,7 +690,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     },
                   ),
                 ),
-                _BottomBar(
+                BottomBar(
                   settings: widget.settings,
                   servers: _servers,
                   selectedServerId: _selectedServerId,
@@ -811,427 +786,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               ),
           ],
         ),
-      ),
-    );
-  }
-
-  
-}
-
-class _SearchBar extends StatelessWidget {
-  final TextEditingController? controller;
-  final FocusNode? focusNode;
-  final ValueChanged<String>? onChanged;
-
-  const _SearchBar({this.controller, this.focusNode, this.onChanged});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 48,
-      decoration: BoxDecoration(
-        color: Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(24),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      child: Row(
-        children: [
-          const Icon(Icons.search, color: Colors.grey),
-          const SizedBox(width: 8),
-          Expanded(
-            child: ValueListenableBuilder<TextEditingValue>(
-              valueListenable: controller ?? TextEditingController(),
-              builder: (context, value, _) {
-                final hasText = value.text.isNotEmpty;
-                return TextField(
-                  controller: controller,
-                  focusNode: focusNode,
-                  onChanged: onChanged,
-                  textAlignVertical: TextAlignVertical.center,
-                  decoration: InputDecoration(
-                    hintText: 'Search',
-                    border: InputBorder.none,
-                    isDense: true,
-                    suffixIcon: hasText
-                        ? IconButton(
-                            icon: const Icon(Icons.clear, size: 18),
-                            onPressed: () {
-                              controller?.clear();
-                              onChanged?.call('');
-                              // keep focus after clearing
-                              focusNode?.requestFocus();
-                            },
-                          )
-                        : null,
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _AccountList extends StatelessWidget {
-  final String selectedGroup;
-  final String searchQuery;
-  final SettingsService settings;
-  final List<AccountEntry> items;
-  final Future<void> Function()? onRefresh;
-  final ScrollController? scrollController;
-
-  const _AccountList({required this.selectedGroup, required this.searchQuery, required this.settings, required this.items, this.onRefresh, this.scrollController});
-
-  @override
-  Widget build(BuildContext context) {
-    // Helper refresh wrapper that uses provided onRefresh when available.
-    Future<void> handleRefresh() async {
-      if (onRefresh != null) {
-        await onRefresh!();
-      }
-    }
-
-    // If no accounts/items available, return informative message but keep pull-to-refresh
-    if (items.isEmpty) {
-      // Safe check for no servers: avoid null lints
-      final storage = settings.storage;
-      bool noServers = false;
-      if (storage != null && storage.isUnlocked) {
-        final raw = storage.box.get('servers');
-        noServers = raw == null || (raw as List).isEmpty;
-      } else {
-        noServers = true; // Assume no servers if storage locked/unavailable
-      }
-      return RefreshIndicator(
-        onRefresh: handleRefresh,
-        child: ListView(
-          controller: scrollController,
-          physics: const AlwaysScrollableScrollPhysics(),
-          children: [
-            const SizedBox(height: 120),
-            Center(
-              child: Text(
-                noServers
-                    ? 'No servers configured. Configure a server in settings to get started.'
-                    : 'No accounts registered',
-                style: const TextStyle(color: Colors.grey, fontSize: 16),
-                textAlign: TextAlign.center,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    final base = selectedGroup == 'All' || selectedGroup.isEmpty
-      ? items
-      : items.where((i) => i.group == selectedGroup).toList();
-
-    final query = searchQuery.toLowerCase();
-    final filtered = query.isEmpty
-      ? base
-      : base.where((i) {
-        final s = i.service.toLowerCase();
-        final a = i.account.toLowerCase();
-        return s.contains(query) || a.contains(query);
-      }).toList();
-
-    // No results after filtering — still allow pull-to-refresh
-    if (filtered.isEmpty) {
-      return RefreshIndicator(
-        onRefresh: handleRefresh,
-        child: ListView(
-          controller: scrollController,
-          physics: const AlwaysScrollableScrollPhysics(),
-          children: const [
-            SizedBox(height: 120),
-            Center(child: Text('No results', style: TextStyle(color: Colors.grey))),
-          ],
-        ),
-      );
-    }
-
-    final width = MediaQuery.of(context).size.width;
-    int columns;
-    if (width > 1200) {
-      columns = 3;
-    } else if (width > 800) {
-      columns = 2;
-    } else {
-      columns = 1;
-    }
-
-    if (columns == 1) {
-      return RefreshIndicator(
-        onRefresh: handleRefresh,
-        child: ListView.separated(
-          controller: scrollController,
-          physics: const AlwaysScrollableScrollPhysics(),
-          itemCount: filtered.length,
-          separatorBuilder: (context, index) => Divider(indent: 20, endIndent: 20,),
-          itemBuilder: (context, index) {
-            try {
-              final item = filtered[index];
-              return AccountTile(item: item, settings: settings);
-            } catch (e) {
-              return ListTile(
-                leading: const Icon(Icons.error, color: Colors.red),
-                title: const Text('Error al mostrar cuenta'),
-                subtitle: Text(e.toString()),
-                isThreeLine: true,
-                dense: true,
-              );
-            }
-          },
-        ),
-      );
-    }
-
-    // Multi-column grid for wide screens (up to 3 columns) — wrap with RefreshIndicator
-    return RefreshIndicator(
-      onRefresh: handleRefresh,
-      child: GridView.builder(
-  controller: scrollController,
-  physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: columns,
-          crossAxisSpacing: 16,
-          mainAxisExtent: 92, // enough to contain the 72px tile plus spacing
-        ),
-        itemCount: filtered.length,
-        itemBuilder: (context, index) {
-          try {
-            final item = filtered[index];
-            return Container(
-              decoration: const BoxDecoration(
-                border: Border(bottom: BorderSide(color: Color(0xFFE0E0E0))),
-              ),
-              child: AccountTile(key: ValueKey(item.id), item: item, settings: settings),
-            );
-          } catch (e) {
-            return Container(
-              decoration: const BoxDecoration(
-                border: Border(bottom: BorderSide(color: Color(0xFFE0E0E0))),
-              ),
-              child: ListTile(
-                leading: const Icon(Icons.error, color: Colors.red),
-                title: const Text('Error al mostrar cuenta'),
-                subtitle: Text(e.toString()),
-                isThreeLine: true,
-                dense: true,
-              ),
-            );
-          }
-        },
-      ),
-    );
-  }
-}
-
-// _IconCircle removed (now unused after refactor)
-
-class _BottomBar extends StatelessWidget {
-  final SettingsService settings;
-  final List<ServerConnection> servers;
-  final String? selectedServerId;
-  final int? selectedAccountIndex;
-  final bool serverReachable;
-  final VoidCallback onOpenSelector;
-  final VoidCallback? onOpenAccounts;
-  final ValueChanged<AccountEntry>? onNewAccount;
-
-  const _BottomBar({required this.settings, required this.servers, required this.selectedServerId, required this.selectedAccountIndex, required this.onOpenSelector, this.onOpenAccounts, this.onNewAccount, required this.serverReachable});
-
-  @override
-  Widget build(BuildContext context) {
-    final bool hasServers = servers.isNotEmpty;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      color: Colors.white,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              ElevatedButton.icon(
-                onPressed: hasServers
-                    ? () async {
-                        // Open the new code screen and wait for a created AccountEntry
-                        final srv = selectedServerId != null
-                            ? servers.firstWhere((s) => s.id == selectedServerId, orElse: () => servers.first)
-                            : servers.first;
-                        final acct = (srv.userEmail.isNotEmpty) ? srv.userEmail : 'no email';
-                        final host = Uri.parse(srv.url).host;
-                        final result = await Navigator.of(context).push(MaterialPageRoute(builder: (c) => NewCodeScreen(userEmail: acct, serverHost: host, groups: srv.groups)));
-                        if (result is AccountEntry && onNewAccount != null) {
-                          onNewAccount!(result);
-                        }
-                      }
-                    : null,
-                icon: const Icon(Icons.qr_code, color: Colors.white),
-                style: ElevatedButton.styleFrom(
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                  backgroundColor: hasServers ? const Color(0xFF4F63E6) : Colors.grey,
-                  foregroundColor: Colors.white,
-                ),
-                label: const Text('New', style: TextStyle(color: Colors.white)),
-              ),
-              const SizedBox(width: 12),
-              OutlinedButton(
-                onPressed: hasServers
-                    ? () async {
-                        final messenger = ScaffoldMessenger.of(context);
-
-                        final srv = selectedServerId != null
-                            ? servers.firstWhere((s) => s.id == selectedServerId, orElse: () => servers.first)
-                            : servers.first;
-
-                        final urlStr = srv.url.trim();
-                        final parsed = Uri.tryParse(urlStr);
-                        if (parsed == null || parsed.scheme.isEmpty || !(parsed.scheme == 'http' || parsed.scheme == 'https') || parsed.host.isEmpty) {
-                          messenger.showSnackBar(const SnackBar(
-                            content: Text('Invalid server URL (missing http/https)'),
-                          ));
-                          return;
-                        }
-
-                        // Launch base server url in external browser
-                        final trimmed = urlStr.endsWith('/') ? urlStr.substring(0, urlStr.length - 1) : urlStr;
-                        final uri = Uri.parse(trimmed);
-                        await _launchExternal(uri, messenger);
-                      }
-                    : null,
-                style: OutlinedButton.styleFrom(
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                  foregroundColor: hasServers ? null : Colors.grey,
-                ),
-                child: const Text('2fauth web'),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Reachability indicator: icon + tooltip + semantics for accessibility
-                  Tooltip(
-                    message: serverReachable ? 'Online' : 'Offline',
-                    child: Semantics(
-                      label: serverReachable ? 'Server reachable' : 'Server unreachable',
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 6.0),
-                        child: Icon(
-                          serverReachable ? Icons.cloud : Icons.cloud_off,
-                          size: 14,
-                          color: serverReachable ? Colors.green : Colors.red,
-                        ),
-                      ),
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: onOpenSelector,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
-                      child: Builder(builder: (ctx) {
-                        // Compute display text from the selected server/account safely
-                        String displayText;
-                        if (servers.isEmpty) {
-                          displayText = 'no-server';
-                        } else {
-                          final srv = selectedServerId != null
-                              ? servers.firstWhere((s) => s.id == selectedServerId, orElse: () => servers.first)
-                              : servers.first;
-              // Show only the server/user email. Do not display the selected
-              // account name in this top/bottom summary to avoid confusion.
-              final acct = (srv.userEmail.isNotEmpty) ? srv.userEmail : 'no email';
-              displayText = '$acct - ${Uri.parse(srv.url).host}';
-                        }
-                        return Text(displayText, style: const TextStyle(color: Colors.grey));
-                      }),
-                    ),
-                  ),
-                  InkWell(
-                    onTap: () {
-                      final s = settings;
-                      final nav = Navigator.of(context);
-                      final messenger = ScaffoldMessenger.of(context);
-                      showModalBottomSheet<String>(
-                          context: context,
-                          backgroundColor: Colors.white,
-                          shape: const RoundedRectangleBorder(
-                            borderRadius: BorderRadius.vertical(top: Radius.circular(12.0)),
-                          ),
-                          builder: (ctx) {
-                            return SafeArea(
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  ListTile(
-                                    title: const Text('settings', textAlign: TextAlign.center),
-                                    onTap: () => Navigator.of(ctx).pop('settings'),
-                                  ),
-                                  ListTile(
-                                    title: const Text('accounts', textAlign: TextAlign.center),
-                                    onTap: () => Navigator.of(ctx).pop('accounts'),
-                                  ),
-                                  const SizedBox(height: 12),
-                                  const Divider(height: 1),
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.end,
-                                      children: [
-                                        IconButton(
-                                          icon: const Icon(Icons.close, color: Colors.grey),
-                                          onPressed: () => Navigator.of(ctx).pop(), // close without selecting
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                        ).then((value) {
-                          if (value != null) {
-                            if (value == 'settings') {
-                              // open full settings screen using captured Navigator
-                              nav.push(MaterialPageRoute(builder: (c) => SettingsScreen(settings: s)));
-                            } else if (value == 'accounts') {
-                              // delegate to the owner (HomePage) to open accounts so it can reload afterwards
-                              if (onOpenAccounts != null) {
-                                onOpenAccounts!();
-                              } else {
-                                // fallback behaviour: try to open directly if storage is available
-                                if (s.storage != null) {
-                                  nav.push(MaterialPageRoute(builder: (c) => AccountsScreen(storage: s.storage!)));
-                                } else {
-                                  messenger.showSnackBar(const SnackBar(content: Text('Storage not available')));
-                                }
-                              }
-                            }
-                          }
-                        });
-                      },
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: const [
-                    Icon(Icons.menu, size: 18, color: Colors.grey),
-                  ],
-                ),
-              ),
-                ],
-              ),
-            ],
-          ),
-        ],
       ),
     );
   }

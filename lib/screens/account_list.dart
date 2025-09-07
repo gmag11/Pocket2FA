@@ -1,0 +1,173 @@
+import 'package:flutter/material.dart';
+import '../widgets/account_tile.dart';
+import '../services/settings_service.dart';
+import '../models/account_entry.dart';
+
+class AccountList extends StatelessWidget {
+  final String selectedGroup;
+  final String searchQuery;
+  final SettingsService settings;
+  final List<AccountEntry> items;
+  final Future<void> Function()? onRefresh;
+  final ScrollController? scrollController;
+
+  const AccountList({
+    required this.selectedGroup,
+    required this.searchQuery,
+    required this.settings,
+    required this.items,
+    this.onRefresh,
+    this.scrollController,
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // Helper refresh wrapper that uses provided onRefresh when available.
+    Future<void> handleRefresh() async {
+      if (onRefresh != null) {
+        await onRefresh!();
+      }
+    }
+
+    // If no accounts/items available, return informative message but keep pull-to-refresh
+    if (items.isEmpty) {
+      // Safe check for no servers: avoid null lints
+      final storage = settings.storage;
+      bool noServers = false;
+      if (storage != null && storage.isUnlocked) {
+        try {
+          final raw = storage.box.get('servers');
+          noServers = raw == null || (raw as List).isEmpty;
+        } on StateError catch (_) {
+          noServers = true; // Assume no servers if storage locked/unavailable
+        }
+      } else {
+        noServers = true; // Assume no servers if storage locked/unavailable
+      }
+      return RefreshIndicator(
+        onRefresh: handleRefresh,
+        child: ListView(
+          controller: scrollController,
+          physics: const AlwaysScrollableScrollPhysics(),
+          children: [
+            const SizedBox(height: 120),
+            Center(
+              child: Text(
+                noServers
+                    ? 'No servers configured. Configure a server in settings to get started.'
+                    : 'No accounts registered',
+                style: const TextStyle(color: Colors.grey, fontSize: 16),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final base = selectedGroup == 'All' || selectedGroup.isEmpty
+        ? items
+        : items.where((i) => i.group == selectedGroup).toList();
+
+    final query = searchQuery.toLowerCase();
+    final filtered = query.isEmpty
+        ? base
+        : base.where((i) {
+            final s = i.service.toLowerCase();
+            final a = i.account.toLowerCase();
+            return s.contains(query) || a.contains(query);
+          }).toList();
+
+    // No results after filtering — still allow pull-to-refresh
+    if (filtered.isEmpty) {
+      return RefreshIndicator(
+        onRefresh: handleRefresh,
+        child: ListView(
+          controller: scrollController,
+          physics: const AlwaysScrollableScrollPhysics(),
+          children: const [
+            SizedBox(height: 120),
+            Center(child: Text('No results', style: TextStyle(color: Colors.grey))),
+          ],
+        ),
+      );
+    }
+
+    final width = MediaQuery.of(context).size.width;
+    int columns;
+    if (width > 1200) {
+      columns = 3;
+    } else if (width > 800) {
+      columns = 2;
+    } else {
+      columns = 1;
+    }
+
+    if (columns == 1) {
+      return RefreshIndicator(
+        onRefresh: handleRefresh,
+        child: ListView.separated(
+          controller: scrollController,
+          physics: const AlwaysScrollableScrollPhysics(),
+          itemCount: filtered.length,
+          separatorBuilder: (context, index) => Divider(indent: 20, endIndent: 20,),
+          itemBuilder: (context, index) {
+            try {
+              final item = filtered[index];
+              return AccountTile(item: item, settings: settings);
+            } catch (e) {
+              return ListTile(
+                leading: const Icon(Icons.error, color: Colors.red),
+                title: const Text('Error al mostrar cuenta'),
+                subtitle: Text(e.toString()),
+                isThreeLine: true,
+                dense: true,
+              );
+            }
+          },
+        ),
+      );
+    }
+
+    // Multi-column grid for wide screens (up to 3 columns) — wrap with RefreshIndicator
+    return RefreshIndicator(
+      onRefresh: handleRefresh,
+      child: GridView.builder(
+        controller: scrollController,
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: columns,
+          crossAxisSpacing: 16,
+          mainAxisExtent: 92, // enough to contain the 72px tile plus spacing
+        ),
+        itemCount: filtered.length,
+        itemBuilder: (context, index) {
+          try {
+            final item = filtered[index];
+            return Container(
+              decoration: const BoxDecoration(
+                border: Border(bottom: BorderSide(color: Color(0xFFE0E0E0))),
+              ),
+              child: AccountTile(key: ValueKey(item.id), item: item, settings: settings),
+            );
+          } catch (e) {
+            return Container(
+              decoration: const BoxDecoration(
+                border: Border(bottom: BorderSide(color: Color(0xFFE0E0E0))),
+              ),
+              child: ListTile(
+                leading: const Icon(Icons.error, color: Colors.red),
+                title: const Text('Error al mostrar cuenta'),
+                subtitle: Text(e.toString()),
+                isThreeLine: true,
+                dense: true,
+              ),
+            );
+          }
+        },
+      ),
+    );
+  }
+}

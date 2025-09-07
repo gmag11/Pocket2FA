@@ -40,6 +40,7 @@ class _ImageQrScannerScreenState extends State<ImageQrScannerScreen> {
     setState(() { _isProcessing = true; });
 
     try {
+      developer.log('ImageQrScannerScreen: Analyzing image for QR code', name: 'ImageQrScannerScreen');
       final controller = MobileScannerController();
       final capture = await controller.analyzeImage(image.path);
       await controller.dispose();
@@ -47,20 +48,29 @@ class _ImageQrScannerScreenState extends State<ImageQrScannerScreen> {
       if (capture != null && capture.barcodes.isNotEmpty) {
         final barcode = capture.barcodes.first;
         if (barcode.rawValue != null) {
+          developer.log('ImageQrScannerScreen: QR code found in image, processing', name: 'ImageQrScannerScreen');
           final entry = await _parseAndCreateEntry(barcode.rawValue!);
+          
           if (entry != null && mounted) {
+            developer.log('ImageQrScannerScreen: Returning with entry', name: 'ImageQrScannerScreen');
             Navigator.of(context).pop(entry);
+            return; // Importante: salir después de navegar
           }
         }
       } else {
+        developer.log('ImageQrScannerScreen: No QR code found in image', name: 'ImageQrScannerScreen');
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No QR code found in image'), backgroundColor: Colors.orange));
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('No QR code found in image'), backgroundColor: Colors.orange)
+          );
         }
       }
     } catch (e) {
       developer.log('ImageQrScannerScreen: Scan image failed: $e', name: 'ImageQrScannerScreen');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error scanning image: $e'), backgroundColor: Colors.red));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error scanning image: $e'), backgroundColor: Colors.red)
+        );
       }
     } finally {
       if (mounted) setState(() { _isProcessing = false; });
@@ -70,6 +80,8 @@ class _ImageQrScannerScreenState extends State<ImageQrScannerScreen> {
 
   // Parse otpauth URL and build AccountEntry using our service
   Future<AccountEntry?> _parseAndCreateEntry(String qrContent) async {
+    developer.log('ImageQrScannerScreen: Processing QR content', name: 'ImageQrScannerScreen');
+    
     // Parse QR content to create entry
     var entry = await EntryCreationService.parseOtpAuthUrl(
       qrContent, 
@@ -77,11 +89,17 @@ class _ImageQrScannerScreenState extends State<ImageQrScannerScreen> {
       sourceTag: 'ImageQrScannerScreen'
     );
     
-    if (entry == null) return null;
+    if (entry == null) {
+      developer.log('ImageQrScannerScreen: Failed to parse QR content', name: 'ImageQrScannerScreen');
+      return null;
+    }
+    
+    developer.log('ImageQrScannerScreen: Entry created from QR: ${entry.service}/${entry.account}', name: 'ImageQrScannerScreen');
     
     // Attempt immediate upload if server host present
     if (widget.serverHost.isNotEmpty && mounted) {
       try {
+        developer.log('ImageQrScannerScreen: Attempting server upload', name: 'ImageQrScannerScreen');
         final serverEntry = await EntryCreationService.createEntryOnServer(
           entry,
           serverHost: widget.serverHost,
@@ -90,15 +108,20 @@ class _ImageQrScannerScreenState extends State<ImageQrScannerScreen> {
           sourceTag: 'ImageQrScannerScreen'
         );
         
-        if (serverEntry != null && serverEntry.synchronized && mounted) {
-          Navigator.of(context).pop(serverEntry);
-          return null;
+        if (serverEntry != null && serverEntry.synchronized) {
+          developer.log('ImageQrScannerScreen: Server upload successful, returning entry', name: 'ImageQrScannerScreen');
+          return serverEntry;
+        } else {
+          developer.log('ImageQrScannerScreen: Server upload returned null or unsynchronized entry', name: 'ImageQrScannerScreen');
         }
       } catch (e) {
-        developer.log('ImageQrScannerScreen: Error handling server entry: $e', name: 'ImageQrScannerScreen');
+        developer.log('ImageQrScannerScreen: Error during server upload: $e', name: 'ImageQrScannerScreen');
       }
+    } else {
+      developer.log('ImageQrScannerScreen: Skipping server upload (no server or not mounted)', name: 'ImageQrScannerScreen');
     }
     
+    // Retornar la entrada local
     return entry;
   }
 

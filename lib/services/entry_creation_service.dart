@@ -188,11 +188,11 @@ class EntryCreationService {
       return serverEntry;
     } catch (e) {
       developer.log('$sourceTag: Immediate create failed: $e (keeping local unsynced)', name: sourceTag);
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not create on server: $e'), backgroundColor: Colors.orange),
-        );
-      }
+      // if (context.mounted) {
+      //   ScaffoldMessenger.of(context).showSnackBar(
+      //     SnackBar(content: Text('Could not create on server: $e'), backgroundColor: Colors.orange),
+      //   );
+      // }
       return entry; // Return the local entry on failure
     }
   }

@@ -14,9 +14,12 @@ class AccountEntry {
   final int? digits; // number of digits in OTP
   final String? algorithm; // hashing algorithm, e.g. sha1
   final int? period; // time step for TOTP
-  // final int? counter; // counter for HOTP
+  final int? counter; // counter for HOTP
   // Local-only path to the cached icon file. Not part of server model.
   final String? localIcon;
+  // Whether this entry is synchronized with the server. True for accounts
+  // received from the API; false for locally created unsynced accounts.
+  final bool synchronized;
 
   AccountEntry({
     required this.id,
@@ -30,8 +33,9 @@ class AccountEntry {
     this.digits,
     this.algorithm,
     this.period,
-    // this.counter,
+    this.counter,
     this.localIcon,
+    this.synchronized = true,
   });
 
   Map<String, dynamic> toMap() => {
@@ -41,14 +45,15 @@ class AccountEntry {
         // API uses 'secret' but local model uses 'seed'
         'secret': seed,
         'group': group,
+        'synchronized': synchronized,
         if (groupId != null) 'group_id': groupId,
         if (otpType != null) 'otp_type': otpType,
         if (icon != null) 'icon': icon,
         if (digits != null) 'digits': digits,
         if (algorithm != null) 'algorithm': algorithm,
         if (period != null) 'period': period,
-        // if (counter != null) 'counter': counter,
-  if (localIcon != null) 'local_icon': localIcon,
+        if (counter != null) 'counter': counter,
+        if (localIcon != null) 'local_icon': localIcon,
       };
 
   factory AccountEntry.fromMap(Map<dynamic, dynamic> m) => AccountEntry(
@@ -66,8 +71,11 @@ class AccountEntry {
         digits: m.containsKey('digits') && m['digits'] != null ? (m['digits'] is int ? m['digits'] as int : int.tryParse(m['digits'].toString())) : null,
         algorithm: m['algorithm']?.toString(),
         period: m.containsKey('period') && m['period'] != null ? (m['period'] is int ? m['period'] as int : int.tryParse(m['period'].toString())) : null,
-        // counter: m.containsKey('counter') && m['counter'] != null ? (m['counter'] is int ? m['counter'] as int : int.tryParse(m['counter'].toString())) : null,
+        counter: m.containsKey('counter') && m['counter'] != null ? (m['counter'] is int ? m['counter'] as int : int.tryParse(m['counter'].toString())) : null,
         localIcon: m['local_icon']?.toString(),
+  // If the server provided the entry, consider it synchronized. If the
+  // map explicitly contains a 'synchronized' value, respect it.
+  synchronized: m.containsKey('synchronized') ? (m['synchronized'] == true || m['synchronized']?.toString() == 'true') : true,
       );
 
   // Legacy conversion removed: UI should use AccountEntry directly and generate OTPs dynamically.
@@ -86,6 +94,7 @@ class AccountEntry {
     int? period,
     int? counter,
     String? localIcon,
+    bool? synchronized,
   }) {
     return AccountEntry(
       id: id ?? this.id,
@@ -101,6 +110,7 @@ class AccountEntry {
       period: period ?? this.period,
       // counter: counter ?? this.counter,
       localIcon: localIcon ?? this.localIcon,
+      synchronized: synchronized ?? this.synchronized,
     );
   }
 }

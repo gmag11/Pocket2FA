@@ -6,6 +6,7 @@ import '../widgets/account_tile.dart';
 import '../services/settings_service.dart';
 import 'settings_screen.dart';
 import 'accounts_screen.dart';
+import 'new_code_screen.dart';
 import '../models/server_connection.dart';
 import '../models/account_entry.dart';
 import '../services/api_service.dart';
@@ -61,6 +62,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   int _loadServerAttempts = 0;
   static const int _maxLoadServerAttempts = 6;
   bool _suppressFullScreenSyncIndicator = false;
+  bool _skipSyncOnLoad = false;
 
   Future<void> _onRefreshFromPull() async {
     // Called by RefreshIndicator's onRefresh. Suppress the fullscreen overlay
@@ -96,6 +98,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   if (mounted) setState(() { _serverReachable = true; });
   // After forcing sync, reload servers but suppress the automatic sync snackbar
   _suppressNextSyncSnack = true;
+  // Prevent the subsequent _loadServers() call from triggering a second network
+  // syncIfNeeded immediately after a forced sync. This avoids double network
+  // requests when the UI reloads servers right after forcing a sync.
+  _skipSyncOnLoad = true;
   await _loadServers();
       if (mounted) {
         if (result['network_failed'] == true) {
@@ -299,12 +305,22 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         final srv = _servers.firstWhere((s) => s.id == _selectedServerId);
         ApiService.instance.setServer(srv);
         // Attempt a throttled sync to refresh accounts/icons (if we have persistent storage)
-        if (storage != null) {
+            if (storage != null) {
           try {
             // Do not show the fullscreen sync overlay when a pull-to-refresh
             // is active; the RefreshIndicator already shows a spinner.
             if (mounted && !_suppressFullScreenSyncIndicator) setState(() { _isSyncing = true; });
-            final result = await SyncService.instance.syncIfNeeded(srv, storage);
+            Map<String, dynamic> result;
+            if (_skipSyncOnLoad) {
+              // consume the flag and skip the automatic throttled sync because
+              // a forceSync just ran and already refreshed server state.
+              _skipSyncOnLoad = false;
+              developer.log('HomePage: skipping syncIfNeeded because a recent forced sync ran', name: 'HomePage');
+              result = {'skipped': true, 'success': true, 'downloaded': 0, 'failed': 0};
+            } else {
+              final tmp = await SyncService.instance.syncIfNeeded(srv, storage);
+              result = tmp;
+            }
             // If syncIfNeeded actually performed a network sync, it will not set
             // 'skipped' to true. Only update reachability state when a network
             // attempt occurred and succeeded.
@@ -594,14 +610,16 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           padding: const EdgeInsets.symmetric(horizontal: 16.0),
                           child: Row(
                             children: [
-                              Expanded(
-                                child: _SearchBar(
-                                  controller: _searchController,
-                                  focusNode: _searchFocus,
-                                  onChanged: (v) =>
-                                      setState(() => _searchQuery = v),
-                                ),
-                              ),
+                              if (_servers.isNotEmpty)
+                                Expanded(
+                                  child: _SearchBar(
+                                    controller: _searchController,
+                                    focusNode: _searchFocus,
+                                    onChanged: (v) => setState(() => _searchQuery = v),
+                                  ),
+                                )
+                              else
+                                const Expanded(child: SizedBox()),
                               const SizedBox(width: 8),
                               // Manual sync button that performs the same action as pull-to-refresh
                               _isSyncing
@@ -612,23 +630,25 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                         child: SizedBox(
                                           width: 20,
                                           height: 20,
-                                          child:
-                                              const CircularProgressIndicator(
-                                                  strokeWidth: 2),
+                                          child: const CircularProgressIndicator(strokeWidth: 2),
                                         ),
                                       ),
                                     )
-                                  : Semantics(
-                                      label: 'Synchronize',
-                                      button: true,
-                                      child: IconButton(
-                                        tooltip: 'Synchronize',
-                                        icon: const Icon(Icons.sync),
-                                        onPressed: () async {
-                                          await _manualSyncPressed();
-                                        },
-                                      ),
-                                    ),
+                                  : _servers.isEmpty
+                                      ? const SizedBox(
+                                          width: 48,
+                                          height: 48,
+                                          child: Icon(Icons.sync, color: Colors.grey),
+                                        )
+                                      : Semantics(
+                                          label: 'Synchronize',
+                                          button: true,
+                                          child: IconButton(
+                                            tooltip: 'Synchronize',
+                                            icon: const Icon(Icons.sync),
+                                            onPressed: _manualSyncPressed,
+                                          ),
+                                        ),
                             ],
                           ),
                         ),
@@ -709,6 +729,59 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       await _loadServers();
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Storage not available')));
+                    }
+                  },
+                  onNewAccount: (acct) {
+                    // Add new unsynced account to the currently selected server in memory
+                    if (_selectedServerId != null) {
+                      final idx = _servers.indexWhere((s) => s.id == _selectedServerId);
+                      if (idx != -1) {
+                        final srv = _servers[idx];
+                        srv.accounts.add(acct);
+                        // also update _currentItems and UI
+                        setState(() {
+                          _currentItems = srv.accounts;
+                          _selectedGroup = 'All (${_currentItems.length})';
+                        });
+
+                        // Best-effort persist to storage in background.
+                        final storage = widget.settings.storage;
+                        if (storage != null) {
+                          Future.microtask(() async {
+                            try {
+                              if (storage.isUnlocked) {
+                                await storage.box.put('servers', _servers.map((s) => s.toMap()).toList());
+                              }
+                            } on StateError catch (_) {
+                              // ignore when storage is locked
+                            } catch (e) {
+                              developer.log('HomePage: failed to persist servers after new account: $e', name: 'HomePage');
+                            }
+                          });
+                        }
+                      }
+                    } else {
+                      // If no server selected, append to in-memory list only
+                      setState(() {
+                        _currentItems.add(acct);
+                        _selectedGroup = 'All (${_currentItems.length})';
+                      });
+
+                      // Attempt to persist as well (will write current _servers list)
+                      final storage = widget.settings.storage;
+                      if (storage != null) {
+                        Future.microtask(() async {
+                          try {
+                            if (storage.isUnlocked) {
+                              await storage.box.put('servers', _servers.map((s) => s.toMap()).toList());
+                            }
+                          } on StateError catch (_) {
+                            // ignore when storage is locked
+                          } catch (e) {
+                            developer.log('HomePage: failed to persist servers after new account (no selected server): $e', name: 'HomePage');
+                          }
+                        });
+                      }
                     }
                   },
                 ),
@@ -822,14 +895,31 @@ class _AccountList extends StatelessWidget {
 
     // If no accounts/items available, return informative message but keep pull-to-refresh
     if (items.isEmpty) {
+      // Safe check for no servers: avoid null lints
+      final storage = settings.storage;
+      bool noServers = false;
+      if (storage != null && storage.isUnlocked) {
+        final raw = storage.box.get('servers');
+        noServers = raw == null || (raw as List).isEmpty;
+      } else {
+        noServers = true; // Assume no servers if storage locked/unavailable
+      }
       return RefreshIndicator(
         onRefresh: handleRefresh,
         child: ListView(
           controller: scrollController,
           physics: const AlwaysScrollableScrollPhysics(),
-          children: const [
-            SizedBox(height: 120),
-            Center(child: Text('No accounts registered', style: TextStyle(color: Colors.grey))),
+          children: [
+            const SizedBox(height: 120),
+            Center(
+              child: Text(
+                noServers
+                    ? 'No servers configured. Configure a server in settings to get started.'
+                    : 'No accounts registered',
+                style: const TextStyle(color: Colors.grey, fontSize: 16),
+                textAlign: TextAlign.center,
+              ),
+            ),
           ],
         ),
       );
@@ -919,7 +1009,7 @@ class _AccountList extends StatelessWidget {
               decoration: const BoxDecoration(
                 border: Border(bottom: BorderSide(color: Color(0xFFE0E0E0))),
               ),
-              child: AccountTile(item: item, settings: settings),
+              child: AccountTile(key: ValueKey(item.id), item: item, settings: settings),
             );
           } catch (e) {
             return Container(
@@ -951,11 +1041,13 @@ class _BottomBar extends StatelessWidget {
   final bool serverReachable;
   final VoidCallback onOpenSelector;
   final VoidCallback? onOpenAccounts;
+  final ValueChanged<AccountEntry>? onNewAccount;
 
-  const _BottomBar({required this.settings, required this.servers, required this.selectedServerId, required this.selectedAccountIndex, required this.onOpenSelector, this.onOpenAccounts, required this.serverReachable});
+  const _BottomBar({required this.settings, required this.servers, required this.selectedServerId, required this.selectedAccountIndex, required this.onOpenSelector, this.onOpenAccounts, this.onNewAccount, required this.serverReachable});
 
   @override
   Widget build(BuildContext context) {
+    final bool hasServers = servers.isNotEmpty;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       color: Colors.white,
@@ -966,76 +1058,56 @@ class _BottomBar extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               ElevatedButton.icon(
-                onPressed: () async {
-                  final messenger = ScaffoldMessenger.of(context);
-                  // Validate servers exist
-                  if (servers.isEmpty) {
-                    messenger.showSnackBar(const SnackBar(
-                      content: Text('No servers configured'),
-                    ));
-                    return;
-                  }
-
-                  // Select active server
-                  final srv = selectedServerId != null
-                      ? servers.firstWhere((s) => s.id == selectedServerId, orElse: () => servers.first)
-                      : servers.first;
-
-                  final urlStr = srv.url.trim();
-                  final parsed = Uri.tryParse(urlStr);
-
-                  // Validate that the URL has an http/https scheme and a host
-                  if (parsed == null || parsed.scheme.isEmpty || !(parsed.scheme == 'http' || parsed.scheme == 'https') || parsed.host.isEmpty) {
-                    messenger.showSnackBar(const SnackBar(
-                      content: Text('Invalid server URL (missing http/https)'),
-                    ));
-                    return;
-                  }
-
-                  // Build /start URI and launch externally
-                  final trimmed = urlStr.endsWith('/') ? urlStr.substring(0, urlStr.length - 1) : urlStr;
-                  final uri = Uri.parse('$trimmed/start');
-                    await _launchExternal(uri, messenger);
-                },
+                onPressed: hasServers
+                    ? () async {
+                        // Open the new code screen and wait for a created AccountEntry
+                        final srv = selectedServerId != null
+                            ? servers.firstWhere((s) => s.id == selectedServerId, orElse: () => servers.first)
+                            : servers.first;
+                        final acct = (srv.userEmail.isNotEmpty) ? srv.userEmail : 'no email';
+                        final host = Uri.parse(srv.url).host;
+                        final result = await Navigator.of(context).push(MaterialPageRoute(builder: (c) => NewCodeScreen(userEmail: acct, serverHost: host, groups: srv.groups)));
+                        if (result is AccountEntry && onNewAccount != null) {
+                          onNewAccount!(result);
+                        }
+                      }
+                    : null,
                 icon: const Icon(Icons.qr_code, color: Colors.white),
                 style: ElevatedButton.styleFrom(
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                  backgroundColor: const Color(0xFF4F63E6), // custom blue to match design
+                  backgroundColor: hasServers ? const Color(0xFF4F63E6) : Colors.grey,
+                  foregroundColor: Colors.white,
                 ),
-                label: const Text('New (web)', style: TextStyle(color: Colors.white)),
+                label: const Text('New', style: TextStyle(color: Colors.white)),
               ),
               const SizedBox(width: 12),
               OutlinedButton(
-                onPressed: () async {
-                  final messenger = ScaffoldMessenger.of(context);
+                onPressed: hasServers
+                    ? () async {
+                        final messenger = ScaffoldMessenger.of(context);
 
-                  if (servers.isEmpty) {
-                    messenger.showSnackBar(const SnackBar(
-                      content: Text('No servers configured'),
-                    ));
-                    return;
-                  }
+                        final srv = selectedServerId != null
+                            ? servers.firstWhere((s) => s.id == selectedServerId, orElse: () => servers.first)
+                            : servers.first;
 
-                  final srv = selectedServerId != null
-                      ? servers.firstWhere((s) => s.id == selectedServerId, orElse: () => servers.first)
-                      : servers.first;
+                        final urlStr = srv.url.trim();
+                        final parsed = Uri.tryParse(urlStr);
+                        if (parsed == null || parsed.scheme.isEmpty || !(parsed.scheme == 'http' || parsed.scheme == 'https') || parsed.host.isEmpty) {
+                          messenger.showSnackBar(const SnackBar(
+                            content: Text('Invalid server URL (missing http/https)'),
+                          ));
+                          return;
+                        }
 
-                  final urlStr = srv.url.trim();
-                  final parsed = Uri.tryParse(urlStr);
-                  if (parsed == null || parsed.scheme.isEmpty || !(parsed.scheme == 'http' || parsed.scheme == 'https') || parsed.host.isEmpty) {
-                    messenger.showSnackBar(const SnackBar(
-                      content: Text('Invalid server URL (missing http/https)'),
-                    ));
-                    return;
-                  }
-
-                  // Launch base server url in external browser
-                  final trimmed = urlStr.endsWith('/') ? urlStr.substring(0, urlStr.length - 1) : urlStr;
-                  final uri = Uri.parse(trimmed);
-                  await _launchExternal(uri, messenger);
-                },
+                        // Launch base server url in external browser
+                        final trimmed = urlStr.endsWith('/') ? urlStr.substring(0, urlStr.length - 1) : urlStr;
+                        final uri = Uri.parse(trimmed);
+                        await _launchExternal(uri, messenger);
+                      }
+                    : null,
                 style: OutlinedButton.styleFrom(
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                  foregroundColor: hasServers ? null : Colors.grey,
                 ),
                 child: const Text('2fauth web'),
               ),

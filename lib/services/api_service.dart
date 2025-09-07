@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'dart:developer' as developer;
 import '../models/server_connection.dart';
+import '../models/account_entry.dart';
 
 /// Centralized service for 2fauth API calls.
 ///
@@ -87,38 +88,58 @@ class ApiService {
       },
     );
 
-    _dio = Dio(baseOptions);
+  _dio = Dio(baseOptions);
     // Attach a default logging interceptor (configurable).
     if (enableLogging) {
+      // Use LogInterceptor but do NOT log request/response headers or bodies
+      // here — we log masked bodies separately in our helpers. This prevents
+      // accidental exposure of the Authorization header.
       _dio!.interceptors.add(LogInterceptor(
         request: true,
+        requestHeader: false,
         requestBody: false,
+        responseHeader: false,
         responseBody: false,
         error: true,
-        logPrint: (obj) =>
-            developer.log(obj.toString(), name: 'ApiService.Log'),
+        logPrint: (obj) => developer.log(obj.toString(), name: 'ApiService.Log'),
       ));
-      // Also attach a lightweight response-summary interceptor so callers
-      // can see response status and path in the same ApiService log channel.
+      // Also attach an interceptor that logs masked request/response bodies
+      // and error bodies. We avoid logging headers here to prevent token
+      // leakage; the bodies are masked via `_maskSecretsIn` before printing.
       _dio!.interceptors.add(InterceptorsWrapper(
+        onRequest: (options, handler) {
+          try {
+            final path = options.path;
+            developer.log(
+                'ApiService: request path=$path method=${options.method} body=${_maskSecretsIn(options.data)}',
+                name: 'ApiService.Log');
+          } catch (_) {}
+          handler.next(options);
+        },
         onResponse: (response, handler) {
           try {
             final path = response.requestOptions.path;
             developer.log(
-                'ApiService: response path=$path status=${response.statusCode}',
+                'ApiService: response path=$path status=${response.statusCode} body=${_maskSecretsIn(response.data)}',
                 name: 'ApiService.Log');
           } catch (_) {}
           handler.next(response);
+        },
+        onError: (err, handler) {
+          try {
+            final path = err.requestOptions.path;
+            developer.log(
+                'ApiService: error path=$path status=${err.response?.statusCode} data=${_maskSecretsIn(err.response?.data)}',
+                name: 'ApiService.Log');
+          } catch (_) {}
+          handler.next(err);
         },
       ));
       developer.log('ApiService: logging interceptor attached',
           name: 'ApiService');
     }
 
-    developer.log('ApiService: server configured',
-        name: 'ApiService',
-        error:
-            'id=${server.id} name=${server.name} base=$base authorization=${server.apiKey.isNotEmpty ? 'present' : 'absent'}');
+  developer.log('ApiService: server configured', name: 'ApiService', error: 'id=${server.id} name=${server.name} base=$base authorization=${server.apiKey.isNotEmpty ? 'present' : 'absent'}');
   }
 
   /// Closes the active connection and clears state.
@@ -157,10 +178,24 @@ class ApiService {
   }) async {
     _ensureReady();
     final rel = _normalizeRelativePath(path);
-    return _dio!.get<T>(rel,
-        queryParameters: queryParameters,
-        options: options,
-        cancelToken: cancelToken);
+    try {
+      try {
+        developer.log('ApiService: GET $rel query=${_maskSecretsIn(queryParameters)}', name: 'ApiService');
+      } catch (_) {}
+      final resp = await _dio!.get<T>(rel,
+          queryParameters: queryParameters,
+          options: options,
+          cancelToken: cancelToken);
+      try {
+        developer.log('ApiService: GET response path=$rel status=${resp.statusCode} body=${_maskSecretsIn(resp.data)}', name: 'ApiService');
+      } catch (_) {}
+      return resp;
+    } on DioException catch (e) {
+      try {
+        developer.log('ApiService: GET DioException path=$rel status=${e.response?.statusCode} data=${_maskSecretsIn(e.response?.data)}', name: 'ApiService');
+      } catch (_) {}
+      rethrow;
+    }
   }
 
   /// POST request (private method).
@@ -174,11 +209,25 @@ class ApiService {
   }) async {
     _ensureReady();
     final rel = _normalizeRelativePath(path);
-    return _dio!.post<T>(rel,
-        data: data,
-        queryParameters: queryParameters,
-        options: options,
-        cancelToken: cancelToken);
+    try {
+      try {
+        developer.log('ApiService: POST $rel query=${_maskSecretsIn(queryParameters)} body=${_maskSecretsIn(data)}', name: 'ApiService');
+      } catch (_) {}
+      final resp = await _dio!.post<T>(rel,
+          data: data,
+          queryParameters: queryParameters,
+          options: options,
+          cancelToken: cancelToken);
+      try {
+        developer.log('ApiService: POST response path=$rel status=${resp.statusCode} body=${_maskSecretsIn(resp.data)}', name: 'ApiService');
+      } catch (_) {}
+      return resp;
+    } on DioException catch (e) {
+      try {
+        developer.log('ApiService: POST DioException path=$rel status=${e.response?.statusCode} data=${_maskSecretsIn(e.response?.data)}', name: 'ApiService');
+      } catch (_) {}
+      rethrow;
+    }
   }
 
   /// PUT request (private method).
@@ -192,11 +241,25 @@ class ApiService {
   }) async {
     _ensureReady();
     final rel = _normalizeRelativePath(path);
-    return _dio!.put<T>(rel,
-        data: data,
-        queryParameters: queryParameters,
-        options: options,
-        cancelToken: cancelToken);
+    try {
+      try {
+        developer.log('ApiService: PUT $rel query=${_maskSecretsIn(queryParameters)} body=${_maskSecretsIn(data)}', name: 'ApiService');
+      } catch (_) {}
+      final resp = await _dio!.put<T>(rel,
+          data: data,
+          queryParameters: queryParameters,
+          options: options,
+          cancelToken: cancelToken);
+      try {
+        developer.log('ApiService: PUT response path=$rel status=${resp.statusCode} body=${_maskSecretsIn(resp.data)}', name: 'ApiService');
+      } catch (_) {}
+      return resp;
+    } on DioException catch (e) {
+      try {
+        developer.log('ApiService: PUT DioException path=$rel status=${e.response?.statusCode} data=${_maskSecretsIn(e.response?.data)}', name: 'ApiService');
+      } catch (_) {}
+      rethrow;
+    }
   }
 
   /// DELETE request (private method).
@@ -210,11 +273,25 @@ class ApiService {
   }) async {
     _ensureReady();
     final rel = _normalizeRelativePath(path);
-    return _dio!.delete<T>(rel,
-        data: data,
-        queryParameters: queryParameters,
-        options: options,
-        cancelToken: cancelToken);
+    try {
+      try {
+        developer.log('ApiService: DELETE $rel query=${_maskSecretsIn(queryParameters)} body=${_maskSecretsIn(data)}', name: 'ApiService');
+      } catch (_) {}
+      final resp = await _dio!.delete<T>(rel,
+          data: data,
+          queryParameters: queryParameters,
+          options: options,
+          cancelToken: cancelToken);
+      try {
+        developer.log('ApiService: DELETE response path=$rel status=${resp.statusCode} body=${_maskSecretsIn(resp.data)}', name: 'ApiService');
+      } catch (_) {}
+      return resp;
+    } on DioException catch (e) {
+      try {
+        developer.log('ApiService: DELETE DioException path=$rel status=${e.response?.statusCode} data=${_maskSecretsIn(e.response?.data)}', name: 'ApiService');
+      } catch (_) {}
+      rethrow;
+    }
   }
 
   /// Returns the Dio instance (for advanced uses). Throws if not ready.
@@ -257,11 +334,38 @@ class ApiService {
     return p;
   }
 
+  // Deep-clone the object and mask sensitive fields before logging.
+  dynamic _maskSecretsIn(dynamic obj) {
+    if (obj == null) return null;
+    try {
+      if (obj is Map) {
+        final out = <dynamic, dynamic>{};
+        obj.forEach((k, v) {
+          try {
+            final key = k?.toString();
+            if (key == 'secret' || key == 'seed' || key == 'apiKey' || key == 'Authorization') {
+              out[k] = v == null ? null : '***REDACTED***';
+            } else {
+              out[k] = _maskSecretsIn(v);
+            }
+          } catch (_) {
+            out[k] = '***UNPRINTABLE***';
+          }
+        });
+        return out;
+      }
+      if (obj is List) return obj.map((e) => _maskSecretsIn(e)).toList();
+      return obj;
+    } catch (_) {
+      return '***UNPRINTABLE***';
+    }
+  }
+
   /// Validate a server (GET /api/v1/user) using the provided [server] data.
   ///
   /// This method does not require `setServer` to have been called; it creates a
   /// temporary Dio instance with short timeouts to validate connectivity and
-  /// returns the decoded body as Map<String, dynamic> when the endpoint responds with 200.
+  /// returns the decoded body as `Map<String, dynamic>` when the endpoint responds with 200.
   ///
   /// Throws [DioException] for connection/response errors and [StateError]
   /// for unexpected responses.
@@ -284,13 +388,15 @@ class ApiService {
 
     final dio = Dio(opts);
     // lightweight logging for validation (do not log sensitive values)
-    dio.interceptors.add(LogInterceptor(
-        request: true,
-        requestBody: false,
-        responseBody: false,
-        error: true,
-        logPrint: (o) =>
-            developer.log(o.toString(), name: 'ApiService.validate')));
+  // Validation uses a lightweight logger that must also avoid printing headers
+  dio.interceptors.add(LogInterceptor(
+    request: true,
+    requestHeader: false,
+    requestBody: false,
+    responseHeader: false,
+    responseBody: false,
+    error: true,
+    logPrint: (o) => developer.log(o.toString(), name: 'ApiService.validate')));
 
     final resp = await dio.get('user');
     if (resp.statusCode == 200 && resp.data is Map) {
@@ -350,6 +456,80 @@ class ApiService {
       throw StateError('Invalid OTP response shape');
     }
     throw StateError('Unexpected OTP response: ${resp.statusCode}');
+  }
+
+  /// Create a 2FA account on the server (POST /twofaccounts).
+  ///
+  /// The [body] must follow the 2FAccountStore shape (see API spec). Returns
+  /// the decoded server response as a Map when the server responds with 201.
+  Future<Map<String, dynamic>> createAccount(Map<String, dynamic> body,
+      {CancelToken? cancelToken}) async {
+    _ensureReady();
+    try {
+      developer.log('ApiService: createAccount payload keys=${body.keys.toList()}', name: 'ApiService');
+      developer.log('ApiService: createAccount payload=${_maskSecretsIn(body)}', name: 'ApiService');
+    } catch (_) {}
+    try {
+      final resp = await _dio!.post('twofaccounts', data: body, cancelToken: cancelToken);
+      try {
+        developer.log('ApiService: createAccount response status=${resp.statusCode}', name: 'ApiService');
+        developer.log('ApiService: createAccount response body=${_maskSecretsIn(resp.data)}', name: 'ApiService');
+      } catch (_) {}
+      if (resp.statusCode == 201 && resp.data != null && resp.data is Map) {
+        try {
+          developer.log('ApiService: createAccount returned body keys=${(resp.data as Map).keys.toList()}', name: 'ApiService');
+        } catch (_) {}
+        return Map<String, dynamic>.from(resp.data as Map);
+      }
+      try {
+        developer.log('ApiService: createAccount unexpected response body=${_maskSecretsIn(resp.data)}', name: 'ApiService');
+      } catch (_) {}
+      throw StateError('Unexpected create account response: ${resp.statusCode}');
+    } on DioException catch (e) {
+      // Log response body if present to aid debugging (may contain validation errors)
+      try {
+        developer.log('ApiService: createAccount DioException status=${e.response?.statusCode} data=${_maskSecretsIn(e.response?.data)}', name: 'ApiService');
+      } catch (_) {}
+      rethrow;
+    }
+  }
+
+  /// Convenience wrapper to create an account from an [AccountEntry]. If you
+  /// have a server-side group id, pass it as [groupId]; otherwise the wrapper
+  /// will omit group_id and the server will treat it as ungrouped.
+  Future<Map<String, dynamic>> createAccountFromEntry(AccountEntry entry, {int? groupId, CancelToken? cancelToken}) async {
+    final Map<String, dynamic> payload = {
+      if (entry.service.isNotEmpty) 'service': entry.service,
+      'account': entry.account,
+      'secret': entry.seed,
+      'otp_type': entry.otpType ?? 'totp',
+      if (entry.digits != null) 'digits': entry.digits,
+      if (entry.algorithm != null) 'algorithm': entry.algorithm,
+      // Para HOTP, enviar counter (que almacenamos en period) y para TOTP enviar period
+      if (entry.otpType?.toLowerCase() == 'hotp' && entry.period != null) 
+        'counter': entry.period
+      else if (entry.period != null) 
+        'period': entry.period,
+      if (groupId != null) 'group_id': groupId,
+    };
+    // Remove nulls/empty
+    payload.removeWhere((k, v) => v == null);
+    try {
+      developer.log('ApiService: createAccountFromEntry service=${entry.service} account=${entry.account} groupId=$groupId', name: 'ApiService');
+      developer.log('ApiService: createAccountFromEntry payload=${_maskSecretsIn(payload)}', name: 'ApiService');
+    } catch (_) {}
+    try {
+      final resp = await createAccount(payload, cancelToken: cancelToken);
+      try {
+        developer.log('ApiService: createAccountFromEntry response keys=${resp.keys.toList()}', name: 'ApiService');
+      } catch (_) {}
+      return resp;
+    } on DioException catch (e) {
+      try {
+        developer.log('ApiService: createAccountFromEntry DioException status=${e.response?.statusCode} data=${_maskSecretsIn(e.response?.data)}', name: 'ApiService');
+      } catch (_) {}
+      rethrow;
+    }
   }
 
   /// Produce a user-friendly, localized-ish message from a [DioException].

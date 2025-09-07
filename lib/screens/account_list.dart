@@ -10,6 +10,9 @@ class AccountList extends StatelessWidget {
   final List<AccountEntry> items;
   final Future<void> Function()? onRefresh;
   final ScrollController? scrollController;
+  final bool isManageMode;
+  final Set<int> selectedAccountIds;
+  final ValueChanged<int> onToggleAccountSelection;
 
   const AccountList({
     required this.selectedGroup,
@@ -18,6 +21,9 @@ class AccountList extends StatelessWidget {
     required this.items,
     this.onRefresh,
     this.scrollController,
+    required this.isManageMode,
+    required this.selectedAccountIds,
+    required this.onToggleAccountSelection,
     super.key,
   });
 
@@ -115,7 +121,13 @@ class AccountList extends StatelessWidget {
           itemBuilder: (context, index) {
             try {
               final item = filtered[index];
-              return AccountTile(item: item, settings: settings);
+              return AccountTile(
+                item: item, 
+                settings: settings,
+                isManageMode: isManageMode,
+                isSelected: selectedAccountIds.contains(item.id),
+                onToggleSelection: () => onToggleAccountSelection(item.id),
+              );
             } catch (e) {
               return ListTile(
                 leading: const Icon(Icons.error, color: Colors.red),
@@ -150,7 +162,14 @@ class AccountList extends StatelessWidget {
               decoration: const BoxDecoration(
                 border: Border(bottom: BorderSide(color: Color(0xFFE0E0E0))),
               ),
-              child: AccountTile(key: ValueKey(item.id), item: item, settings: settings),
+              child: AccountTile(
+                key: ValueKey(item.id), 
+                item: item, 
+                settings: settings,
+                isManageMode: isManageMode,
+                isSelected: selectedAccountIds.contains(item.id),
+                onToggleSelection: () => onToggleAccountSelection(item.id),
+              ),
             );
           } catch (e) {
             return Container(

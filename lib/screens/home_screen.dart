@@ -39,6 +39,65 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   static const int _maxLoadServerAttempts = 6;
   bool _suppressFullScreenSyncIndicator = false;
   bool _skipSyncOnLoad = false;
+  bool _isManageMode = false;
+  final Set<int> _selectedAccountIds = <int>{};
+
+  void _toggleManageMode() {
+    setState(() {
+      _isManageMode = !_isManageMode;
+      if (!_isManageMode) {
+        // Salir del modo manage: limpiar selecciones
+        _selectedAccountIds.clear();
+      }
+    });
+  }
+
+  void _toggleAccountSelection(int accountId) {
+    setState(() {
+      if (_selectedAccountIds.contains(accountId)) {
+        _selectedAccountIds.remove(accountId);
+      } else {
+        _selectedAccountIds.add(accountId);
+      }
+    });
+  }
+
+  Future<void> _deleteSelectedAccounts() async {
+    if (_selectedAccountIds.isEmpty) return;
+    
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Accounts'),
+        content: Text('Are you sure you want to delete ${_selectedAccountIds.length} selected account(s)?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    
+    if (confirmed == true) {
+      // TODO: Implementar borrado local (sin sync por ahora)
+      setState(() {
+        _currentItems.removeWhere((item) => _selectedAccountIds.contains(item.id));
+        _selectedAccountIds.clear();
+        _selectedGroup = 'All (${_currentItems.length})';
+      });
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Accounts deleted locally')),
+        );
+      }
+    }
+  }
 
   Future<void> _onRefreshFromPull() async {
     // Called by RefreshIndicator's onRefresh. Suppress the fullscreen overlay
@@ -412,6 +471,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
 
     if (choice != null) {
+      if (!mounted) return;
+
       final serverId = choice['serverId'] as String;
       final accountIndex = choice['accountIndex'] as int?;
       final server = _servers.firstWhere((s) => s.id == serverId);
@@ -630,25 +691,30 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         const SizedBox(height: 8),
                         // Group selector
                         Center(
-                          child: PopupMenuButton<String>(
-                            initialValue: _selectedGroup,
-                            onSelected: (value) {
-                              setState(() {
-                                _selectedGroup = value;
-                              });
-                            },
-                            itemBuilder: (context) => groups
-                                .map((g) => PopupMenuItem(value: g, child: Text(g)))
-                                .toList(),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(_selectedGroup, style: TextStyle(color: Colors.grey.shade700)),
-                                const SizedBox(width: 6),
-                                Icon(Icons.keyboard_arrow_down, size: 18, color: Colors.grey.shade600),
-                              ],
-                            ),
-                          ),
+                          child: _isManageMode && _selectedAccountIds.isNotEmpty
+                              ? Text(
+                                  '${_selectedAccountIds.length} selected',
+                                  style: TextStyle(color: Colors.grey.shade700),
+                                )
+                              : PopupMenuButton<String>(
+                                  initialValue: _selectedGroup,
+                                  onSelected: (value) {
+                                    setState(() {
+                                      _selectedGroup = value;
+                                    });
+                                  },
+                                  itemBuilder: (context) => groups
+                                      .map((g) => PopupMenuItem(value: g, child: Text(g)))
+                                      .toList(),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(_selectedGroup, style: TextStyle(color: Colors.grey.shade700)),
+                                      const SizedBox(width: 6),
+                                      Icon(Icons.keyboard_arrow_down, size: 18, color: Colors.grey.shade600),
+                                    ],
+                                  ),
+                                ),
                         ),
                         const SizedBox(height: 8),
                       ],
@@ -672,6 +738,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                 items: _currentItems,
                                 onRefresh: _onRefreshFromPull,
                                 scrollController: _listScrollController,
+                                isManageMode: _isManageMode,
+                                selectedAccountIds: _selectedAccountIds,
+                                onToggleAccountSelection: _toggleAccountSelection,
                               ),
                             ),
                           ),
@@ -685,6 +754,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           items: _currentItems,
                           onRefresh: _onRefreshFromPull,
                           scrollController: _listScrollController,
+                          isManageMode: _isManageMode,
+                          selectedAccountIds: _selectedAccountIds,
+                          onToggleAccountSelection: _toggleAccountSelection,
                         ),
                       );
                     },
@@ -697,6 +769,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   selectedAccountIndex: _selectedAccountIndex,
                   onOpenSelector: _openServerAccountSelector,
                   serverReachable: _serverReachable,
+                  isManageMode: _isManageMode,
+                  selectedAccountIds: _selectedAccountIds,
+                  onToggleManageMode: _toggleManageMode,
+                  onDeleteSelected: _deleteSelectedAccounts,
                   onOpenAccounts: () async {
                     if (widget.settings.storage != null) {
                       await Navigator.of(context).push(MaterialPageRoute(builder: (c) => AccountsScreen(storage: widget.settings.storage!)));

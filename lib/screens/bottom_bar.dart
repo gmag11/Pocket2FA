@@ -38,6 +38,10 @@ class BottomBar extends StatelessWidget {
   final VoidCallback onOpenSelector;
   final VoidCallback? onOpenAccounts;
   final ValueChanged<AccountEntry>? onNewAccount;
+  final bool isManageMode;
+  final Set<int> selectedAccountIds;
+  final VoidCallback onToggleManageMode;
+  final VoidCallback onDeleteSelected;
 
   const BottomBar({
     required this.settings,
@@ -48,6 +52,10 @@ class BottomBar extends StatelessWidget {
     this.onOpenAccounts,
     this.onNewAccount,
     required this.serverReachable,
+    required this.isManageMode,
+    required this.selectedAccountIds,
+    required this.onToggleManageMode,
+    required this.onDeleteSelected,
     super.key,
   });
 
@@ -63,106 +71,110 @@ class BottomBar extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              ElevatedButton.icon(
-                onPressed: hasServers
-                    ? () async {
-                        // Open the new code screen and wait for a created AccountEntry
-                        final srv = selectedServerId != null
-                            ? servers.firstWhere((s) => s.id == selectedServerId, orElse: () => servers.first)
-                            : servers.first;
-                        final acct = (srv.userEmail.isNotEmpty) ? srv.userEmail : 'no email';
-                        final host = Uri.parse(srv.url).host;
-                        final result = await Navigator.of(context).push(MaterialPageRoute(builder: (c) => NewCodeScreen(userEmail: acct, serverHost: host, groups: srv.groups)));
-                        if (result is AccountEntry && onNewAccount != null) {
-                          onNewAccount!(result);
-                        }
-                      }
-                    : null,
-                icon: const Icon(Icons.qr_code, color: Colors.white),
-                style: ElevatedButton.styleFrom(
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                  backgroundColor: hasServers ? const Color(0xFF4F63E6) : Colors.grey,
-                  foregroundColor: Colors.white,
+              if (isManageMode) ...[
+                // Modo Manage: Mostrar botones Delete y Done
+                ElevatedButton(
+                  onPressed: selectedAccountIds.isNotEmpty ? onDeleteSelected : null,
+                  style: ElevatedButton.styleFrom(
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                    backgroundColor: selectedAccountIds.isNotEmpty ? Colors.red : Colors.grey,
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(0, 36),
+                  ),
+                  child: const Text('Delete', style: TextStyle(color: Colors.white)),
                 ),
-                label: const Text('New', style: TextStyle(color: Colors.white)),
-              ),
-              const SizedBox(width: 12),
-              OutlinedButton(
-                onPressed: hasServers
-                    ? () async {
-                        final messenger = ScaffoldMessenger.of(context);
-
-                        final srv = selectedServerId != null
-                            ? servers.firstWhere((s) => s.id == selectedServerId, orElse: () => servers.first)
-                            : servers.first;
-
-                        final urlStr = srv.url.trim();
-                        final parsed = Uri.tryParse(urlStr);
-                        if (parsed == null || parsed.scheme.isEmpty || !(parsed.scheme == 'http' || parsed.scheme == 'https') || parsed.host.isEmpty) {
-                          messenger.showSnackBar(const SnackBar(
-                            content: Text('Invalid server URL (missing http/https)'),
-                          ));
-                          return;
-                        }
-
-                        // Launch base server url in external browser
-                        final trimmed = urlStr.endsWith('/') ? urlStr.substring(0, urlStr.length - 1) : urlStr;
-                        final uri = Uri.parse(trimmed);
-                        await launchExternal(uri, messenger);
-                      }
-                    : null,
-                style: OutlinedButton.styleFrom(
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                  foregroundColor: hasServers ? null : Colors.grey,
+                const SizedBox(width: 12),
+                OutlinedButton(
+                  onPressed: onToggleManageMode,
+                  style: OutlinedButton.styleFrom(
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                    minimumSize: const Size(0, 36),
+                  ),
+                  child: const Text('Done'),
                 ),
-                child: const Text('2fauth web'),
-              ),
+              ] else ...[
+                // Modo Normal: Mostrar botones New y Manage
+                ElevatedButton.icon(
+                  onPressed: hasServers
+                      ? () async {
+                          // Open the new code screen and wait for a created AccountEntry
+                          final srv = selectedServerId != null
+                              ? servers.firstWhere((s) => s.id == selectedServerId, orElse: () => servers.first)
+                              : servers.first;
+                          final acct = (srv.userEmail.isNotEmpty) ? srv.userEmail : 'no email';
+                          final host = Uri.parse(srv.url).host;
+                          final result = await Navigator.of(context).push(MaterialPageRoute(builder: (c) => NewCodeScreen(userEmail: acct, serverHost: host, groups: srv.groups)));
+                          if (result is AccountEntry && onNewAccount != null) {
+                            onNewAccount!(result);
+                          }
+                        }
+                      : null,
+                  icon: const Icon(Icons.qr_code, color: Colors.white),
+                  style: ElevatedButton.styleFrom(
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                    backgroundColor: hasServers ? const Color(0xFF4F63E6) : Colors.grey,
+                    foregroundColor: Colors.white,
+                  ),
+                  label: const Text('New', style: TextStyle(color: Colors.white)),
+                ),
+                const SizedBox(width: 12),
+                OutlinedButton(
+                  onPressed: hasServers ? onToggleManageMode : null,
+                  style: OutlinedButton.styleFrom(
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                    foregroundColor: hasServers ? null : Colors.grey,
+                    minimumSize: const Size(0, 36),
+                  ),
+                  child: const Text('Manage'),
+                ),
+              ],
             ],
           ),
           const SizedBox(height: 12),
+          // Mostrar siempre la información del servidor/cuenta, incluso en modo edición
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Reachability indicator: icon + tooltip + semantics for accessibility
-                  Tooltip(
-                    message: serverReachable ? 'Online' : 'Offline',
-                    child: Semantics(
-                      label: serverReachable ? 'Server reachable' : 'Server unreachable',
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 6.0),
-                        child: Icon(
-                          serverReachable ? Icons.cloud : Icons.cloud_off,
-                          size: 14,
-                          color: serverReachable ? Colors.green : Colors.red,
+                    // Reachability indicator: icon + tooltip + semantics for accessibility
+                    Tooltip(
+                      message: serverReachable ? 'Online' : 'Offline',
+                      child: Semantics(
+                        label: serverReachable ? 'Server reachable' : 'Server unreachable',
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 6.0),
+                          child: Icon(
+                            serverReachable ? Icons.cloud : Icons.cloud_off,
+                            size: 14,
+                            color: serverReachable ? Colors.green : Colors.red,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  GestureDetector(
-                    onTap: onOpenSelector,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
-                      child: Builder(builder: (ctx) {
-                        // Compute display text from the selected server/account safely
-                        String displayText;
-                        if (servers.isEmpty) {
-                          displayText = 'no-server';
-                        } else {
-                          final srv = selectedServerId != null
-                              ? servers.firstWhere((s) => s.id == selectedServerId, orElse: () => servers.first)
-                              : servers.first;
-                          // Show only the server/user email. Do not display the selected
-                          // account name in this top/bottom summary to avoid confusion.
-                          final acct = (srv.userEmail.isNotEmpty) ? srv.userEmail : 'no email';
-                          displayText = '$acct - ${Uri.parse(srv.url).host}';
-                        }
-                        return Text(displayText, style: const TextStyle(color: Colors.grey));
-                      }),
+                    GestureDetector(
+                      onTap: onOpenSelector,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
+                        child: Builder(builder: (ctx) {
+                          // Compute display text from the selected server/account safely
+                          String displayText;
+                          if (servers.isEmpty) {
+                            displayText = 'no-server';
+                          } else {
+                            final srv = selectedServerId != null
+                                ? servers.firstWhere((s) => s.id == selectedServerId, orElse: () => servers.first)
+                                : servers.first;
+                            // Show only the server/user email. Do not display the selected
+                            // account name in this top/bottom summary to avoid confusion.
+                            final acct = (srv.userEmail.isNotEmpty) ? srv.userEmail : 'no email';
+                            displayText = '$acct - ${Uri.parse(srv.url).host}';
+                          }
+                          return Text(displayText, style: const TextStyle(color: Colors.grey));
+                        }),
+                      ),
                     ),
-                  ),
                   InkWell(
                     onTap: () {
                       final s = settings;

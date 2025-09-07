@@ -11,8 +11,18 @@ import 'account_tile_utils.dart';
 class AccountTileTOTP extends StatefulWidget {
   final AccountEntry item;
   final SettingsService? settings;
+  final bool isManageMode;
+  final bool isSelected;
+  final VoidCallback? onToggleSelection;
 
-  const AccountTileTOTP({required this.item, this.settings, super.key});
+  const AccountTileTOTP({
+    required this.item, 
+    this.settings, 
+    this.isManageMode = false,
+    this.isSelected = false,
+    this.onToggleSelection,
+    super.key,
+  });
 
   @override
   State<AccountTileTOTP> createState() => _AccountTileTOTPState();
@@ -161,7 +171,7 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
         final screenWidth = MediaQuery.of(context).size.width;
         final tile = borderWrap(
           SizedBox(
-            height: 70,
+            height: 70, // Mantener la misma altura en ambos modos
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -169,14 +179,36 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    // Avatar (ancho fijo) — add left padding
-                    borderWrap(
-                      Padding(
-                        padding: const EdgeInsets.only(left: 12.0),
-                        child: AccountTileUi.buildServiceAvatar(widget.item, color),
+                    // En modo manage: Checkbox + Avatar, en modo normal: solo Avatar con padding
+                    if (widget.isManageMode) ...[
+                      borderWrap(
+                        Padding(
+                          padding: const EdgeInsets.only(left: 8.0),
+                          child: Transform.scale(
+                            scale: 0.8, // Hacer el checkbox más pequeño
+                            child: Checkbox(
+                              value: widget.isSelected,
+                              onChanged: (_) => widget.onToggleSelection?.call(),
+                              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                          ),
+                        ),
+                        padding: const EdgeInsets.all(2),
                       ),
-                      padding: const EdgeInsets.all(2),
-                    ),
+                      const SizedBox(width: 4),
+                      borderWrap(
+                        AccountTileUi.buildServiceAvatar(widget.item, color),
+                        padding: const EdgeInsets.all(2),
+                      ),
+                    ] else
+                      // Avatar (ancho fijo) — add left padding
+                      borderWrap(
+                        Padding(
+                          padding: const EdgeInsets.only(left: 12.0),
+                          child: AccountTileUi.buildServiceAvatar(widget.item, color),
+                        ),
+                        padding: const EdgeInsets.all(2),
+                      ),
                     const SizedBox(width: 8),
                     
                     // Service name (flexible width, allow ellipsis)
@@ -193,73 +225,91 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
                       ),
                     ),
 
-                    // OTP code (takes needed space, no clipping, right aligned)
-                    borderWrap(
+                    // En modo manage: Botones de edición, en modo normal: OTP code
+                    if (widget.isManageMode)
                       Padding(
-                        padding: const EdgeInsets.only(right: 12.0),
-                        child: IntrinsicWidth(
-                          child: Align(
-                            alignment: Alignment.centerRight,
-                            child: settings != null
-                                ? AnimatedBuilder(
-                                    animation: settings!,
-                                    builder: (context, _) {
-                                      return Material(
-                                        color: Colors.transparent,
-                                        child: InkWell(
-                                          borderRadius: BorderRadius.zero,
-                                          onTap: () => _copyToClipboard(_otpService.currentCode),
-                                          onLongPress: () {
-                                            if (settings?.hideOtps == true) {
-                                              setState(() { _revealCurrent = true; });
-                                              _revealTimerCurrent?.cancel();
-                                              _revealTimerCurrent = Timer(const Duration(seconds: 10), () {
-                                                if (mounted) setState(() { _revealCurrent = false; });
-                                              });
-                                            }
-                                          },
-                                          child: Padding(
-                                            padding: const EdgeInsets.symmetric(vertical: 0.0, horizontal: 2.0),
-                                            child: Text(
-                                              AccountTileUtils.formatCode(
-                                                  _otpService.currentCode, settings, forceVisible: _revealCurrent),
-                                              style: const TextStyle(
-                                                fontSize: 24,
-                                                fontWeight: FontWeight.w700,
+                        padding: const EdgeInsets.only(right: 8.0),
+                        child: IconButton(
+                          icon: const Icon(Icons.edit, color: Colors.blue, size: 18),
+                          onPressed: () {
+                            // TODO: Abrir pantalla de edición
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Edit functionality not yet implemented')),
+                            );
+                          },
+                          padding: const EdgeInsets.all(4),
+                          constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                        ),
+                      )
+                    else
+                      // OTP code (takes needed space, no clipping, right aligned)
+                      borderWrap(
+                        Padding(
+                          padding: const EdgeInsets.only(right: 12.0),
+                          child: IntrinsicWidth(
+                            child: Align(
+                              alignment: Alignment.centerRight,
+                              child: settings != null
+                                  ? AnimatedBuilder(
+                                      animation: settings!,
+                                      builder: (context, _) {
+                                        return Material(
+                                          color: Colors.transparent,
+                                          child: InkWell(
+                                            borderRadius: BorderRadius.zero,
+                                            onTap: () => _copyToClipboard(_otpService.currentCode),
+                                            onLongPress: () {
+                                              if (settings?.hideOtps == true) {
+                                                setState(() { _revealCurrent = true; });
+                                                _revealTimerCurrent?.cancel();
+                                                _revealTimerCurrent = Timer(const Duration(seconds: 10), () {
+                                                  if (mounted) setState(() { _revealCurrent = false; });
+                                                });
+                                              }
+                                            },
+                                            child: Padding(
+                                              padding: const EdgeInsets.symmetric(vertical: 0.0, horizontal: 2.0),
+                                              child: Text(
+                                                AccountTileUtils.formatCode(
+                                                    _otpService.currentCode, settings, forceVisible: _revealCurrent),
+                                                style: const TextStyle(
+                                                  fontSize: 24,
+                                                  fontWeight: FontWeight.w700,
+                                                ),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.visible,
                                               ),
-                                              maxLines: 1,
-                                              overflow: TextOverflow.visible,
                                             ),
                                           ),
+                                        );
+                                      },
+                                    )
+                                  : InkWell(
+                                      onTap: () =>
+                                          _copyToClipboard(_otpService.currentCode),
+                                      child: Text(
+                                        AccountTileUtils.formatCode(
+                                            _otpService.currentCode, null),
+                                        style: const TextStyle(
+                                          fontSize: 24,
+                                          fontWeight: FontWeight.w700,
                                         ),
-                                      );
-                                    },
-                                  )
-                                : InkWell(
-                                    onTap: () =>
-                                        _copyToClipboard(_otpService.currentCode),
-                                    child: Text(
-                                      AccountTileUtils.formatCode(
-                                          _otpService.currentCode, null),
-                                      style: const TextStyle(
-                                        fontSize: 24,
-                                        fontWeight: FontWeight.w700,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.visible,
                                       ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.visible,
                                     ),
-                                  ),
+                            ),
                           ),
                         ),
+                        padding: const EdgeInsets.all(2),
                       ),
-                      padding: const EdgeInsets.all(2),
-                    ),
                   ],
                 ),
 
-                const SizedBox(height: 6),
+                // En modo normal: espaciado completo, en modo manage: reducido
+                SizedBox(height: widget.isManageMode ? 2 : 6),
 
-                // Bottom row: Account user + Next OTP + Progress dots
+                // Bottom row: Account user + Next OTP + Progress dots (solo account en modo manage)
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
@@ -268,7 +318,8 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
                       child: borderWrap(
                         Padding(
                           // add left padding so username is not flush with the tile edge
-                          padding: const EdgeInsets.only(left: 12.0),
+                          // En modo manage, agregar más padding para alinear con el checkbox
+                          padding: EdgeInsets.only(left: widget.isManageMode ? 56.0 : 12.0),
                           child: Text(
                             widget.item.account,
                             style: TextStyle(
@@ -281,66 +332,69 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
                       ),
                     ),
 
-                    // Next OTP (takes needed space, no clipping, right aligned)
-                    borderWrap(
-                      IntrinsicWidth(
-                        child: Align(
-                          alignment: Alignment.centerRight,
-                          child: AnimatedBuilder(
-                            animation: _animations.animController ??
-                                Listenable.merge([]),
-                            builder: (context, _) {
-                              final anim = _animations.animController;
-                              final opacity = (anim != null)
-                                  ? anim.value.clamp(0.0, 1.0)
-                                  : 1.0;
-                              return Opacity(
-                                opacity: opacity,
-                                child: Material(
-                                  color: Colors.transparent,
-                                  child: InkWell(
-                                    borderRadius: BorderRadius.zero,
-                                    onTap: () => _copyToClipboard(_otpService.nextCode),
-                                    onLongPress: () {
-                                      if (settings?.hideOtps == true) {
-                                        setState(() { _revealNext = true; });
-                                        _revealTimerNext?.cancel();
-                                        _revealTimerNext = Timer(const Duration(seconds: 10), () {
-                                          if (mounted) setState(() { _revealNext = false; });
-                                        });
-                                      }
-                                    },
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(vertical: 0.0, horizontal: 2.0),
-                                      child: Text(
-                                        AccountTileUtils.formatCode(
-                                            _otpService.nextCode, settings, forceVisible: _revealNext),
-                                        style: TextStyle(fontSize: 14, color: Colors.black),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.visible,
+                    // Solo mostrar Next OTP y Progress dots en modo normal
+                    if (!widget.isManageMode) ...[
+                      // Next OTP (takes needed space, no clipping, right aligned)
+                      borderWrap(
+                        IntrinsicWidth(
+                          child: Align(
+                            alignment: Alignment.centerRight,
+                            child: AnimatedBuilder(
+                              animation: _animations.animController ??
+                                  Listenable.merge([]),
+                              builder: (context, _) {
+                                final anim = _animations.animController;
+                                final opacity = (anim != null)
+                                    ? anim.value.clamp(0.0, 1.0)
+                                    : 1.0;
+                                return Opacity(
+                                  opacity: opacity,
+                                  child: Material(
+                                    color: Colors.transparent,
+                                    child: InkWell(
+                                      borderRadius: BorderRadius.zero,
+                                      onTap: () => _copyToClipboard(_otpService.nextCode),
+                                      onLongPress: () {
+                                        if (settings?.hideOtps == true) {
+                                          setState(() { _revealNext = true; });
+                                          _revealTimerNext?.cancel();
+                                          _revealTimerNext = Timer(const Duration(seconds: 10), () {
+                                            if (mounted) setState(() { _revealNext = false; });
+                                          });
+                                        }
+                                      },
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(vertical: 0.0, horizontal: 2.0),
+                                        child: Text(
+                                          AccountTileUtils.formatCode(
+                                              _otpService.nextCode, settings, forceVisible: _revealNext),
+                                          style: TextStyle(fontSize: 14, color: Colors.black),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.visible,
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
-                              );
-                            },
+                                );
+                              },
+                            ),
                           ),
                         ),
+                        padding: const EdgeInsets.all(2),
                       ),
-                      padding: const EdgeInsets.all(2),
-                    ),
 
-                    const SizedBox(width: 12),
+                      const SizedBox(width: 12),
 
-                    // Progress dots (fixed width, right aligned) — add right padding
-                    borderWrap(
-                      Padding(
-                        padding: const EdgeInsets.only(right: 12.0),
-                        child: AccountTileUi.buildProgressDots(
-                            _animations.animController),
+                      // Progress dots (fixed width, right aligned) — add right padding
+                      borderWrap(
+                        Padding(
+                          padding: const EdgeInsets.only(right: 12.0),
+                          child: AccountTileUi.buildProgressDots(
+                              _animations.animController),
+                        ),
+                        padding: const EdgeInsets.all(2),
                       ),
-                      padding: const EdgeInsets.all(2),
-                    ),
+                    ],
                   ],
                 ),
               ],

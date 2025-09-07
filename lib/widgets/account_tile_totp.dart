@@ -307,7 +307,8 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
                 ),
 
                 // En modo normal: espaciado completo, en modo manage: reducido
-                SizedBox(height: widget.isManageMode ? 2 : 6),
+                if (!widget.isManageMode) 
+                  const SizedBox(height: 6),
 
                 // Bottom row: Account user + Next OTP + Progress dots (solo account en modo manage)
                 Row(

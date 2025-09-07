@@ -189,7 +189,7 @@ class _AccountTileHOTPState extends State<AccountTileHOTP> {
               ),
 
               // Small spacer (reduced in manage mode)
-              const SizedBox(height: 2),
+              //const SizedBox(height: 2),
 
               // Bottom row: account username aligned under service (use left padding to align with avatar in manage mode)
               Row(

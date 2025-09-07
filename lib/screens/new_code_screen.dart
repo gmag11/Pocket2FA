@@ -3,6 +3,7 @@ import '../models/group_entry.dart';
 import '../models/account_entry.dart';
 import 'advanced_form_screen.dart';
 import 'qr_scanner_screen.dart';
+import 'image_qr_scanner_screen.dart';
 
 class NewCodeScreen extends StatelessWidget {
   final String userEmail;
@@ -52,10 +53,28 @@ class NewCodeScreen extends StatelessWidget {
             const SizedBox(height: 64),
             const Center(child: Text('Alternate methods', style: TextStyle(color: Colors.grey))),
             const SizedBox(height: 12),
-            ElevatedButton.icon(
-              onPressed: () {},
-              icon: const Icon(Icons.image),
-              label: const Text('Select an image'),
+            SizedBox(
+              height: 50,
+              child: ElevatedButton.icon(
+                onPressed: () async {
+                  final navigator = Navigator.of(context);
+                  final result = await navigator.push(MaterialPageRoute(
+                    builder: (c) => ImageQrScannerScreen(
+                      userEmail: userEmail,
+                      serverHost: serverHost,
+                      groups: groups,
+                    ),
+                  ));
+                  if (result is AccountEntry) {
+                    navigator.pop(result);
+                  }
+                },
+                icon: const Icon(Icons.image),
+                label: const Text('Select an image', style: TextStyle(fontSize: 16)),
+                style: ElevatedButton.styleFrom(
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                ),
+              ),
             ),
             const SizedBox(height: 12),
             ElevatedButton.icon(

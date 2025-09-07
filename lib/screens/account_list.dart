@@ -3,7 +3,7 @@ import '../widgets/account_tile.dart';
 import '../services/settings_service.dart';
 import '../models/account_entry.dart';
 
-class AccountList extends StatelessWidget {
+class AccountList extends StatefulWidget {
   final String selectedGroup;
   final String searchQuery;
   final SettingsService settings;
@@ -28,18 +28,26 @@ class AccountList extends StatelessWidget {
   });
 
   @override
+  State<AccountList> createState() => _AccountListState();
+}
+
+class _AccountListState extends State<AccountList> {
+  @override
   Widget build(BuildContext context) {
+    // Filter out deleted items to prevent crashes
+    final filteredItems = widget.items.where((item) => !item.deleted).toList();
+    
     // Helper refresh wrapper that uses provided onRefresh when available.
     Future<void> handleRefresh() async {
-      if (onRefresh != null) {
-        await onRefresh!();
+      if (widget.onRefresh != null) {
+        await widget.onRefresh!();
       }
     }
 
     // If no accounts/items available, return informative message but keep pull-to-refresh
-    if (items.isEmpty) {
+    if (filteredItems.isEmpty) {
       // Safe check for no servers: avoid null lints
-      final storage = settings.storage;
+      final storage = widget.settings.storage;
       bool noServers = false;
       if (storage != null && storage.isUnlocked) {
         try {
@@ -54,7 +62,7 @@ class AccountList extends StatelessWidget {
       return RefreshIndicator(
         onRefresh: handleRefresh,
         child: ListView(
-          controller: scrollController,
+          controller: widget.scrollController,
           physics: const AlwaysScrollableScrollPhysics(),
           children: [
             const SizedBox(height: 120),
@@ -72,11 +80,11 @@ class AccountList extends StatelessWidget {
       );
     }
 
-    final base = selectedGroup == 'All' || selectedGroup.isEmpty
-        ? items
-        : items.where((i) => i.group == selectedGroup).toList();
+    final base = widget.selectedGroup == 'All' || widget.selectedGroup.isEmpty
+        ? filteredItems
+        : filteredItems.where((i) => i.group == widget.selectedGroup).toList();
 
-    final query = searchQuery.toLowerCase();
+    final query = widget.searchQuery.toLowerCase();
     final filtered = query.isEmpty
         ? base
         : base.where((i) {
@@ -90,7 +98,7 @@ class AccountList extends StatelessWidget {
       return RefreshIndicator(
         onRefresh: handleRefresh,
         child: ListView(
-          controller: scrollController,
+          controller: widget.scrollController,
           physics: const AlwaysScrollableScrollPhysics(),
           children: const [
             SizedBox(height: 120),
@@ -114,7 +122,7 @@ class AccountList extends StatelessWidget {
       return RefreshIndicator(
         onRefresh: handleRefresh,
         child: ListView.separated(
-          controller: scrollController,
+          controller: widget.scrollController,
           physics: const AlwaysScrollableScrollPhysics(),
           itemCount: filtered.length,
           separatorBuilder: (context, index) => Divider(indent: 20, endIndent: 20,),
@@ -123,10 +131,10 @@ class AccountList extends StatelessWidget {
               final item = filtered[index];
               return AccountTile(
                 item: item, 
-                settings: settings,
-                isManageMode: isManageMode,
-                isSelected: selectedAccountIds.contains(item.id),
-                onToggleSelection: () => onToggleAccountSelection(item.id),
+                settings: widget.settings,
+                isManageMode: widget.isManageMode,
+                isSelected: widget.selectedAccountIds.contains(item.id),
+                onToggleSelection: () => widget.onToggleAccountSelection(item.id),
               );
             } catch (e) {
               return ListTile(
@@ -146,7 +154,7 @@ class AccountList extends StatelessWidget {
     return RefreshIndicator(
       onRefresh: handleRefresh,
       child: GridView.builder(
-        controller: scrollController,
+        controller: widget.scrollController,
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -165,10 +173,10 @@ class AccountList extends StatelessWidget {
               child: AccountTile(
                 key: ValueKey(item.id), 
                 item: item, 
-                settings: settings,
-                isManageMode: isManageMode,
-                isSelected: selectedAccountIds.contains(item.id),
-                onToggleSelection: () => onToggleAccountSelection(item.id),
+                settings: widget.settings,
+                isManageMode: widget.isManageMode,
+                isSelected: widget.selectedAccountIds.contains(item.id),
+                onToggleSelection: () => widget.onToggleAccountSelection(item.id),
               ),
             );
           } catch (e) {

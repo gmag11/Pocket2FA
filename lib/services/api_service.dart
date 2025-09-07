@@ -532,6 +532,30 @@ class ApiService {
     }
   }
 
+  /// Delete one or more 2FA accounts on the server (DELETE /twofaccounts?ids=1,2)
+  ///
+  /// If the server responds with 204 the operation is considered successful.
+  Future<void> deleteAccounts(List<int> ids, {CancelToken? cancelToken}) async {
+    _ensureReady();
+    if (ids.isEmpty) return;
+    final idsParam = ids.join(',');
+    try {
+      final resp = await _dio!.delete('twofaccounts',
+          queryParameters: {'ids': idsParam}, cancelToken: cancelToken);
+      if (resp.statusCode == 204) {
+        developer.log('ApiService: deleteAccounts success ids=$idsParam', name: 'ApiService');
+        return;
+      }
+      developer.log('ApiService: deleteAccounts unexpected status=${resp.statusCode} body=${_maskSecretsIn(resp.data)}', name: 'ApiService');
+      throw StateError('Unexpected delete response: ${resp.statusCode}');
+    } on DioException catch (e) {
+      try {
+        developer.log('ApiService: deleteAccounts DioException status=${e.response?.statusCode} data=${_maskSecretsIn(e.response?.data)}', name: 'ApiService');
+      } catch (_) {}
+      rethrow;
+    }
+  }
+
   /// Produce a user-friendly, localized-ish message from a [DioException].
   ///
   /// Intentionally conservative: avoid leaking sensitive data (API keys).

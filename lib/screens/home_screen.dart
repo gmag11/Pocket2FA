@@ -84,17 +84,158 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
     
     if (confirmed == true) {
-      // TODO: Implementar borrado local (sin sync por ahora)
+      // Find selected server index
+      final serverIdx = _servers.indexWhere((s) => s.id == _selectedServerId);
+      if (serverIdx == -1) {
+        if (mounted) {
+          setState(() {
+            _serverReachable = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No server selected')));
+        }
+        return;
+      }
+      final server = _servers[serverIdx];
+      
+      // Mark selected as deleted=true, synchronized=false; create updated accounts list
+      final updatedAccounts = <AccountEntry>[];
+      final toDeleteIds = <int>{};
+      for (final acc in server.accounts) {
+        if (_selectedAccountIds.contains(acc.id)) {
+          toDeleteIds.add(acc.id);
+          // Mark as deleted but keep in storage for now
+          updatedAccounts.add(acc.copyWith(deleted: true, synchronized: false));
+        } else {
+          updatedAccounts.add(acc);
+        }
+      }
+      
+      // Create new ServerConnection with updated accounts (immutable)
+      final updatedServer = ServerConnection(
+        id: server.id,
+        name: server.name,
+        url: server.url,
+        apiKey: server.apiKey,
+        accounts: updatedAccounts,
+        groups: server.groups,
+        userId: server.userId,
+        userName: server.userName,
+        userEmail: server.userEmail,
+        oauthProvider: server.oauthProvider,
+        authenticatedByProxy: server.authenticatedByProxy,
+        preferences: server.preferences,
+        isAdmin: server.isAdmin,
+      );
+      
+      // Update in-memory servers list
+      final updatedServers = List<ServerConnection>.from(_servers);
+      updatedServers[serverIdx] = updatedServer;
       setState(() {
-        _currentItems.removeWhere((item) => _selectedAccountIds.contains(item.id));
+        _servers = updatedServers;
+        _currentItems = updatedServer.accounts.where((a) => !a.deleted).toList();
         _selectedAccountIds.clear();
         _selectedGroup = 'All (${_currentItems.length})';
       });
       
+      // Persist updated servers to storage
+      final storage = widget.settings.storage;
+      if (storage != null) {
+        try {
+          if (storage.isUnlocked) {
+            final box = storage.box;
+            final raw = box.get('servers');
+            if (raw != null) {
+              final list = (raw as List<dynamic>).map((e) => Map<dynamic, dynamic>.from(e)).toList();
+              final sIdx = list.indexWhere((e) => e['id'] == server.id);
+              if (sIdx != -1) {
+                list[sIdx] = updatedServer.toMap();
+                await box.put('servers', list);
+              }
+            }
+          }
+        } on StateError catch (_) {
+          // ignore when locked
+        } catch (e) {
+          developer.log('HomePage: failed to persist after marking deleted: $e', name: 'HomePage');
+        }
+      }
+      
+      // Attempt API delete once (silently)
+      if (toDeleteIds.isNotEmpty) {
+        if (!ApiService.instance.isReady) {
+          // Not ready: indicate no connectivity
+          if (mounted) {
+            setState(() {
+              _serverReachable = false;
+            });
+          }
+        } else {
+          try {
+            await ApiService.instance.deleteAccounts(toDeleteIds.toList());
+            // Success: restore connectivity indicator and remove from local storage
+            if (mounted) {
+              setState(() {
+                _serverReachable = true;
+              });
+            }
+            // Success: remove from local storage and memory
+            final finalAccounts = updatedServer.accounts.where((a) => !a.deleted).toList();
+            final finalServer = ServerConnection(
+              id: updatedServer.id,
+              name: updatedServer.name,
+              url: updatedServer.url,
+              apiKey: updatedServer.apiKey,
+              accounts: finalAccounts,
+              groups: updatedServer.groups,
+              userId: updatedServer.userId,
+              userName: updatedServer.userName,
+              userEmail: updatedServer.userEmail,
+              oauthProvider: updatedServer.oauthProvider,
+              authenticatedByProxy: updatedServer.authenticatedByProxy,
+              preferences: updatedServer.preferences,
+              isAdmin: updatedServer.isAdmin,
+            );
+            final finalServers = List<ServerConnection>.from(_servers);
+            finalServers[serverIdx] = finalServer;
+            setState(() {
+              _servers = finalServers;
+              _currentItems = finalAccounts;
+              _selectedGroup = 'All (${_currentItems.length})';
+            });
+            // Persist final removal
+            if (storage != null) {
+              try {
+                if (storage.isUnlocked) {
+                  final box = storage.box;
+                  final raw = box.get('servers');
+                  if (raw != null) {
+                    final list = (raw as List<dynamic>).map((e) => Map<dynamic, dynamic>.from(e)).toList();
+                    final sIdx = list.indexWhere((e) => e['id'] == server.id);
+                    if (sIdx != -1) {
+                      list[sIdx] = finalServer.toMap();
+                      await box.put('servers', list);
+                    }
+                  }
+                }
+              } on StateError catch (_) {} catch (e) {
+                developer.log('HomePage: failed to persist after API delete: $e', name: 'HomePage');
+              }
+            }
+          } catch (e) {
+            // Silent fail: log only, keep marked deleted for sync retry
+            developer.log('HomePage: API delete failed (will retry in sync): $e', name: 'HomePage');
+            // Set reachability to false to indicate connectivity issue
+            if (mounted) {
+              setState(() {
+                _serverReachable = false;
+              });
+            }
+          }
+        }
+      }
+      
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Accounts deleted locally')),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Accounts deleted')));
       }
     }
   }
@@ -310,7 +451,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             final srv = _servers[idx];
             _selectedServerId = srv.id;
             _selectedAccountIndex = (restoredAccountIndex != null && srv.accounts.length > restoredAccountIndex) ? restoredAccountIndex : (srv.accounts.isNotEmpty ? 0 : null);
-            _currentItems = srv.accounts;
+            _currentItems = srv.accounts.where((a) => !a.deleted).toList();
             _selectedGroup = 'All (${_currentItems.length})';
           } else {
             final first = _servers[0];
@@ -323,7 +464,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           final first = _servers[0];
           _selectedServerId = first.id;
           _selectedAccountIndex = first.accounts.isNotEmpty ? 0 : null;
-          _currentItems = first.accounts;
+          _currentItems = first.accounts.where((a) => !a.deleted).toList();
           _selectedGroup = 'All (${_currentItems.length})';
         }
       } else {
@@ -376,7 +517,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       final idx = _servers.indexWhere((s) => s.id == srv.id);
                       if (idx != -1) {
                         final updatedSrv = _servers[idx];
-                        _currentItems = updatedSrv.accounts;
+                        _currentItems = updatedSrv.accounts.where((a) => !a.deleted).toList();
                         _selectedGroup = 'All (${_currentItems.length})';
                       }
                     });
@@ -480,7 +621,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       setState(() {
         _selectedServerId = serverId;
         _selectedAccountIndex = accountIndex;
-        _currentItems = server.accounts;
+        _currentItems = server.accounts.where((a) => !a.deleted).toList();
         _selectedGroup = 'All (${_currentItems.length})';
       });
 
@@ -791,7 +932,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         srv.accounts.add(acct);
                         // also update _currentItems and UI
                         setState(() {
-                          _currentItems = srv.accounts;
+                          _currentItems = srv.accounts.where((a) => !a.deleted).toList();
                           _selectedGroup = 'All (${_currentItems.length})';
                         });
 

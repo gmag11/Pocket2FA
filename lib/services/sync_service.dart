@@ -76,10 +76,16 @@ class SyncService {
 
     developer.log('SyncService: forceSync START server=${server.id}', name: 'SyncService');
 
-    // First, attempt to upload any locally created accounts that are marked
-    // as unsynchronized (synchronized==false && id==-1). This ensures that
-    // newly created entries are sent to the server before we fetch remote
-    // state so the server returns the created resources on subsequent GET.
+    // First, attempt to delete any pending deleted accounts (synchronized=false && deleted=true)
+    try {
+      developer.log('SyncService: calling _deletePendingAccounts for server=${server.id}', name: 'SyncService');
+      await _deletePendingAccounts(server, storage, cancelToken: cancelToken);
+      developer.log('SyncService: _deletePendingAccounts completed for server=${server.id}', name: 'SyncService');
+    } catch (e) {
+      developer.log('SyncService: _deletePendingAccounts failed: $e', name: 'SyncService');
+    }
+
+    // Then, upload pending new accounts
     try {
       developer.log('SyncService: calling _uploadPendingAccounts for server=${server.id}', name: 'SyncService');
       await _uploadPendingAccounts(server, storage, cancelToken: cancelToken);
@@ -345,6 +351,67 @@ class SyncService {
         } catch (_) {}
         developer.log('SyncService._uploadPendingAccounts: failed to create account ${acc.service}/${acc.account}: $e', name: 'SyncService');
         // continue with next pending account
+      }
+    }
+  }
+
+  Future<void> _deletePendingAccounts(ServerConnection server, SettingsStorage storage, {CancelToken? cancelToken}) async {
+    // Ensure storage is available and unlocked
+    try {
+      if (!storage.isUnlocked) return;
+    } on StateError catch (_) {
+      return;
+    }
+
+    final box = storage.box;
+    final raw = box.get('servers');
+    if (raw == null) return;
+    final list = (raw as List<dynamic>).map((e) => Map<dynamic, dynamic>.from(e)).toList();
+    final idx = list.indexWhere((e) => e['id'] == server.id);
+    if (idx == -1) return;
+
+    // Deserialize server
+    final localServer = ServerConnection.fromMap(list[idx]);
+    final pendingDelete = <AccountEntry>[];
+    for (final acc in localServer.accounts) {
+      if (!acc.synchronized && acc.deleted) {
+        pendingDelete.add(acc);
+      }
+    }
+    developer.log('SyncService._deletePendingAccounts: found ${pendingDelete.length} pending deletes for server=${server.id}', name: 'SyncService');
+    if (pendingDelete.isEmpty) return;
+
+    // Configure ApiService
+    ApiService.instance.setServer(server);
+
+    // Collect IDs for mass delete
+    final deleteIds = pendingDelete.map((a) => a.id).where((id) => id > 0).toList(); // Only if has server ID
+    if (deleteIds.isNotEmpty) {
+      try {
+        await ApiService.instance.deleteAccounts(deleteIds);
+        // Success: remove from local accounts
+        final keptAccounts = localServer.accounts.where((a) => !pendingDelete.contains(a)).toList();
+        final updatedServer = ServerConnection(
+          id: localServer.id,
+          name: localServer.name,
+          url: localServer.url,
+          apiKey: localServer.apiKey,
+          accounts: keptAccounts,
+          groups: localServer.groups,
+          userId: localServer.userId,
+          userName: localServer.userName,
+          userEmail: localServer.userEmail,
+          oauthProvider: localServer.oauthProvider,
+          authenticatedByProxy: localServer.authenticatedByProxy,
+          preferences: localServer.preferences,
+          isAdmin: localServer.isAdmin,
+        );
+        list[idx] = updatedServer.toMap();
+        await box.put('servers', list);
+        developer.log('SyncService._deletePendingAccounts: removed ${deleteIds.length} pending deletes', name: 'SyncService');
+      } catch (e) {
+        // Silent fail: log, leave marked for next sync
+        developer.log('SyncService._deletePendingAccounts: API delete failed (retry next sync): $e', name: 'SyncService');
       }
     }
   }

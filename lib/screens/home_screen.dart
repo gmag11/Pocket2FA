@@ -178,8 +178,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 _serverReachable = true;
               });
             }
-            // Success: remove from local storage and memory
-            final finalAccounts = updatedServer.accounts.where((a) => !a.deleted).toList();
+      // Success: remove only the accounts we requested to delete from local storage and memory
+      final finalAccounts = updatedServer.accounts.where((a) => !toDeleteIds.contains(a.id)).toList();
             final finalServer = ServerConnection(
               id: updatedServer.id,
               name: updatedServer.name,

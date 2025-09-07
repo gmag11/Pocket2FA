@@ -127,6 +127,37 @@ class SyncService {
       developer.log('SyncService: error fetching accounts: $e', name: 'SyncService');
     }
 
+    // If there are locally marked deleted but unsynchronized entries, ensure
+    // they are not re-introduced by the freshly fetched server list. We
+    // remove any fetched account that matches a locally pending delete id so
+    // the entry remains deleted locally until the server-side delete succeeds.
+    if (accountsFetched) {
+      try {
+        if (storage.isUnlocked) {
+          final rawStored = storage.box.get('servers');
+          if (rawStored != null) {
+            final storedList = (rawStored as List<dynamic>).map((e) => Map<dynamic, dynamic>.from(e)).toList();
+            final storedIdx = storedList.indexWhere((e) => e['id'] == server.id);
+            if (storedIdx != -1) {
+              final localServer = ServerConnection.fromMap(storedList[storedIdx]);
+              final pendingDeleteIds = localServer.accounts
+                  .where((a) => a.deleted == true && a.synchronized == false && a.id > 0)
+                  .map((a) => a.id)
+                  .toSet();
+              if (pendingDeleteIds.isNotEmpty) {
+                final before = accounts.length;
+                accounts.removeWhere((a) => pendingDeleteIds.contains(a.id));
+                final removed = before - accounts.length;
+                developer.log('SyncService: filtered out $removed fetched accounts that are pending local delete (ids=${pendingDeleteIds.toList()})', name: 'SyncService');
+              }
+            }
+          }
+        }
+      } catch (e) {
+        developer.log('SyncService: could not apply pending-delete filter: $e', name: 'SyncService');
+      }
+    }
+
     // If groups were fetched, map account.groupId -> group.name so UI can filter
     if (groups.isNotEmpty && accounts.isNotEmpty) {
       final Map<int, String> gidToName = { for (var g in groups) g.id : g.name };

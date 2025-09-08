@@ -15,8 +15,8 @@ if (-not $buildDir) {
 }
 $buildDir = $buildDir.Path
 
-$src = Join-Path $buildDir "twofauth.exe"
-$dst = Join-Path $buildDir "2fauth.exe"
+$src = Join-Path $buildDir "pocket2fa.exe"
+$dst = Join-Path $buildDir "pocket2fa.exe"
 
 if (-not (Test-Path $src)) {
   Write-Error "Source executable not found: $src"
@@ -29,14 +29,14 @@ Write-Output "Renamed: $src -> $dst"
 
 # Path to Inno Setup compiler and .iss. Assume installer files are in windows\installer relative to repo root
 $iscc = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
-$iss = Resolve-Path (Join-Path $repoRoot "windows\installer\TwoFactorAuth.iss") -ErrorAction SilentlyContinue
+$iss = Resolve-Path (Join-Path $repoRoot "windows\installer\Pocket2FA.iss") -ErrorAction SilentlyContinue
 
 if (-not (Test-Path $iscc)) {
   Write-Error "ISCC.exe not found at: $iscc. Install Inno Setup or adjust the path."
   exit 1
 }
 if (-not $iss) {
-  Write-Error ".iss file not found: $($repoRoot)\windows\installer\TwoFactorAuth.iss"
+  Write-Error ".iss file not found: $($repoRoot)\windows\installer\Pocket2FA.iss"
   exit 1
 }
 $iss = $iss.Path
@@ -53,12 +53,12 @@ if ($exit -ne 0) {
 # Optional signing
 if ($Sign) {
   # The Inno Setup output typically goes to windows\installer\Output by the .iss script; keep that convention
-  $installer = Resolve-Path (Join-Path $repoRoot "windows\installer\Output\2Fauth_Installer.exe") -ErrorAction SilentlyContinue
+  $installer = Resolve-Path (Join-Path $repoRoot "windows\installer\Output\Pocket2FA.exe") -ErrorAction SilentlyContinue
   if ($installer -and (Test-Path $installer.Path)) {
     Write-Output "Signing installer: $($installer.Path)"
     & signtool sign /a /tr http://timestamp.digicert.com /td sha256 /fd sha256 $installer.Path
   } else {
-    Write-Warning "Installer not found to sign: $($repoRoot)\windows\installer\Output\2Fauth_Installer.exe"
+    Write-Warning "Installer not found to sign: $($repoRoot)\windows\installer\Output\Pocket2FA.exe"
   }
 }
 

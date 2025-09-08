@@ -1,4 +1,4 @@
-package net.gmartin.twofactorauth
+package net.gmartin.pocket2fa
 
 import io.flutter.embedding.android.FlutterFragmentActivity
 

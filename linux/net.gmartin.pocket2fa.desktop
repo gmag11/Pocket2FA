@@ -1,10 +1,10 @@
 [Desktop Entry]
 Version=1.0
 Type=Application
-Name=Two Factor Auth
+Name=Pocket 2FA
 Comment=2FA manager based on 2FAuth web app
-Exec=twofauth
-Icon=net.gmartin.twofauth
+Exec=pocket2fa
+Icon=net.gmartin.pocket2fa
 Categories=Utility;Security;
 Terminal=false
-StartupWMClass=twofauth
+StartupWMClass=pocket2fa

@@ -1,4 +1,4 @@
-name: twofauth
+name: pocket2fa
 description: 2FA manager based on 2FAuth web app.
 publish_to: 'none'
 

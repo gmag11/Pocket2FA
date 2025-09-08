@@ -94,12 +94,12 @@ def increment_version_code_in_gradle(path: str) -> Tuple[int, str]:
 
 
 def update_iss_version(path: str, new_version: str) -> bool:
-    """If present, update windows/installer/TwoFactorAuth.iss AppVersion to new_version.
+    """If present, update windows/installer/pocket2fa.iss AppVersion to new_version.
 
     Creates a .bak backup before writing. Returns True if file existed and was
     modified, False if file not present.
     """
-    iss_path = os.path.join(path, 'windows', 'installer', 'TwoFactorAuth.iss')
+    iss_path = os.path.join(path, 'windows', 'installer', 'pocket2fa.iss')
     if not os.path.exists(iss_path):
         return False
     text = open(iss_path, 'r', encoding='utf-8').read()
@@ -175,11 +175,11 @@ def main(argv: List[str]) -> int:
     try:
         modified = update_iss_version(root, new_version)
         if modified:
-            print(f" - windows/installer/TwoFactorAuth.iss: AppVersion updated to {new_version} (backup at windows/installer/TwoFactorAuth.iss.bak)")
+            print(f" - windows/installer/pocket2fa.iss: AppVersion updated to {new_version} (backup at windows/installer/pocket2fa.iss.bak)")
         else:
-            print(" - windows/installer/TwoFactorAuth.iss: not found, skipping")
+            print(" - windows/installer/pocket2fa.iss: not found, skipping")
     except Exception as e:
-        print(f" - Warning: failed to update TwoFactorAuth.iss: {e}")
+        print(f" - Warning: failed to update pocket2fa.iss: {e}")
     return 0
 
 

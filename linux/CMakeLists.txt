@@ -4,10 +4,10 @@ project(runner LANGUAGES CXX)
 
 # The name of the executable created for the application. Change this to change
 # the on-disk name of your application.
-set(BINARY_NAME "twofauth")
+set(BINARY_NAME "Pocket2FA")
 # The unique GTK application identifier for this application. See:
 # https://wiki.gnome.org/HowDoI/ChooseApplicationID
-set(APPLICATION_ID "net.gmartin.twofauth")
+set(APPLICATION_ID "net.gmartin.pocket2fa")
 
 # Explicitly opt in to modern CMake behaviors to avoid warnings with recent
 # versions of CMake.
@@ -126,14 +126,14 @@ install(DIRECTORY "${PROJECT_BUILD_DIR}/${FLUTTER_ASSET_DIR_NAME}"
   DESTINATION "${INSTALL_BUNDLE_DATA_DIR}" COMPONENT Runtime)
 
 # Install desktop file and icons
-install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/net.gmartin.twofauth.desktop"
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/net.gmartin.pocket2fa.desktop"
   DESTINATION "share/applications"
   COMPONENT Runtime)
 
 # Install application icon (replace favicon_lg.png with your actual icon file)
 install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/icon.png"
   DESTINATION "share/icons/hicolor/256x256/apps"
-  RENAME "net.gmartin.twofauth.png"
+  RENAME "net.gmartin.pocket2fa.png"
   COMPONENT Runtime)
 
 # Install the AOT library on non-Debug builds only.

@@ -1,17 +1,17 @@
-; Inno Setup script for 2FAuth
+; Inno Setup script for Pocket2FA
 [Setup]
-AppName=2FAuth
+AppName=Pocket2FA
 AppVersion=0.6.1
-DefaultDirName={autopf}\2FAuth
-DefaultGroupName=2FAuth
-OutputBaseFilename=2FAuth_Installer
+DefaultDirName={autopf}\Pocket2FA
+DefaultGroupName=Pocket2FA
+OutputBaseFilename=Pocket2FA_Installer
 Compression=lzma
 SolidCompression=yes
 PrivilegesRequired=lowest
 AllowNoIcons=yes
 UsePreviousAppDir=yes
 AppPublisher=gmartin
-AppPublisherURL=https://github.com/gmag11/2fauthApp
+AppPublisherURL=https://github.com/gmag11/pocket2fa
 PrivilegesRequiredOverridesAllowed=dialog
 
 [Languages]
@@ -21,8 +21,8 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Source: "..\\..\\build\\windows\\x64\\runner\\Release\\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
-Name: "{group}\\2FAuth"; Filename: "{app}\\2fauth.exe"; WorkingDir: "{app}"
-Name: "{autodesktop}\\2FAuth"; Filename: "{app}\\2fauth.exe"; Tasks: desktopicon
+Name: "{group}\\Pocket2FA"; Filename: "{app}\\pocket2fa.exe"; WorkingDir: "{app}"
+Name: "{autodesktop}\\Pocket2FA"; Filename: "{app}\\pocket2fa.exe"; Tasks: desktopicon
 
 [Tasks]
 Name: "desktopicon"; Description: "Create a &desktop icon"; GroupDescription: "Additional icons:"; Flags: unchecked
@@ -31,7 +31,7 @@ Name: "desktopicon"; Description: "Create a &desktop icon"; GroupDescription: "A
 Name: "{app}"; Permissions: users-full
 
 [Run]
-Filename: "{app}\\2FAuth.exe"; Description: "Launch 2FAuth"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\\pocket2fa.exe"; Description: "Launch Pocket2FA"; Flags: nowait postinstall skipifsilent
 
 [Code]
 procedure InitializeWizard();

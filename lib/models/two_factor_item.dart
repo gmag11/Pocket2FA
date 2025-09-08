@@ -1,4 +1,4 @@
-class TwoFactorItem {
+class Pocket2FA {
   final String service;
   final String account;
   final String twoFa;
@@ -7,9 +7,9 @@ class TwoFactorItem {
   // Optional local file path for a cached icon. If present the UI should show it.
   final String? localIcon;
 
-  const TwoFactorItem({required this.service, required this.account, required this.twoFa, required this.nextTwoFa, required this.group, this.localIcon});
+  const Pocket2FA({required this.service, required this.account, required this.twoFa, required this.nextTwoFa, required this.group, this.localIcon});
 
-  factory TwoFactorItem.fromMap(Map<String, String> m) => TwoFactorItem(
+  factory Pocket2FA.fromMap(Map<String, String> m) => Pocket2FA(
     service: m['service'] ?? '',
     account: m['account'] ?? '',
     twoFa: m['2fa'] ?? '',

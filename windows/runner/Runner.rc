@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "net.gmartin" "\0"
-            VALUE "FileDescription", "twofauth" "\0"
+            VALUE "FileDescription", "pocket2fa" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "twofauth" "\0"
+            VALUE "InternalName", "pocket2fa" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2025 net.gmartin. All rights reserved." "\0"
-            VALUE "OriginalFilename", "twofauth.exe" "\0"
-            VALUE "ProductName", "twofauth" "\0"
+            VALUE "OriginalFilename", "pocket2fa.exe" "\0"
+            VALUE "ProductName", "Pocket2FA" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

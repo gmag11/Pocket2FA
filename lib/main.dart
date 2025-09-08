@@ -18,12 +18,12 @@ Future<void> main() async {
   await storage.init();
 
   final settings = SettingsService(storage: storage);
-  runApp(TwoFactorAuthApp(settings: settings));
+  runApp(Pocket2FA(settings: settings));
 }
 
-class TwoFactorAuthApp extends StatelessWidget {
+class Pocket2FA extends StatelessWidget {
   final SettingsService settings;
-  const TwoFactorAuthApp({required this.settings, super.key});
+  const Pocket2FA({required this.settings, super.key});
 
   @override
   Widget build(BuildContext context) {

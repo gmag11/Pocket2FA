@@ -19,14 +19,14 @@ This project complements the official 2FAuth web application by offering:
 
 <!-- markdownlint-disable MD033 -->
 <p align="center">
-   <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/accounts-manage.png" width="240" alt="Accounts Manage">
-   <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/accounts.png" width="240" alt="Accounts">
-   <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/edit_form.png" width="240" alt="Edit Form">
+   <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/accounts-manage.png" width="240" alt="Accounts Manage" style="border:1px solid #ccc; padding:6px; border-radius:8px;">
+   <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/accounts.png" width="240" alt="Accounts" style="border:1px solid #ccc; padding:6px; border-radius:8px;">
+   <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/edit_form.png" width="240" alt="Edit Form" style="border:1px solid #ccc; padding:6px; border-radius:8px;">
 </p>
 
 <p align="center">
-   <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/new_menu.png" width="240" alt="New Menu">
-   <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/servers.png" width="240" alt="Servers">
+   <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/new_menu.png" width="240" alt="New Menu" style="border:1px solid #ccc; padding:6px; border-radius:8px;">
+   <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/servers.png" width="240" alt="Servers" style="border:1px solid #ccc; padding:6px; border-radius:8px;">
 </p>
 <!-- markdownlint-enable MD033 -->
 

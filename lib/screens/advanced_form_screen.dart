@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:developer' as developer;
 import 'package:dio/dio.dart';
+import '../models/account_entry.dart';
 import '../models/group_entry.dart';
 import '../services/entry_creation_service.dart';
 
@@ -8,12 +9,15 @@ class AdvancedFormScreen extends StatefulWidget {
   final String userEmail;
   final String serverHost;
   final List<GroupEntry>? groups;
+  final AccountEntry? existingEntry; // Para edición
 
-  const AdvancedFormScreen(
-      {super.key,
-      required this.userEmail,
-      required this.serverHost,
-      this.groups});
+  const AdvancedFormScreen({
+    super.key,
+    required this.userEmail,
+    required this.serverHost,
+    this.groups,
+    this.existingEntry,
+  });
 
   @override
   State<AdvancedFormScreen> createState() => _AdvancedFormScreenState();
@@ -44,8 +48,34 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
 
   @override
   void initState() {
-  super.initState();
-  // Default to no group selected. The dropdown will show '- No group -' by default.
+    super.initState();
+    
+    // Si hay una entrada existente, inicializar los campos con sus valores
+    if (widget.existingEntry != null) {
+      final entry = widget.existingEntry!;
+      _serviceCtrl.text = entry.service;
+      _accountCtrl.text = entry.account;
+      _secretCtrl.text = entry.seed;
+      
+      // Configurar el grupo
+      if (entry.group.isNotEmpty) {
+        _selectedGroup = entry.group;
+      }
+      
+      // Configurar el tipo de OTP
+      _otpType = entry.otpType?.toUpperCase() ?? 'TOTP';
+      
+      // Configurar opciones avanzadas
+      _digits = entry.digits ?? 6;
+      _algorithm = entry.algorithm?.toLowerCase() ?? 'sha1';
+      
+      // Configurar period o counter según el tipo
+      if (_otpType == 'HOTP') {
+        _counterCtrl.text = (entry.counter ?? 0).toString();
+      } else {
+        _periodCtrl.text = (entry.period ?? 30).toString();
+      }
+    }
   }
 
   Widget _buildOtpTypeButtons() {
@@ -149,7 +179,7 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('New account')),
+      appBar: AppBar(title: Text(widget.existingEntry != null ? 'Edit account' : 'New account')),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
@@ -368,7 +398,8 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
                     onPressed: () async {
                       final ok = _formKey.currentState?.validate() ?? false;
                       if (!ok) return;
-                      // Determine the selected group's id (if any)
+                      
+                      // Determinar el ID del grupo seleccionado (si hay alguno)
                       int? selectedGroupId;
                       if (_selectedGroup != '- No group -' && widget.groups != null) {
                         for (final g in widget.groups!) {
@@ -379,60 +410,79 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
                         }
                       }
 
-                      // Build AccountEntry using our service
-                      final entry = EntryCreationService.buildManualEntry(
-                        service: _serviceCtrl.text.trim(),
-                        account: _accountCtrl.text.trim(),
-                        secret: _secretCtrl.text.trim(),
-                        group: _selectedGroup == '- No group -' ? '' : _selectedGroup,
-                        groupId: selectedGroupId,
-                        otpType: _otpType,
-                        digits: _digits,
-                        algorithm: _algorithm,
-                        period: _periodCtrl.text.trim().isEmpty ? 
-                          (_otpType == 'TOTP' ? 30 : 0) : 
-                          int.tryParse(_periodCtrl.text.trim()) ?? (_otpType == 'TOTP' ? 30 : 0),
-                      );
-
-                      // Log creation of local entry (redact secret)
-                      try {
-                        developer.log('AdvancedForm: local entry created service=${entry.service} account=${entry.account} id=${entry.id} synchronized=${entry.synchronized}', name: 'AdvancedForm');
-                      } catch (_) {}
-
-                      // Use our service to attempt server creation
-                      developer.log('AdvancedForm: attempting immediate server create for service=${entry.service} account=${entry.account}', name: 'AdvancedForm');
                       final navigator = Navigator.of(context);
                       
-                      try {
-                        // Use our service to create entry on server
-                        final serverEntry = await EntryCreationService.createEntryOnServer(
-                          entry,
-                          serverHost: widget.serverHost,
-                          groups: widget.groups,
-                          context: context,
-                          sourceTag: 'AdvancedForm'
+                      if (widget.existingEntry != null) {
+                        // EDICIÓN: Actualizar entrada existente
+                        final updatedEntry = widget.existingEntry!.copyWith(
+                          service: _serviceCtrl.text.trim(),
+                          account: _accountCtrl.text.trim(),
+                          seed: _secretCtrl.text.trim(),
+                          group: _selectedGroup == '- No group -' ? '' : _selectedGroup,
+                          groupId: selectedGroupId,
+                          otpType: _otpType,
+                          digits: _digits,
+                          algorithm: _algorithm,
+                          period: _otpType == 'HOTP' ? null : 
+                            (_periodCtrl.text.trim().isEmpty ? 30 : 
+                            int.tryParse(_periodCtrl.text.trim()) ?? 30),
+                          counter: _otpType == 'HOTP' ? 
+                            (_counterCtrl.text.trim().isEmpty ? 0 : 
+                            int.tryParse(_counterCtrl.text.trim()) ?? 0) : null,
+                          synchronized: false, // Marcar como no sincronizado después de editar
                         );
-                        
-                        if (serverEntry != null && serverEntry.synchronized) {
-                          developer.log('AdvancedForm: created on server id=${serverEntry.id}', name: 'AdvancedForm');
-                          navigator.pop(serverEntry);
-                          return;
-                        } else {
-                          developer.log('AdvancedForm: server create returned no id, returning local entry', name: 'AdvancedForm');
-                        }
-                      } catch (e) {
-                        // Log response details when available (DioException may contain server response)
-                        try {
-                          if (e is DioException) {
-                            developer.log('AdvancedForm: server create DioException status=${e.response?.statusCode} data=${e.response?.data}', name: 'AdvancedForm');
-                          }
-                        } catch (_) {}
-                        developer.log('AdvancedForm: server create failed (ignored): $e', name: 'AdvancedForm');
-                        // ignore and fallback to returning the local unsynced entry
-                      }
 
-                      developer.log('AdvancedForm: created local AccountEntry: ${entry.toMap()}', name: 'AdvancedForm');
-                      navigator.pop(entry);
+                        developer.log('AdvancedForm: updated entry service=${updatedEntry.service} account=${updatedEntry.account} id=${updatedEntry.id}', name: 'AdvancedForm');
+                        navigator.pop(updatedEntry);
+                      } else {
+                        // CREACIÓN: Crear nueva entrada
+                        final entry = EntryCreationService.buildManualEntry(
+                          service: _serviceCtrl.text.trim(),
+                          account: _accountCtrl.text.trim(),
+                          secret: _secretCtrl.text.trim(),
+                          group: _selectedGroup == '- No group -' ? '' : _selectedGroup,
+                          groupId: selectedGroupId,
+                          otpType: _otpType,
+                          digits: _digits,
+                          algorithm: _algorithm,
+                          period: _periodCtrl.text.trim().isEmpty ? 
+                            (_otpType == 'TOTP' ? 30 : 0) : 
+                            int.tryParse(_periodCtrl.text.trim()) ?? (_otpType == 'TOTP' ? 30 : 0),
+                        );
+
+                        developer.log('AdvancedForm: local entry created service=${entry.service} account=${entry.account} id=${entry.id} synchronized=${entry.synchronized}', name: 'AdvancedForm');
+
+                        // Usar nuestro servicio para intentar crear en el servidor
+                        developer.log('AdvancedForm: attempting immediate server create for service=${entry.service} account=${entry.account}', name: 'AdvancedForm');
+                        
+                        try {
+                          final serverEntry = await EntryCreationService.createEntryOnServer(
+                            entry,
+                            serverHost: widget.serverHost,
+                            groups: widget.groups,
+                            context: context,
+                            sourceTag: 'AdvancedForm'
+                          );
+                          
+                          if (serverEntry != null && serverEntry.synchronized) {
+                            developer.log('AdvancedForm: created on server id=${serverEntry.id}', name: 'AdvancedForm');
+                            navigator.pop(serverEntry);
+                            return;
+                          } else {
+                            developer.log('AdvancedForm: server create returned no id, returning local entry', name: 'AdvancedForm');
+                          }
+                        } catch (e) {
+                          try {
+                            if (e is DioException) {
+                              developer.log('AdvancedForm: server create DioException status=${e.response?.statusCode} data=${e.response?.data}', name: 'AdvancedForm');
+                            }
+                          } catch (_) {}
+                          developer.log('AdvancedForm: server create failed (ignored): $e', name: 'AdvancedForm');
+                        }
+
+                        developer.log('AdvancedForm: created local AccountEntry: ${entry.toMap()}', name: 'AdvancedForm');
+                        navigator.pop(entry);
+                      }
                     },
                     style: ElevatedButton.styleFrom(
                       shape: RoundedRectangleBorder(
@@ -440,10 +490,10 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
                       backgroundColor: const Color(0xFF4F63E6),
                       foregroundColor: Colors.white,
                     ),
-                    child: const Padding(
-                        padding: EdgeInsets.symmetric(
+                    child: Padding(
+                        padding: const EdgeInsets.symmetric(
                             horizontal: 20.0, vertical: 12.0),
-                        child: Text('Create')),
+                        child: Text(widget.existingEntry != null ? 'Update' : 'Create')),
                   ),
                   const SizedBox(width: 12),
           OutlinedButton(

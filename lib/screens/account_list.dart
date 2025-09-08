@@ -13,6 +13,7 @@ class AccountList extends StatefulWidget {
   final bool isManageMode;
   final Set<int> selectedAccountIds;
   final ValueChanged<int> onToggleAccountSelection;
+  final ValueChanged<AccountEntry>? onEditAccount; // Nuevo callback para edición
 
   const AccountList({
     required this.selectedGroup,
@@ -24,6 +25,7 @@ class AccountList extends StatefulWidget {
     required this.isManageMode,
     required this.selectedAccountIds,
     required this.onToggleAccountSelection,
+    this.onEditAccount, // Agregar al constructor
     super.key,
   });
 
@@ -135,6 +137,7 @@ class _AccountListState extends State<AccountList> {
                 isManageMode: widget.isManageMode,
                 isSelected: widget.selectedAccountIds.contains(item.id),
                 onToggleSelection: () => widget.onToggleAccountSelection(item.id),
+                onEdit: widget.onEditAccount != null ? () => widget.onEditAccount!(item) : null,
               );
             } catch (e) {
               return ListTile(
@@ -177,6 +180,7 @@ class _AccountListState extends State<AccountList> {
                 isManageMode: widget.isManageMode,
                 isSelected: widget.selectedAccountIds.contains(item.id),
                 onToggleSelection: () => widget.onToggleAccountSelection(item.id),
+                onEdit: widget.onEditAccount != null ? () => widget.onEditAccount!(item) : null,
               ),
             );
           } catch (e) {

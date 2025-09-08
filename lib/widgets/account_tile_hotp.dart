@@ -13,6 +13,7 @@ class AccountTileHOTP extends StatefulWidget {
   final bool isManageMode;
   final bool isSelected;
   final VoidCallback? onToggleSelection;
+  final VoidCallback? onEdit;
 
   const AccountTileHOTP({
     required this.item, 
@@ -20,6 +21,7 @@ class AccountTileHOTP extends StatefulWidget {
     this.isManageMode = false,
     this.isSelected = false,
     this.onToggleSelection,
+    this.onEdit,
     super.key,
   });
 
@@ -175,12 +177,7 @@ class _AccountTileHOTPState extends State<AccountTileHOTP> {
                     padding: const EdgeInsets.only(right: 8.0),
                     child: IconButton(
                       icon: const Icon(Icons.edit, color: Colors.blue, size: 18),
-                      onPressed: () {
-                        // TODO: Abrir pantalla de edición
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Edit functionality not yet implemented')),
-                        );
-                      },
+                      onPressed: widget.onEdit,
                       padding: const EdgeInsets.all(4),
                       constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                     ),

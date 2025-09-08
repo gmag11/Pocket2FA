@@ -246,6 +246,39 @@ class HomeServerManager extends ChangeNotifier {
     }
   }
 
+  /// Obtiene el servidor actualmente seleccionado
+  ServerConnection? getSelectedServer() {
+    if (_selectedServerId != null) {
+      final idx = _servers.indexWhere((s) => s.id == _selectedServerId);
+      if (idx != -1) {
+        return _servers[idx];
+      }
+    }
+    return null;
+  }
+
+  /// Actualiza una cuenta existente
+  Future<void> updateAccount(AccountEntry updatedAccount) async {
+    if (_selectedServerId != null) {
+      final idx = _servers.indexWhere((s) => s.id == _selectedServerId);
+      if (idx != -1) {
+        final srv = _servers[idx];
+        final accountIdx = srv.accounts.indexWhere((a) => a.id == updatedAccount.id);
+        if (accountIdx != -1) {
+          // Reemplazar la cuenta existente
+          srv.accounts[accountIdx] = updatedAccount;
+          _currentItems = srv.accounts.where((a) => !a.deleted).toList();
+          notifyListeners();
+          
+          // Persistir cambios
+          await persistServersToStorage();
+          
+          developer.log('HomeServerManager: updated account id=${updatedAccount.id} service=${updatedAccount.service}', name: 'HomeServerManager');
+        }
+      }
+    }
+  }
+
   List<String> getGroups() {
     final Map<String, int> counts = {};
     for (final item in _currentItems) {

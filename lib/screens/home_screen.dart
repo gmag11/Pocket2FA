@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import '../services/settings_service.dart';
+import '../models/account_entry.dart';
 import 'accounts_screen.dart';
 import 'search_bar.dart';
 import 'account_list.dart';
 import 'bottom_bar.dart';
+import 'advanced_form_screen.dart';
 import 'home_server_manager.dart';
 import 'home_sync_manager.dart';
 import 'home_manage_mode.dart';
@@ -70,6 +72,34 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   void _onManageModeChanged() {
     if (mounted) {
       setState(() {});
+    }
+  }
+
+  Future<void> _editAccount(AccountEntry account) async {
+    final result = await Navigator.of(context).push<AccountEntry>(
+      MaterialPageRoute(
+        builder: (context) {
+          final selectedServer = _serverManager.getSelectedServer();
+          return AdvancedFormScreen(
+            userEmail: selectedServer?.userEmail ?? 'Unknown',
+            serverHost: selectedServer?.url ?? 'Unknown',
+            groups: selectedServer?.groups,
+            existingEntry: account, // Pasar la entrada existente para edición
+          );
+        },
+      ),
+    );
+
+    if (result != null) {
+      // La entrada fue editada, actualizarla en el servidor manager
+      await _serverManager.updateAccount(result);
+      
+      // Mostrar mensaje de confirmación
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Account updated successfully')),
+        );
+      }
     }
   }
 
@@ -368,6 +398,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       isManageMode: _manageMode.isManageMode,
       selectedAccountIds: _manageMode.selectedAccountIds,
       onToggleAccountSelection: _manageMode.toggleAccountSelection,
+      onEditAccount: _editAccount,
     );
   }
 

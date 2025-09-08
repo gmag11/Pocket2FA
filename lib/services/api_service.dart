@@ -556,6 +556,58 @@ class ApiService {
     }
   }
 
+  /// Update a 2FA account on the server (PUT /twofaccounts/{id})
+  ///
+  /// Returns a Map representing the updated account data from the server response.
+  Future<Map<dynamic, dynamic>> updateAccountFromEntry(AccountEntry entry, {CancelToken? cancelToken}) async {
+    _ensureReady();
+    if (entry.id <= 0) {
+      throw Exception('Cannot update account without valid server ID');
+    }
+    
+    final body = <String, dynamic>{
+      'service': entry.service.isEmpty ? null : entry.service,
+      'account': entry.account,
+      'secret': entry.seed,
+      // API expects otp_type in lowercase (e.g. 'totp')
+      'otp_type': (entry.otpType ?? 'totp').toLowerCase(),
+      'digits': entry.digits ?? 6,
+      'algorithm': entry.algorithm ?? 'sha1',
+    };
+    
+    // Add period or counter based on OTP type
+    if (entry.otpType == 'hotp') {
+      body['counter'] = entry.counter ?? 0;
+    } else {
+      body['period'] = entry.period ?? 30;
+    }
+    
+    // Add group_id if present
+    if (entry.groupId != null) {
+      body['group_id'] = entry.groupId;
+    }
+    
+  // Ensure the icon field is present in the request body. Some servers
+  // validate its presence even if null, so include it explicitly.
+  body['icon'] = (entry.icon == null || entry.icon!.isEmpty) ? null : entry.icon;
+    
+    try {
+      final resp = await _put('twofaccounts/${entry.id}', data: body, cancelToken: cancelToken);
+      if (resp.statusCode == 200 && resp.data is Map) {
+        developer.log('ApiService: updateAccountFromEntry success id=${entry.id}', name: 'ApiService');
+        return Map<dynamic, dynamic>.from(resp.data as Map);
+      }
+      
+      developer.log('ApiService: updateAccountFromEntry unexpected status=${resp.statusCode} id=${entry.id}', name: 'ApiService');
+      throw Exception('Unexpected response: ${resp.statusCode}');
+    } on DioException catch (e) {
+      try {
+        developer.log('ApiService: updateAccountFromEntry DioException status=${e.response?.statusCode} data=${_maskSecretsIn(e.response?.data)}', name: 'ApiService');
+      } catch (_) {}
+      rethrow;
+    }
+  }
+
   /// Produce a user-friendly, localized-ish message from a [DioException].
   ///
   /// Intentionally conservative: avoid leaking sensitive data (API keys).

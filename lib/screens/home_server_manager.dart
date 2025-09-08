@@ -265,7 +265,7 @@ class HomeServerManager extends ChangeNotifier {
         final srv = _servers[idx];
         final accountIdx = srv.accounts.indexWhere((a) => a.id == updatedAccount.id);
         if (accountIdx != -1) {
-          // Reemplazar la cuenta existente
+          // Preserve the synchronized flag provided by caller (AdvancedForm may already have attempted server update)
           srv.accounts[accountIdx] = updatedAccount;
           _currentItems = srv.accounts.where((a) => !a.deleted).toList();
           notifyListeners();
@@ -273,7 +273,7 @@ class HomeServerManager extends ChangeNotifier {
           // Persistir cambios
           await persistServersToStorage();
           
-          developer.log('HomeServerManager: updated account id=${updatedAccount.id} service=${updatedAccount.service}', name: 'HomeServerManager');
+          developer.log('HomeServerManager: updated account id=${updatedAccount.id} service=${updatedAccount.service} (marked unsynchronized)', name: 'HomeServerManager');
         }
       }
     }

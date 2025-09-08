@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import '../models/account_entry.dart';
 import '../models/group_entry.dart';
 import '../services/entry_creation_service.dart';
+import '../services/api_service.dart';
 
 class AdvancedFormScreen extends StatefulWidget {
   final String userEmail;
@@ -463,6 +464,8 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
                           service: _serviceCtrl.text.trim(),
                           account: _accountCtrl.text.trim(),
                           seed: _secretCtrl.text.trim(),
+                          // Preserve the original icon unless the user explicitly changed it.
+                          icon: widget.existingEntry?.icon,
                           group: _selectedGroup == '- No group -' ? '' : _selectedGroup,
                           groupId: selectedGroupId,
                           otpType: _otpType,
@@ -474,10 +477,38 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
                           counter: _otpType == 'HOTP' ? 
                             (_counterCtrl.text.trim().isEmpty ? 0 : 
                             int.tryParse(_counterCtrl.text.trim()) ?? 0) : null,
-                          synchronized: false, // Marcar como no sincronizado después de editar
+                          synchronized: false, // mark as unsynced by default
                         );
 
                         developer.log('AdvancedForm: updated entry service=${updatedEntry.service} account=${updatedEntry.account} id=${updatedEntry.id}', name: 'AdvancedForm');
+
+                        // Attempt immediate server update (silent on failure)
+                        try {
+                          final resp = await ApiService.instance.updateAccountFromEntry(updatedEntry);
+                          if (resp.containsKey('id')) {
+                            // Preserve any locally cached icon file path so the UI
+                            // continues showing the avatar until the sync process
+                            // refreshes or re-downloads it.
+                            var serverEntry = AccountEntry.fromMap(Map<dynamic, dynamic>.from(resp)).copyWith(
+                              synchronized: true,
+                              localIcon: widget.existingEntry?.localIcon,
+                            );
+                            developer.log('AdvancedForm: updated on server id=${serverEntry.id}', name: 'AdvancedForm');
+                            navigator.pop(serverEntry);
+                            return;
+                          } else {
+                            developer.log('AdvancedForm: server update returned unexpected payload, returning local unsynced entry', name: 'AdvancedForm');
+                          }
+                        } catch (e) {
+                          try {
+                            if (e is DioException) {
+                              developer.log('AdvancedForm: server update DioException status=${e.response?.statusCode} data=${e.response?.data}', name: 'AdvancedForm');
+                            }
+                          } catch (_) {}
+                          developer.log('AdvancedForm: server update failed (ignored): $e', name: 'AdvancedForm');
+                        }
+
+                        // If we reach here, server update did not succeed — return local unsynced entry
                         navigator.pop(updatedEntry);
                       } else {
                         // CREACIÓN: Crear nueva entrada

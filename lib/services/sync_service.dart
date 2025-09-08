@@ -94,6 +94,15 @@ class SyncService {
       developer.log('SyncService: uploadPendingAccounts failed: $e', name: 'SyncService');
     }
 
+    // Finally, update pending edited accounts
+    try {
+      developer.log('SyncService: calling _updatePendingAccounts for server=${server.id}', name: 'SyncService');
+      await _updatePendingAccounts(server, storage, cancelToken: cancelToken);
+      developer.log('SyncService: _updatePendingAccounts completed for server=${server.id}', name: 'SyncService');
+    } catch (e) {
+      developer.log('SyncService: _updatePendingAccounts failed: $e', name: 'SyncService');
+    }
+
     // Ensure ApiService is configured for this server so Authorization headers and base are correct
     ApiService.instance.setServer(server);
 
@@ -443,6 +452,112 @@ class SyncService {
       } catch (e) {
         // Silent fail: log, leave marked for next sync
         developer.log('SyncService._deletePendingAccounts: API delete failed (retry next sync): $e', name: 'SyncService');
+      }
+    }
+  }
+
+  Future<void> _updatePendingAccounts(ServerConnection server, SettingsStorage storage, {CancelToken? cancelToken}) async {
+    // Ensure storage is available and unlocked
+    try {
+      if (!storage.isUnlocked) return;
+    } on StateError catch (_) {
+      return;
+    }
+
+    final box = storage.box;
+    final raw = box.get('servers');
+    if (raw == null) return;
+    final list = (raw as List<dynamic>).map((e) => Map<dynamic, dynamic>.from(e)).toList();
+    final idx = list.indexWhere((e) => e['id'] == server.id);
+    if (idx == -1) return;
+
+    // Deserialize server so we can inspect accounts
+    final localServer = ServerConnection.fromMap(list[idx]);
+    final pending = <int>[];
+    for (var i = 0; i < localServer.accounts.length; i++) {
+      final a = localServer.accounts[i];
+      // Find entries that are edited: have valid server ID, not synchronized, not deleted
+      if (a.id > 0 && !a.synchronized && !a.deleted) pending.add(i);
+    }
+    developer.log('SyncService._updatePendingAccounts: found ${pending.length} pending updates for server=${server.id}', name: 'SyncService');
+    if (pending.isEmpty) {
+      developer.log('SyncService._updatePendingAccounts: no pending updates to upload for server=${server.id}', name: 'SyncService');
+      return;
+    }
+
+    // Configure ApiService for this server
+    ApiService.instance.setServer(server);
+
+    for (final accIdx in pending) {
+      final acc = localServer.accounts[accIdx];
+      developer.log('SyncService._updatePendingAccounts: attempting update for local acc index=$accIdx service=${acc.service} account=${acc.account} id=${acc.id}', name: 'SyncService');
+      try {
+        final resp = await ApiService.instance.updateAccountFromEntry(acc, cancelToken: cancelToken);
+        
+        // resp is expected to be a Map representing the updated resource
+        if (resp.containsKey('id')) {
+          developer.log('SyncService._updatePendingAccounts: server updated account id=${resp['id']} for local index=$accIdx', name: 'SyncService');
+          
+          // Build a new AccountEntry from response and mark synchronized
+          var updated = AccountEntry.fromMap(Map<dynamic, dynamic>.from(resp)).copyWith(synchronized: true);
+          // Preserve any existing localIcon path so UI avatar remains stable
+          // if the server response does not include a local path.
+          try {
+            final existingLocal = localServer.accounts[accIdx].localIcon;
+            if (existingLocal != null && existingLocal.isNotEmpty) {
+              updated = updated.copyWith(localIcon: existingLocal);
+            }
+          } catch (_) {}
+          // If server returned only group_id and not the group name, try to
+          // populate the group name from the local server.groups so UI updates
+          // immediately without requiring a subsequent full sync.
+          try {
+            final groups = localServer.groups;
+            if ((updated.group.isEmpty || updated.group.trim().isEmpty) && updated.groupId != null && groups != null && groups.isNotEmpty) {
+              GroupEntry? match;
+              try {
+                match = groups.firstWhere((g) => g.id == updated.groupId);
+              } catch (_) {
+                match = null;
+              }
+              if (match != null) updated = updated.copyWith(group: match.name);
+            }
+          } catch (_) {}
+          // replace in localServer.accounts
+          final updatedAccounts = List<AccountEntry>.from(localServer.accounts);
+          updatedAccounts[accIdx] = updated;
+          final updatedServer = ServerConnection(
+            id: localServer.id,
+            name: localServer.name,
+            url: localServer.url,
+            apiKey: localServer.apiKey,
+            accounts: updatedAccounts,
+            groups: localServer.groups,
+            userId: localServer.userId,
+            userName: localServer.userName,
+            userEmail: localServer.userEmail,
+            oauthProvider: localServer.oauthProvider,
+            authenticatedByProxy: localServer.authenticatedByProxy,
+            preferences: localServer.preferences,
+            isAdmin: localServer.isAdmin,
+          );
+          // Persist updated server in list
+          list[idx] = updatedServer.toMap();
+          await box.put('servers', list);
+          developer.log('SyncService._updatePendingAccounts: persisted updated servers after updating account index=$accIdx', name: 'SyncService');
+          // Update localServer reference for subsequent iterations
+        } else {
+          developer.log('SyncService._updatePendingAccounts: server response missing id: $resp', name: 'SyncService');
+        }
+      } catch (e) {
+        // If the exception is a DioException, try to log response data
+        try {
+          if (e is DioException) {
+            developer.log('SyncService._updatePendingAccounts: DioException status=${e.response?.statusCode} data=${e.response?.data}', name: 'SyncService');
+          }
+        } catch (_) {}
+        developer.log('SyncService._updatePendingAccounts: failed to update account ${acc.service}/${acc.account}: $e', name: 'SyncService');
+        // continue with next pending account
       }
     }
   }

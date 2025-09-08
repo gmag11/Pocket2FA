@@ -15,6 +15,21 @@ This project complements the official 2FAuth web application by offering:
 - Synchronization with your self-hosted 2FAuth server
 - Offline access to your authentication codes
 
+## Screenshots
+
+<!-- markdownlint-disable MD033 -->
+<p align="center">
+   <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/accounts-manage.png" width="240" alt="Accounts Manage">
+   <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/accounts.png" width="240" alt="Accounts">
+   <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/edit_form.png" width="240" alt="Edit Form">
+</p>
+
+<p align="center">
+   <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/new_menu.png" width="240" alt="New Menu">
+   <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/servers.png" width="240" alt="Servers">
+</p>
+<!-- markdownlint-enable MD033 -->
+
 **Important**: This client requires a running instance of 2FAuth. It does not replace the web application but extends its functionality to mobile devices.
 
 ## Features

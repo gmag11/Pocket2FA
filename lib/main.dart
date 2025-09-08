@@ -28,7 +28,7 @@ class Pocket2FA extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: '2FA Manager UI',
+      title: 'Pocket2FA',
       theme: ThemeData(
         primarySwatch: Colors.indigo,
         scaffoldBackgroundColor: Colors.white,

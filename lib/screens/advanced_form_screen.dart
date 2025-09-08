@@ -35,6 +35,7 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
   String _algorithm = 'sha1';
   final _periodCtrl = TextEditingController();
   final _counterCtrl = TextEditingController();
+  bool _secretUnlocked = false; // Estado para controlar si el secret está desbloqueado
 
   @override
   void dispose() {
@@ -75,45 +76,53 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
       } else {
         _periodCtrl.text = (entry.period ?? 30).toString();
       }
+      
+      // En modo edición, el secret inicia bloqueado
+      _secretUnlocked = false;
+    } else {
+      // En modo creación, el secret siempre está desbloqueado
+      _secretUnlocked = true;
     }
   }
 
   Widget _buildOtpTypeButtons() {
+    final isEditMode = widget.existingEntry != null;
+    
     return Row(
       children: [
         Expanded(
           child: OutlinedButton(
-            onPressed: () => setState(() => _otpType = 'TOTP'),
+            onPressed: isEditMode ? null : () => setState(() => _otpType = 'TOTP'),
             style: OutlinedButton.styleFrom(
                 backgroundColor:
                     _otpType == 'TOTP' ? const Color(0xFF4F63E6) : null),
             child: Text('TOTP',
                 style:
-                    TextStyle(color: _otpType == 'TOTP' ? Colors.white : null)),
+                    TextStyle(color: _otpType == 'TOTP' ? Colors.white : (isEditMode ? Colors.grey : null))),
           ),
         ),
         const SizedBox(width: 8),
         Expanded(
           child: OutlinedButton(
-            onPressed: () => setState(() => _otpType = 'HOTP'),
+            onPressed: isEditMode ? null : () => setState(() => _otpType = 'HOTP'),
             style: OutlinedButton.styleFrom(
                 backgroundColor:
                     _otpType == 'HOTP' ? const Color(0xFF4F63E6) : null),
             child: Text('HOTP',
                 style:
-                    TextStyle(color: _otpType == 'HOTP' ? Colors.white : null)),
+                    TextStyle(color: _otpType == 'HOTP' ? Colors.white : (isEditMode ? Colors.grey : null))),
           ),
         ),
         const SizedBox(width: 8),
         Expanded(
           child: OutlinedButton(
-            onPressed: () => setState(() => _otpType = 'STEAM'),
+            onPressed: isEditMode ? null : () => setState(() => _otpType = 'STEAM'),
             style: OutlinedButton.styleFrom(
                 backgroundColor:
                     _otpType == 'STEAM' ? const Color(0xFF4F63E6) : null),
             child: Text('STEAM',
                 style: TextStyle(
-                    color: _otpType == 'STEAM' ? Colors.white : null)),
+                    color: _otpType == 'STEAM' ? Colors.white : (isEditMode ? Colors.grey : null))),
           ),
         ),
       ],
@@ -121,9 +130,45 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
   }
 
   Widget _buildSecretField() {
+    final isEditMode = widget.existingEntry != null;
+    final canEdit = !isEditMode || _secretUnlocked;
+
     return TextFormField(
       controller: _secretCtrl,
-      decoration: const InputDecoration(hintText: ''),
+      // Keep the field enabled so suffixIcon remains interactive; use readOnly to prevent editing when locked.
+      enabled: true,
+      readOnly: !canEdit,
+      enableInteractiveSelection: canEdit,
+      obscureText: isEditMode && !_secretUnlocked, // Ocultar texto cuando está bloqueado
+      decoration: InputDecoration(
+        hintText: canEdit ? '' : 'Secret is locked - tap the lock to edit',
+        filled: !canEdit,
+        fillColor: !canEdit ? Colors.grey[100] : null,
+        border: OutlineInputBorder(
+          borderSide: BorderSide(
+            color: !canEdit ? Colors.grey : Colors.blue,
+          ),
+        ),
+        // Lock button moved inside the field as suffixIcon. It toggles visibility and editability.
+        suffixIcon: isEditMode
+            ? IconButton(
+                icon: Icon(
+                  _secretUnlocked ? Icons.lock_open : Icons.lock,
+                  color: _secretUnlocked ? Colors.green : Colors.grey,
+                ),
+                onPressed: () {
+                  setState(() {
+                    _secretUnlocked = !_secretUnlocked;
+                    if (!_secretUnlocked) {
+                      // Al bloquear, limpiar la selección
+                      _secretCtrl.selection = TextSelection.collapsed(offset: 0);
+                    }
+                  });
+                },
+                tooltip: _secretUnlocked ? 'Lock secret field' : 'Unlock secret field',
+              )
+            : null,
+      ),
       validator: (v) {
         final s = v?.trim() ?? '';
         if (s.isEmpty) return 'Secret is required';

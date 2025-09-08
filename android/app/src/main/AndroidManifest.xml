@@ -10,7 +10,7 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
     <application
-        android:label="two_factor_ui"
+        android:label="PocketToken"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

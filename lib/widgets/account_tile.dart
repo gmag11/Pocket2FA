@@ -7,17 +7,45 @@ import 'account_tile_totp.dart';
 class AccountTile extends StatelessWidget {
   final AccountEntry item;
   final SettingsService? settings;
+  final bool isManageMode;
+  final bool isSelected;
+  final VoidCallback? onToggleSelection;
+  final VoidCallback? onEdit; // Nuevo callback para edición
 
-  const AccountTile({super.key, required this.item, this.settings});
+  const AccountTile({
+    super.key, 
+    required this.item, 
+    this.settings,
+    this.isManageMode = false,
+    this.isSelected = false,
+    this.onToggleSelection,
+    this.onEdit, // Agregar al constructor
+  });
 
   @override
   Widget build(BuildContext context) {
     final isHotp = (item.otpType ?? 'totp').toLowerCase() == 'hotp';
     Widget child;
     if (isHotp) {
-      child = AccountTileHOTP(key: key, item: item, settings: settings);
+      child = AccountTileHOTP(
+        key: key, 
+        item: item, 
+        settings: settings,
+        isManageMode: isManageMode,
+        isSelected: isSelected,
+        onToggleSelection: onToggleSelection,
+        onEdit: onEdit,
+      );
     } else {
-      child = AccountTileTOTP(key: key, item: item, settings: settings);
+      child = AccountTileTOTP(
+        key: key, 
+        item: item, 
+        settings: settings,
+        isManageMode: isManageMode,
+        isSelected: isSelected,
+        onToggleSelection: onToggleSelection,
+        onEdit: onEdit,
+      );
     }
 
     // If the entry is not synchronized, overlay a small indicator badge.

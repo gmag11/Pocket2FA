@@ -6,7 +6,6 @@ A mobile client application for managing two-factor authentication (2FA) codes, 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/gmag11/2fauthApp/release-build-android.yml )
 
-
 ## Purpose
 
 This project complements the official 2FAuth web application by offering:
@@ -22,6 +21,7 @@ This project complements the official 2FAuth web application by offering:
 
 - **Secure Code Generation**: All codes are generated locally on your device
 - **Server Synchronization**: Sync your accounts and icons from your 2FAuth instance
+- **Account Management**: Create, edit, and delete entries directly from the mobile app
 - **Offline Access**: Access your codes even without internet connection
 - **Encrypted Storage**: Your secrets are stored securely using platform encryption
 - **Platform Support**: Native support for Android, Windows, and Linux
@@ -74,8 +74,12 @@ This project complements the official 2FAuth web application by offering:
 1. **Setup**: Open the app and navigate to Settings → Servers
 2. **Add Server**: Configure connection to your 2FAuth instance (URL and API key)
 3. **Synchronize**: Pull your accounts and icons from the server
-4. **Access Codes**: View and copy your 2FA codes from the main accounts list
-5. **Offline Use**: Codes continue to work without internet connection after initial sync
+4. **Create Entry**: Use the "New" button to add a new account entry directly from the app
+5. **Manage Mode**: Tap the "Manage" button to enter manage mode for editing or deleting entries
+6. **Edit Entry**: In manage mode, tap the edit icon next to an entry to modify its details
+7. **Delete Entry**: In manage mode, select the entries you want to delete and press the "Delete" button
+8. **Access Codes**: View and copy your 2FA codes from the main accounts list
+9. **Offline Use**: Codes continue to work without internet connection after initial sync
 
 ## Privacy & Security
 
@@ -88,9 +92,7 @@ This project complements the official 2FAuth web application by offering:
 
 This application is in early development and may have bugs or incomplete features.
 
-- **Read-only Synchronization**: Synchronization is currently one-way (read-only)
-- **Account Management**: Editing, creating, deleting, or managing accounts is not implemented in the mobile client
-- **Web Redirection**: The "New" button redirects to the 2FAuth web interface; account creation must be done through the web application
+- **SVG Icon Issues**: Some SVG icons may not display correctly or may cause the app to close unexpectedly because Flutter does not fully support the SVG format. Whenever possible, use PNG icons for best compatibility.
 - **Fixed Order**: Accounts cannot be reordered; the order present on the server is replicated
 - **HOTP Limitations**: Offline local generation of HOTP codes is not supported. You must synchronize the counter with the server to avoid breaking the HOTP sequence
 - **Platform-specific Features**: Some features like biometric authentication may have limited availability depending on the platform and device capabilities

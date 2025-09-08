@@ -1,19 +1,24 @@
 import 'package:flutter/material.dart';
 import 'dart:developer' as developer;
 import 'package:dio/dio.dart';
+import '../models/account_entry.dart';
 import '../models/group_entry.dart';
 import '../services/entry_creation_service.dart';
+import '../services/api_service.dart';
 
 class AdvancedFormScreen extends StatefulWidget {
   final String userEmail;
   final String serverHost;
   final List<GroupEntry>? groups;
+  final AccountEntry? existingEntry; // Para edición
 
-  const AdvancedFormScreen(
-      {super.key,
-      required this.userEmail,
-      required this.serverHost,
-      this.groups});
+  const AdvancedFormScreen({
+    super.key,
+    required this.userEmail,
+    required this.serverHost,
+    this.groups,
+    this.existingEntry,
+  });
 
   @override
   State<AdvancedFormScreen> createState() => _AdvancedFormScreenState();
@@ -31,6 +36,7 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
   String _algorithm = 'sha1';
   final _periodCtrl = TextEditingController();
   final _counterCtrl = TextEditingController();
+  bool _secretUnlocked = false; // Estado para controlar si el secret está desbloqueado
 
   @override
   void dispose() {
@@ -44,46 +50,80 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
 
   @override
   void initState() {
-  super.initState();
-  // Default to no group selected. The dropdown will show '- No group -' by default.
+    super.initState();
+    
+    // Si hay una entrada existente, inicializar los campos con sus valores
+    if (widget.existingEntry != null) {
+      final entry = widget.existingEntry!;
+      _serviceCtrl.text = entry.service;
+      _accountCtrl.text = entry.account;
+      _secretCtrl.text = entry.seed;
+      
+      // Configurar el grupo
+      if (entry.group.isNotEmpty) {
+        _selectedGroup = entry.group;
+      }
+      
+      // Configurar el tipo de OTP
+      _otpType = entry.otpType?.toUpperCase() ?? 'TOTP';
+      
+      // Configurar opciones avanzadas
+      _digits = entry.digits ?? 6;
+      _algorithm = entry.algorithm?.toLowerCase() ?? 'sha1';
+      
+      // Configurar period o counter según el tipo
+      if (_otpType == 'HOTP') {
+        _counterCtrl.text = (entry.counter ?? 0).toString();
+      } else {
+        _periodCtrl.text = (entry.period ?? 30).toString();
+      }
+      
+      // En modo edición, el secret inicia bloqueado
+      _secretUnlocked = false;
+    } else {
+      // En modo creación, el secret siempre está desbloqueado
+      _secretUnlocked = true;
+    }
   }
 
   Widget _buildOtpTypeButtons() {
+    final isEditMode = widget.existingEntry != null;
+    
     return Row(
       children: [
         Expanded(
           child: OutlinedButton(
-            onPressed: () => setState(() => _otpType = 'TOTP'),
+            onPressed: isEditMode ? null : () => setState(() => _otpType = 'TOTP'),
             style: OutlinedButton.styleFrom(
                 backgroundColor:
                     _otpType == 'TOTP' ? const Color(0xFF4F63E6) : null),
             child: Text('TOTP',
                 style:
-                    TextStyle(color: _otpType == 'TOTP' ? Colors.white : null)),
+                    TextStyle(color: _otpType == 'TOTP' ? Colors.white : (isEditMode ? Colors.grey : null))),
           ),
         ),
         const SizedBox(width: 8),
         Expanded(
           child: OutlinedButton(
-            onPressed: () => setState(() => _otpType = 'HOTP'),
+            onPressed: isEditMode ? null : () => setState(() => _otpType = 'HOTP'),
             style: OutlinedButton.styleFrom(
                 backgroundColor:
                     _otpType == 'HOTP' ? const Color(0xFF4F63E6) : null),
             child: Text('HOTP',
                 style:
-                    TextStyle(color: _otpType == 'HOTP' ? Colors.white : null)),
+                    TextStyle(color: _otpType == 'HOTP' ? Colors.white : (isEditMode ? Colors.grey : null))),
           ),
         ),
         const SizedBox(width: 8),
         Expanded(
           child: OutlinedButton(
-            onPressed: () => setState(() => _otpType = 'STEAM'),
+            onPressed: isEditMode ? null : () => setState(() => _otpType = 'STEAM'),
             style: OutlinedButton.styleFrom(
                 backgroundColor:
                     _otpType == 'STEAM' ? const Color(0xFF4F63E6) : null),
             child: Text('STEAM',
                 style: TextStyle(
-                    color: _otpType == 'STEAM' ? Colors.white : null)),
+                    color: _otpType == 'STEAM' ? Colors.white : (isEditMode ? Colors.grey : null))),
           ),
         ),
       ],
@@ -91,9 +131,45 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
   }
 
   Widget _buildSecretField() {
+    final isEditMode = widget.existingEntry != null;
+    final canEdit = !isEditMode || _secretUnlocked;
+
     return TextFormField(
       controller: _secretCtrl,
-      decoration: const InputDecoration(hintText: ''),
+      // Keep the field enabled so suffixIcon remains interactive; use readOnly to prevent editing when locked.
+      enabled: true,
+      readOnly: !canEdit,
+      enableInteractiveSelection: canEdit,
+      obscureText: isEditMode && !_secretUnlocked, // Ocultar texto cuando está bloqueado
+      decoration: InputDecoration(
+        hintText: canEdit ? '' : 'Secret is locked - tap the lock to edit',
+        filled: !canEdit,
+        fillColor: !canEdit ? Colors.grey[100] : null,
+        border: OutlineInputBorder(
+          borderSide: BorderSide(
+            color: !canEdit ? Colors.grey : Colors.blue,
+          ),
+        ),
+        // Lock button moved inside the field as suffixIcon. It toggles visibility and editability.
+        suffixIcon: isEditMode
+            ? IconButton(
+                icon: Icon(
+                  _secretUnlocked ? Icons.lock_open : Icons.lock,
+                  color: _secretUnlocked ? Colors.green : Colors.grey,
+                ),
+                onPressed: () {
+                  setState(() {
+                    _secretUnlocked = !_secretUnlocked;
+                    if (!_secretUnlocked) {
+                      // Al bloquear, limpiar la selección
+                      _secretCtrl.selection = TextSelection.collapsed(offset: 0);
+                    }
+                  });
+                },
+                tooltip: _secretUnlocked ? 'Lock secret field' : 'Unlock secret field',
+              )
+            : null,
+      ),
       validator: (v) {
         final s = v?.trim() ?? '';
         if (s.isEmpty) return 'Secret is required';
@@ -149,7 +225,7 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('New account')),
+      appBar: AppBar(title: Text(widget.existingEntry != null ? 'Edit account' : 'New account')),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
@@ -368,7 +444,8 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
                     onPressed: () async {
                       final ok = _formKey.currentState?.validate() ?? false;
                       if (!ok) return;
-                      // Determine the selected group's id (if any)
+                      
+                      // Determinar el ID del grupo seleccionado (si hay alguno)
                       int? selectedGroupId;
                       if (_selectedGroup != '- No group -' && widget.groups != null) {
                         for (final g in widget.groups!) {
@@ -379,60 +456,109 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
                         }
                       }
 
-                      // Build AccountEntry using our service
-                      final entry = EntryCreationService.buildManualEntry(
-                        service: _serviceCtrl.text.trim(),
-                        account: _accountCtrl.text.trim(),
-                        secret: _secretCtrl.text.trim(),
-                        group: _selectedGroup == '- No group -' ? '' : _selectedGroup,
-                        groupId: selectedGroupId,
-                        otpType: _otpType,
-                        digits: _digits,
-                        algorithm: _algorithm,
-                        period: _periodCtrl.text.trim().isEmpty ? 
-                          (_otpType == 'TOTP' ? 30 : 0) : 
-                          int.tryParse(_periodCtrl.text.trim()) ?? (_otpType == 'TOTP' ? 30 : 0),
-                      );
-
-                      // Log creation of local entry (redact secret)
-                      try {
-                        developer.log('AdvancedForm: local entry created service=${entry.service} account=${entry.account} id=${entry.id} synchronized=${entry.synchronized}', name: 'AdvancedForm');
-                      } catch (_) {}
-
-                      // Use our service to attempt server creation
-                      developer.log('AdvancedForm: attempting immediate server create for service=${entry.service} account=${entry.account}', name: 'AdvancedForm');
                       final navigator = Navigator.of(context);
                       
-                      try {
-                        // Use our service to create entry on server
-                        final serverEntry = await EntryCreationService.createEntryOnServer(
-                          entry,
-                          serverHost: widget.serverHost,
-                          groups: widget.groups,
-                          context: context,
-                          sourceTag: 'AdvancedForm'
+                      if (widget.existingEntry != null) {
+                        // EDICIÓN: Actualizar entrada existente
+                        final updatedEntry = widget.existingEntry!.copyWith(
+                          service: _serviceCtrl.text.trim(),
+                          account: _accountCtrl.text.trim(),
+                          seed: _secretCtrl.text.trim(),
+                          // Preserve the original icon unless the user explicitly changed it.
+                          icon: widget.existingEntry?.icon,
+                          group: _selectedGroup == '- No group -' ? '' : _selectedGroup,
+                          groupId: selectedGroupId,
+                          otpType: _otpType,
+                          digits: _digits,
+                          algorithm: _algorithm,
+                          period: _otpType == 'HOTP' ? null : 
+                            (_periodCtrl.text.trim().isEmpty ? 30 : 
+                            int.tryParse(_periodCtrl.text.trim()) ?? 30),
+                          counter: _otpType == 'HOTP' ? 
+                            (_counterCtrl.text.trim().isEmpty ? 0 : 
+                            int.tryParse(_counterCtrl.text.trim()) ?? 0) : null,
+                          synchronized: false, // mark as unsynced by default
                         );
-                        
-                        if (serverEntry != null && serverEntry.synchronized) {
-                          developer.log('AdvancedForm: created on server id=${serverEntry.id}', name: 'AdvancedForm');
-                          navigator.pop(serverEntry);
-                          return;
-                        } else {
-                          developer.log('AdvancedForm: server create returned no id, returning local entry', name: 'AdvancedForm');
-                        }
-                      } catch (e) {
-                        // Log response details when available (DioException may contain server response)
-                        try {
-                          if (e is DioException) {
-                            developer.log('AdvancedForm: server create DioException status=${e.response?.statusCode} data=${e.response?.data}', name: 'AdvancedForm');
-                          }
-                        } catch (_) {}
-                        developer.log('AdvancedForm: server create failed (ignored): $e', name: 'AdvancedForm');
-                        // ignore and fallback to returning the local unsynced entry
-                      }
 
-                      developer.log('AdvancedForm: created local AccountEntry: ${entry.toMap()}', name: 'AdvancedForm');
-                      navigator.pop(entry);
+                        developer.log('AdvancedForm: updated entry service=${updatedEntry.service} account=${updatedEntry.account} id=${updatedEntry.id}', name: 'AdvancedForm');
+
+                        // Attempt immediate server update (silent on failure)
+                        try {
+                          final resp = await ApiService.instance.updateAccountFromEntry(updatedEntry);
+                          if (resp.containsKey('id')) {
+                            // Preserve any locally cached icon file path so the UI
+                            // continues showing the avatar until the sync process
+                            // refreshes or re-downloads it.
+                            var serverEntry = AccountEntry.fromMap(Map<dynamic, dynamic>.from(resp)).copyWith(
+                              synchronized: true,
+                              localIcon: widget.existingEntry?.localIcon,
+                            );
+                            developer.log('AdvancedForm: updated on server id=${serverEntry.id}', name: 'AdvancedForm');
+                            navigator.pop(serverEntry);
+                            return;
+                          } else {
+                            developer.log('AdvancedForm: server update returned unexpected payload, returning local unsynced entry', name: 'AdvancedForm');
+                          }
+                        } catch (e) {
+                          try {
+                            if (e is DioException) {
+                              developer.log('AdvancedForm: server update DioException status=${e.response?.statusCode} data=${e.response?.data}', name: 'AdvancedForm');
+                            }
+                          } catch (_) {}
+                          developer.log('AdvancedForm: server update failed (ignored): $e', name: 'AdvancedForm');
+                        }
+
+                        // If we reach here, server update did not succeed — return local unsynced entry
+                        navigator.pop(updatedEntry);
+                      } else {
+                        // CREACIÓN: Crear nueva entrada
+                        final entry = EntryCreationService.buildManualEntry(
+                          service: _serviceCtrl.text.trim(),
+                          account: _accountCtrl.text.trim(),
+                          secret: _secretCtrl.text.trim(),
+                          group: _selectedGroup == '- No group -' ? '' : _selectedGroup,
+                          groupId: selectedGroupId,
+                          otpType: _otpType,
+                          digits: _digits,
+                          algorithm: _algorithm,
+                          period: _periodCtrl.text.trim().isEmpty ? 
+                            (_otpType == 'TOTP' ? 30 : 0) : 
+                            int.tryParse(_periodCtrl.text.trim()) ?? (_otpType == 'TOTP' ? 30 : 0),
+                        );
+
+                        developer.log('AdvancedForm: local entry created service=${entry.service} account=${entry.account} id=${entry.id} synchronized=${entry.synchronized}', name: 'AdvancedForm');
+
+                        // Usar nuestro servicio para intentar crear en el servidor
+                        developer.log('AdvancedForm: attempting immediate server create for service=${entry.service} account=${entry.account}', name: 'AdvancedForm');
+                        
+                        try {
+                          final serverEntry = await EntryCreationService.createEntryOnServer(
+                            entry,
+                            serverHost: widget.serverHost,
+                            groups: widget.groups,
+                            context: context,
+                            sourceTag: 'AdvancedForm'
+                          );
+                          
+                          if (serverEntry != null && serverEntry.synchronized) {
+                            developer.log('AdvancedForm: created on server id=${serverEntry.id}', name: 'AdvancedForm');
+                            navigator.pop(serverEntry);
+                            return;
+                          } else {
+                            developer.log('AdvancedForm: server create returned no id, returning local entry', name: 'AdvancedForm');
+                          }
+                        } catch (e) {
+                          try {
+                            if (e is DioException) {
+                              developer.log('AdvancedForm: server create DioException status=${e.response?.statusCode} data=${e.response?.data}', name: 'AdvancedForm');
+                            }
+                          } catch (_) {}
+                          developer.log('AdvancedForm: server create failed (ignored): $e', name: 'AdvancedForm');
+                        }
+
+                        developer.log('AdvancedForm: created local AccountEntry: ${entry.toMap()}', name: 'AdvancedForm');
+                        navigator.pop(entry);
+                      }
                     },
                     style: ElevatedButton.styleFrom(
                       shape: RoundedRectangleBorder(
@@ -440,10 +566,10 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
                       backgroundColor: const Color(0xFF4F63E6),
                       foregroundColor: Colors.white,
                     ),
-                    child: const Padding(
-                        padding: EdgeInsets.symmetric(
+                    child: Padding(
+                        padding: const EdgeInsets.symmetric(
                             horizontal: 20.0, vertical: 12.0),
-                        child: Text('Create')),
+                        child: Text(widget.existingEntry != null ? 'Update' : 'Create')),
                   ),
                   const SizedBox(width: 12),
           OutlinedButton(

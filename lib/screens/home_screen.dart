@@ -1,38 +1,15 @@
 import 'package:flutter/material.dart';
-import 'dart:developer' as developer;
-import 'dart:io';
-import 'package:url_launcher/url_launcher.dart';
-import '../widgets/account_tile.dart';
 import '../services/settings_service.dart';
-import 'settings_screen.dart';
-import 'accounts_screen.dart';
-import 'new_code_screen.dart';
-import '../models/server_connection.dart';
 import '../models/account_entry.dart';
-import '../services/api_service.dart';
-import '../services/sync_service.dart';
-
-// Top-level helper to open an external URL using the platform default, with
-// a Linux fallback to xdg-open when the platform opener fails.
-Future<void> _launchExternal(Uri uri, ScaffoldMessengerState messenger) async {
-  try {
-    if (await canLaunchUrl(uri)) {
-      final ok = await launchUrl(uri, mode: LaunchMode.platformDefault);
-      if (!ok && Platform.isLinux) {
-        await Process.run('xdg-open', [uri.toString()]);
-      }
-    } else if (Platform.isLinux) {
-      await Process.run('xdg-open', [uri.toString()]);
-    } else {
-      await launchUrl(uri);
-    }
-  } catch (e) {
-    developer.log('HomePage: cannot launch $uri: $e', name: 'HomePage');
-        messenger.showSnackBar(SnackBar(
-          content: Text('Could not open URL: $e'),
-    ));
-  }
-}
+import 'accounts_screen.dart';
+import 'search_bar.dart';
+import 'account_list.dart';
+import 'bottom_bar.dart';
+import 'advanced_form_screen.dart';
+import 'home_server_manager.dart';
+import 'home_sync_manager.dart';
+import 'home_manage_mode.dart';
+import 'home_header_animation.dart';
 
 class HomePage extends StatefulWidget {
   final SettingsService settings;
@@ -47,357 +24,118 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   String _searchQuery = '';
   late final TextEditingController _searchController;
   late final FocusNode _searchFocus;
-  late final ScrollController _listScrollController;
-  late final AnimationController _headerController;
-  late final Animation<Offset> _headerSlide;
-  late final Animation<double> _headerSizeFactor;
-  double _lastScrollOffset = 0.0;
-  List<ServerConnection> _servers = [];
-  String? _selectedServerId;
-  int? _selectedAccountIndex;
-  List<AccountEntry> _currentItems = [];
-  bool _isSyncing = false;
-  bool _suppressNextSyncSnack = false;
-  bool _serverReachable = false;
-  int _loadServerAttempts = 0;
-  static const int _maxLoadServerAttempts = 6;
-  bool _suppressFullScreenSyncIndicator = false;
-  bool _skipSyncOnLoad = false;
-
-  Future<void> _onRefreshFromPull() async {
-    // Called by RefreshIndicator's onRefresh. Suppress the fullscreen overlay
-    // because RefreshIndicator already shows a spinner.
-  _suppressFullScreenSyncIndicator = true; // Suppress fullscreen sync overlay
-    try {
-      await _forceSyncCurrentServer();
-    } finally {
-      _suppressFullScreenSyncIndicator = false;
-    }
-  }
-
-  Future<void> _forceSyncCurrentServer() async {
-    final storage = widget.settings.storage;
-    // If storage is not yet available (race during startup), retry a few times
-    // before giving up. Do not clear currently displayed servers while retrying.
-    if (storage == null) {
-      _loadServerAttempts += 1;
-      if (_loadServerAttempts <= _maxLoadServerAttempts) {
-        Future.delayed(const Duration(milliseconds: 400), () {
-          if (mounted) _loadServers();
-        });
-        return;
-      }
-      // fall through: proceed with storage == null (no persistent data)
-    }
-    if (_selectedServerId == null || storage == null) return;
-    final srv = _servers.firstWhere((s) => s.id == _selectedServerId, orElse: () => _servers.first);
-    try {
-      if (mounted) setState(() { if (!_suppressFullScreenSyncIndicator) _isSyncing = true; });
-  final result = await SyncService.instance.forceSync(srv, storage, markAsForced: true);
-  // Force sync attempted network operations; success means server reachable
-  if (mounted) setState(() { _serverReachable = true; });
-  // After forcing sync, reload servers but suppress the automatic sync snackbar
-  _suppressNextSyncSnack = true;
-  // Prevent the subsequent _loadServers() call from triggering a second network
-  // syncIfNeeded immediately after a forced sync. This avoids double network
-  // requests when the UI reloads servers right after forcing a sync.
-  _skipSyncOnLoad = true;
-  await _loadServers();
-      if (mounted) {
-        if (result['network_failed'] == true) {
-          setState(() { _serverReachable = false; });
-          developer.log('HomePage: cannot sync (network failure) for server ${srv.id}', name: 'HomePage');
-          _suppressNextSyncSnack = false;
-        } else {
-          if (!_suppressNextSyncSnack) {
-            // Only log when an actual network sync ran (not when skipped)
-            if (result['skipped'] != true) {
-              developer.log('HomePage: sync finished for server ${srv.id}', name: 'HomePage');
-            }
-          } else {
-            _suppressNextSyncSnack = false;
-          }
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() { _serverReachable = false; });
-        developer.log('HomePage: forceSync failed: $e', name: 'HomePage');
-      }
-    } finally {
-      if (mounted) setState(() { _isSyncing = false; });
-    }
-  }
+  
+  // Managers
+  late final HomeServerManager _serverManager;
+  late final HomeSyncManager _syncManager;
+  late final HomeManageMode _manageMode;
+  late final HomeHeaderAnimation _headerAnimation;
 
   @override
   void initState() {
     super.initState();
     _searchController = TextEditingController();
     _searchFocus = FocusNode();
-  _listScrollController = ScrollController();
-
-  // Slower animation so it's clear the header hides upwards and unfolds downwards
-  _headerController = AnimationController(vsync: this, duration: const Duration(milliseconds: 450));
-  _headerSlide = Tween<Offset>(begin: const Offset(0, -0.28), end: Offset.zero)
-    .animate(CurvedAnimation(parent: _headerController, curve: Curves.easeInOut));
-  _headerSizeFactor = CurvedAnimation(parent: _headerController, curve: Curves.easeInOut);
-
-  // Start visible
-  _headerController.value = 1.0;
-
-  // Register named listener so we can remove it on dispose
-  _listScrollController.addListener(_handleScroll);
-    // Load servers and then perform an initial connectivity check for the selected server.
-    _loadServers().then((_) async {
-      try {
-        final storage = widget.settings.storage;
-        if (storage != null && _selectedServerId != null && _servers.isNotEmpty) {
-          final srv = _servers.firstWhere((s) => s.id == _selectedServerId, orElse: () => _servers.first);
-          // Use ApiService.validateServer which performs GET /user on a short timeout
-          try {
-            await ApiService.instance.validateServer(srv);
-            // If response ok, mark reachable and refresh local data
-            if (mounted) {
-              setState(() { _serverReachable = true; });
-              await _loadServers();
-              developer.log('HomePage: initial connectivity check passed for ${srv.id}', name: 'HomePage');
-            }
-          } catch (e) {
-            if (mounted) setState(() { _serverReachable = false; });
-            developer.log('HomePage: initial connectivity check failed for ${srv.id}: $e', name: 'HomePage');
-          }
-        }
-      } catch (_) {}
-    });
+    
+    // Initialize managers
+    _serverManager = HomeServerManager(widget.settings);
+    _syncManager = HomeSyncManager(_serverManager);
+    _manageMode = HomeManageMode(_serverManager);
+    _headerAnimation = HomeHeaderAnimation();
+    
+    // Initialize header animation
+    _headerAnimation.initialize(this);
+    
+    // Add listeners
+    _serverManager.addListener(_onServerManagerChanged);
+    _syncManager.addListener(_onSyncManagerChanged);
+    _manageMode.addListener(_onManageModeChanged);
+    
+    // Load servers and perform initial connectivity check
+    _loadServersAndInitialize();
   }
 
-  void _handleScroll() {
-    if (!_listScrollController.hasClients) return;
-    final offset = _listScrollController.offset;
-    final delta = offset - _lastScrollOffset;
-    const threshold = 6.0;
-
-    // Only allow hiding when the viewport height is smaller than 4 tiles.
-    // AccountTile height is 70 (as defined in account_tile_totp.dart)
-    const tileHeight = 70.0;
-    final viewport = _listScrollController.position.viewportDimension;
-    final allowHide = viewport < (tileHeight * 4);
-
-    if (!allowHide) {
-      // If there's enough vertical space, always show the header
-      if (_headerController.status != AnimationStatus.forward && _headerController.value < 1.0) {
-        _headerController.forward();
-      }
-    } else {
-      if (offset <= 0) {
-        // show at top
-        if (_headerController.status != AnimationStatus.forward && _headerController.value < 1.0) {
-          _headerController.forward();
-        }
-      } else if (delta > threshold) {
-        // scrolling up -> hide (animate upwards)
-        if (_headerController.status != AnimationStatus.reverse && _headerController.value > 0.0) {
-          _headerController.reverse();
-        }
-      } else if (delta < -threshold) {
-        // scrolling down -> show (unfold downward)
-        if (_headerController.status != AnimationStatus.forward && _headerController.value < 1.0) {
-          _headerController.forward();
-        }
-      }
+  void _onServerManagerChanged() {
+    if (mounted) {
+      setState(() {
+        _selectedGroup = 'All (${_serverManager.currentItems.length})';
+      });
     }
-
-    _lastScrollOffset = offset.clamp(0.0, double.infinity);
   }
 
-  Future<void> _loadServers() async {
-  final storage = widget.settings.storage;
-  List<ServerConnection> servers = [];
-  // Keep a copy of the currently displayed servers so we can fall back to them
-  // if storage returns empty due to a failed/partial sync while offline.
-  final previousServers = List<ServerConnection>.from(_servers);
-    String? restoredServerId;
-    int? restoredAccountIndex;
-    // Track whether storage actually provided a value. We only want to
-    // fallback to the in-memory cached servers when storage did not provide
-    // a value (for example the key is missing or the store is locked). If
-    // storage returned an empty list that means the user intentionally
-    // removed all servers and we should respect that.
-    bool storageProvided = false;
-    if (storage != null) {
-      try {
-        if (storage.isUnlocked) {
-          final box = storage.box;
-          final raw = box.get('servers');
-          if (raw != null) {
-            storageProvided = true;
-            servers = (raw as List<dynamic>)
-                .map((e) => ServerConnection.fromMap(Map<dynamic, dynamic>.from(e)))
-                .toList();
-          } else {
-            // raw == null -> storage had no key for 'servers'
-            storageProvided = false;
-          }
-          // Try to restore previously selected server/account
-          final selRaw = box.get('selected');
-          if (selRaw != null) {
-            try {
-              final m = Map<dynamic, dynamic>.from(selRaw);
-              restoredServerId = m['serverId'] as String?;
-              restoredAccountIndex = m['accountIndex'] is int ? m['accountIndex'] as int : (m['accountIndex'] == null ? null : int.tryParse(m['accountIndex'].toString()));
-            } catch (_) {
-              restoredServerId = null;
-              restoredAccountIndex = null;
-            }
-          }
-        }
-      } on StateError catch (_) {
-        // Storage locked — behave as if no persistent servers available.
-        storageProvided = false;
+  void _onSyncManagerChanged() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  void _onManageModeChanged() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  Future<void> _editAccount(AccountEntry account) async {
+    final result = await Navigator.of(context).push<AccountEntry>(
+      MaterialPageRoute(
+        builder: (context) {
+          final selectedServer = _serverManager.getSelectedServer();
+          return AdvancedFormScreen(
+            userEmail: selectedServer?.userEmail ?? 'Unknown',
+            serverHost: selectedServer?.url ?? 'Unknown',
+            groups: selectedServer?.groups,
+            existingEntry: account, // Pasar la entrada existente para edición
+          );
+        },
+      ),
+    );
+
+    if (result != null) {
+      // La entrada fue editada, actualizarla en el servidor manager
+      await _serverManager.updateAccount(result);
+      
+      // Mostrar mensaje de confirmación
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Account updated successfully')),
+        );
       }
     }
+  }
 
-    // Only fallback to the previously cached in-memory servers when storage
-    // did not provide any value (null or locked). If storage returned an
-    // empty list that's an intentional state (e.g. user deleted all servers)
-    // and we should not restore the old entries.
-    final usedCachedFallback = !storageProvided && previousServers.isNotEmpty;
-    if (usedCachedFallback) {
-      servers = previousServers;
-    }
-
-    setState(() {
-      _servers = servers;
-      if (_servers.isNotEmpty) {
-        if (restoredServerId != null) {
-          final idx = _servers.indexWhere((s) => s.id == restoredServerId);
-          if (idx != -1) {
-            final srv = _servers[idx];
-            _selectedServerId = srv.id;
-            _selectedAccountIndex = (restoredAccountIndex != null && srv.accounts.length > restoredAccountIndex) ? restoredAccountIndex : (srv.accounts.isNotEmpty ? 0 : null);
-            _currentItems = srv.accounts;
-            _selectedGroup = 'All (${_currentItems.length})';
-          } else {
-            final first = _servers[0];
-            _selectedServerId = first.id;
-            _selectedAccountIndex = first.accounts.isNotEmpty ? 0 : null;
-            _currentItems = first.accounts;
-            _selectedGroup = 'All (${_currentItems.length})';
-          }
-        } else {
-          final first = _servers[0];
-          _selectedServerId = first.id;
-          _selectedAccountIndex = first.accounts.isNotEmpty ? 0 : null;
-          _currentItems = first.accounts;
-          _selectedGroup = 'All (${_currentItems.length})';
-        }
-      } else {
-        _selectedServerId = null;
-        _selectedAccountIndex = null;
-        _currentItems = [];
-        _selectedGroup = 'All (0)';
-      }
-    });
-
-    // Configure ApiService for the selected server (if any). Ignore errors here.
-    if (_selectedServerId != null) {
+  Future<void> _loadServersAndInitialize() async {
+    await _serverManager.loadServers();
+    await _serverManager.initialConnectivityCheck();
+    
+    // Attempt throttled sync if we have servers
+    if (_serverManager.servers.isNotEmpty) {
       try {
-        final srv = _servers.firstWhere((s) => s.id == _selectedServerId);
-        ApiService.instance.setServer(srv);
-        // Attempt a throttled sync to refresh accounts/icons (if we have persistent storage)
-            if (storage != null) {
-          try {
-            // Do not show the fullscreen sync overlay when a pull-to-refresh
-            // is active; the RefreshIndicator already shows a spinner.
-            if (mounted && !_suppressFullScreenSyncIndicator) setState(() { _isSyncing = true; });
-            Map<String, dynamic> result;
-            if (_skipSyncOnLoad) {
-              // consume the flag and skip the automatic throttled sync because
-              // a forceSync just ran and already refreshed server state.
-              _skipSyncOnLoad = false;
-              developer.log('HomePage: skipping syncIfNeeded because a recent forced sync ran', name: 'HomePage');
-              result = {'skipped': true, 'success': true, 'downloaded': 0, 'failed': 0};
-            } else {
-              final tmp = await SyncService.instance.syncIfNeeded(srv, storage);
-              result = tmp;
-            }
-            // If syncIfNeeded actually performed a network sync, it will not set
-            // 'skipped' to true. Only update reachability state when a network
-            // attempt occurred and succeeded.
-            if (result['skipped'] != true) {
-              if (mounted) setState(() { _serverReachable = true; });
-            }
-            // Reload servers from storage to pick up any updates (icons/local paths)
-            try {
-              if (storage.isUnlocked) {
-                final raw2 = storage.box.get('servers');
-                if (raw2 != null) {
-                  final servers2 = (raw2 as List<dynamic>)
-                      .map((e) => ServerConnection.fromMap(Map<dynamic, dynamic>.from(e)))
-                      .toList();
-                  if (mounted) {
-                    setState(() {
-                      _servers = servers2;
-                      final idx = _servers.indexWhere((s) => s.id == srv.id);
-                      if (idx != -1) {
-                        final updatedSrv = _servers[idx];
-                        _currentItems = updatedSrv.accounts;
-                        _selectedGroup = 'All (${_currentItems.length})';
-                      }
-                    });
-                  }
-                }
-              }
-            } on StateError catch (_) {
-              // storage locked while refreshing; ignore and keep current display
-            }
-            if (mounted) {
-              if (result['network_failed'] == true) {
-                setState(() { _serverReachable = false; });
-                developer.log('HomePage: cannot sync (network failure) for server ${srv.id}', name: 'HomePage');
-                _suppressNextSyncSnack = false;
-              } else {
-                if (!_suppressNextSyncSnack) {
-                  // Only log when an actual network sync ran
-                  if (result['skipped'] != true) developer.log('HomePage: sync finished for server ${srv.id}', name: 'HomePage');
-                } else {
-                  // consume the suppression flag once
-                  _suppressNextSyncSnack = false;
-                }
-              }
-            }
-          } catch (_) {
-            // If a sync error occurred (for example offline or server unreachable),
-            // inform the user but keep showing cached data. Also mark unreachable.
-            if (mounted) {
-              setState(() { _serverReachable = false; });
-              if (!_suppressNextSyncSnack) {
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Cannot sync: offline or server unreachable')));
-              } else {
-                _suppressNextSyncSnack = false;
-              }
-            }
-          } finally {
-            // Only clear the fullscreen overlay if we actually showed it here.
-            if (mounted && !_suppressFullScreenSyncIndicator) setState(() { _isSyncing = false; });
-          }
+        await _syncManager.performThrottledSync();
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Cannot sync: offline or server unreachable'))
+          );
         }
-      } catch (_) {}
+      }
     }
   }
 
   Future<void> _openServerAccountSelector() async {
-    if (_servers.isEmpty) return;
+    if (_serverManager.servers.isEmpty) return;
+    
     final choice = await showModalBottomSheet<Map<String, dynamic>>(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(12))),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(12))
+      ),
       builder: (c) {
-        // Size the sheet based on number of servers (tile height + header), capped to 80% of screen
+        // Size the sheet based on number of servers
         final mq = MediaQuery.of(c).size;
         const double tileH = 72.0;
         const double headerH = 56.0;
-        final desired = headerH + (_servers.length * tileH);
+        final desired = headerH + (_serverManager.servers.length * tileH);
         final maxH = mq.height * 0.8;
         final height = desired.clamp(120.0, maxH);
 
@@ -408,15 +146,18 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               children: [
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                  child: Align(alignment: Alignment.centerLeft, child: Text('Servers', style: Theme.of(context).textTheme.titleMedium)),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text('Servers', style: Theme.of(context).textTheme.titleMedium)
+                  ),
                 ),
                 const Divider(height: 1),
                 Expanded(
                   child: ListView.builder(
-                    itemCount: _servers.length,
+                    itemCount: _serverManager.servers.length,
                     itemBuilder: (ctx, idx) {
-                      final srv = _servers[idx];
-                      final isActive = srv.id == _selectedServerId;
+                      final srv = _serverManager.servers[idx];
+                      final isActive = srv.id == _serverManager.selectedServerId;
                       return ListTile(
                         title: Text('${srv.name} (${Uri.parse(srv.url).host})'),
                         subtitle: Text(srv.url),
@@ -435,81 +176,18 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       },
     );
 
-    if (choice != null) {
+    if (choice != null && mounted) {
       final serverId = choice['serverId'] as String;
       final accountIndex = choice['accountIndex'] as int?;
-      final server = _servers.firstWhere((s) => s.id == serverId);
-      // Prefer sample data for display when available
-      setState(() {
-        _selectedServerId = serverId;
-        _selectedAccountIndex = accountIndex;
-  _currentItems = server.accounts;
-        _selectedGroup = 'All (${_currentItems.length})';
-      });
-
-      // Persist selection
-      final storage = widget.settings.storage;
-      if (storage != null) {
+      
+      final success = await _serverManager.selectServer(serverId, accountIndex: accountIndex);
+      if (success) {
+        // Trigger sync for newly selected server
         try {
-          if (storage.isUnlocked) {
-            await storage.box.put('selected', {'serverId': serverId, 'accountIndex': accountIndex});
-          }
-        } on StateError catch (_) {
-          // ignore persistence when locked
+          await _syncManager.performThrottledSync();
+        } catch (_) {
+          // Ignore sync errors on server selection
         }
-      }
-
-      // Configure ApiService for the newly selected server. Show error if it fails.
-      try {
-        ApiService.instance.setServer(server);
-        // Trigger a throttled sync and reload servers so cached icons/local paths are available
-        final storage = widget.settings.storage;
-        if (storage != null) {
-          try {
-            final result = await SyncService.instance.syncIfNeeded(server, storage);
-            // If network sync occurred and returned (not skipped), mark reachable
-            if (result['skipped'] != true) {
-              if (mounted) setState(() { _serverReachable = true; });
-            }
-            // Suppress the automatic notification from _loadServers() and show only this one
-            _suppressNextSyncSnack = true;
-            await _loadServers();
-            if (mounted) {
-              if (result['skipped'] != true) developer.log('HomePage: sync finished for server ${server.id}', name: 'HomePage');
-            }
-          } catch (_) {
-            if (mounted) setState(() { _serverReachable = false; });
-          }
-        }
-      } catch (e) {
-        if (mounted) {
-          developer.log('HomePage: Error configuring API: $e', name: 'HomePage');
-        }
-      }
-    }
-  }
-
-  /// Called when the user presses the manual sync button in the UI. Ensure
-  /// the fullscreen syncing indicator is shown immediately while the
-  /// refresh/sync runs, even if the underlying sync logic decides not to show
-  /// it for its own reasons.
-  Future<void> _manualSyncPressed() async {
-    // Suppress the fullscreen overlay for manual sync; show only the
-    // small spinner in the sync button.
-    if (mounted) {
-      setState(() {
-      _suppressFullScreenSyncIndicator = true;
-      _isSyncing = true;
-    });
-    }
-    try {
-      await _onRefreshFromPull();
-    } finally {
-      if (mounted) {
-        setState(() {
-        _isSyncing = false;
-        _suppressFullScreenSyncIndicator = false;
-      });
       }
     }
   }
@@ -518,42 +196,20 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   void dispose() {
     _searchController.dispose();
     _searchFocus.dispose();
-  _listScrollController.removeListener(_handleScroll);
-  _listScrollController.dispose();
-  _headerController.dispose();
+    _headerAnimation.dispose();
+    _serverManager.removeListener(_onServerManagerChanged);
+    _syncManager.removeListener(_onSyncManagerChanged);
+    _manageMode.removeListener(_onManageModeChanged);
     super.dispose();
-  }
-
-  List<String> _groups() {
-    final Map<String, int> counts = {};
-    for (final item in _currentItems) {
-      final g = item.group.trim();
-      if (g.isEmpty) continue; // do not include ungrouped entries in selector
-      counts[g] = (counts[g] ?? 0) + 1;
-    }
-    developer.log('HomePage: computed group counts=${counts.toString()} from ${_currentItems.length} items', name: 'HomePage');
-    final groups = ['All (${_currentItems.length})'];
-    groups.addAll(counts.keys.map((k) => '$k (${counts[k]})'));
-    return groups;
-  }
-
-  String _groupKey(String display) {
-    // Convert 'Work (4)' -> 'Work', 'All (71)' -> 'All'
-    final idx = display.indexOf(' (');
-    if (idx == -1) return display;
-    return display.substring(0, idx);
   }
 
   @override
   Widget build(BuildContext context) {
-  final groups = _groups();
-    // If storage exists but is locked (biometric required and not yet satisfied),
-  // If storage exists but is locked (biometric required and not yet satisfied),
-  // show a minimal screen with a single centered 'Retry' button so the user
-  // can re-attempt authentication. This prevents the home UI from being
-  // visible while the local store is locked.
     final storage = widget.settings.storage;
-  if (storage != null && !storage.isUnlocked) {
+    
+    // If storage exists but is locked (biometric required and not yet satisfied),
+    // show a minimal screen with a single centered 'Retry' button
+    if (storage != null && !storage.isUnlocked) {
       return Scaffold(
         body: SafeArea(
           child: Center(
@@ -574,12 +230,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     final messenger = ScaffoldMessenger.of(context);
                     final ok = await storage.attemptUnlock();
                     if (ok) {
-                      // Reload servers from unlocked storage and rebuild UI
-                      await _loadServers();
-                      if (!mounted) return;
-                      setState(() {});
+                      await _serverManager.loadServers();
                     } else {
-                      messenger.showSnackBar(const SnackBar(content: Text('Authentication failed')));
+                      messenger.showSnackBar(
+                        const SnackBar(content: Text('Authentication failed'))
+                      );
                     }
                   },
                   child: const Text('Retry'),
@@ -597,641 +252,207 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           children: [
             Column(
               children: [
-                // Animated header: slide up when hiding, slide down when showing.
+                // Animated header
                 SizeTransition(
-                  sizeFactor: _headerSizeFactor,
+                  sizeFactor: _headerAnimation.headerSizeFactor,
                   axisAlignment: -1.0,
                   child: SlideTransition(
-                    position: _headerSlide,
-                    child: Column(
-                      children: [
-                        const SizedBox(height: 12),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                          child: Row(
-                            children: [
-                              if (_servers.isNotEmpty)
-                                Expanded(
-                                  child: _SearchBar(
-                                    controller: _searchController,
-                                    focusNode: _searchFocus,
-                                    onChanged: (v) => setState(() => _searchQuery = v),
-                                  ),
-                                )
-                              else
-                                const Expanded(child: SizedBox()),
-                              const SizedBox(width: 8),
-                              // Manual sync button that performs the same action as pull-to-refresh
-                              _isSyncing
-                                  ? SizedBox(
-                                      width: 48,
-                                      height: 48,
-                                      child: Center(
-                                        child: SizedBox(
-                                          width: 20,
-                                          height: 20,
-                                          child: const CircularProgressIndicator(strokeWidth: 2),
-                                        ),
-                                      ),
-                                    )
-                                  : _servers.isEmpty
-                                      ? const SizedBox(
-                                          width: 48,
-                                          height: 48,
-                                          child: Icon(Icons.sync, color: Colors.grey),
-                                        )
-                                      : Semantics(
-                                          label: 'Synchronize',
-                                          button: true,
-                                          child: IconButton(
-                                            tooltip: 'Synchronize',
-                                            icon: const Icon(Icons.sync),
-                                            onPressed: _manualSyncPressed,
-                                          ),
-                                        ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        // Group selector
-                        Center(
-                          child: PopupMenuButton<String>(
-                            initialValue: _selectedGroup,
-                            onSelected: (value) {
-                              setState(() {
-                                _selectedGroup = value;
-                              });
-                            },
-                            itemBuilder: (context) => groups
-                                .map((g) => PopupMenuItem(value: g, child: Text(g)))
-                                .toList(),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(_selectedGroup, style: TextStyle(color: Colors.grey.shade700)),
-                                const SizedBox(width: 6),
-                                Icon(Icons.keyboard_arrow_down, size: 18, color: Colors.grey.shade600),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                      ],
-                    ),
+                    position: _headerAnimation.headerSlide,
+                    child: _buildHeader(),
                   ),
                 ),
-                // Forzar Expanded y asegurar que la lista ocupa todo el espacio disponible
+                // Account list
                 Expanded(
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      final screenW = MediaQuery.of(context).size.width;
-                      if (screenW > 1400) {
-                        return Center(
-                          child: ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 1400),
-                            child: SizedBox.expand(
-                              child: _AccountList(
-                                selectedGroup: _groupKey(_selectedGroup),
-                                searchQuery: _searchQuery,
-                                settings: widget.settings,
-                                items: _currentItems,
-                                onRefresh: _onRefreshFromPull,
-                                scrollController: _listScrollController,
-                              ),
-                            ),
-                          ),
-                        );
-                      }
-                      return SizedBox.expand(
-                        child: _AccountList(
-                          selectedGroup: _groupKey(_selectedGroup),
-                          searchQuery: _searchQuery,
-                          settings: widget.settings,
-                          items: _currentItems,
-                          onRefresh: _onRefreshFromPull,
-                          scrollController: _listScrollController,
-                        ),
-                      );
-                    },
-                  ),
+                  child: _buildAccountList(),
                 ),
-                _BottomBar(
-                  settings: widget.settings,
-                  servers: _servers,
-                  selectedServerId: _selectedServerId,
-                  selectedAccountIndex: _selectedAccountIndex,
-                  onOpenSelector: _openServerAccountSelector,
-                  serverReachable: _serverReachable,
-                  onOpenAccounts: () async {
-                    if (widget.settings.storage != null) {
-                      await Navigator.of(context).push(MaterialPageRoute(builder: (c) => AccountsScreen(storage: widget.settings.storage!)));
-                      // After returning from AccountsScreen, reload servers from storage
-                      await _loadServers();
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Storage not available')));
-                    }
-                  },
-                  onNewAccount: (acct) {
-                    // Add new unsynced account to the currently selected server in memory
-                    if (_selectedServerId != null) {
-                      final idx = _servers.indexWhere((s) => s.id == _selectedServerId);
-                      if (idx != -1) {
-                        final srv = _servers[idx];
-                        srv.accounts.add(acct);
-                        // also update _currentItems and UI
-                        setState(() {
-                          _currentItems = srv.accounts;
-                          _selectedGroup = 'All (${_currentItems.length})';
-                        });
-
-                        // Best-effort persist to storage in background.
-                        final storage = widget.settings.storage;
-                        if (storage != null) {
-                          Future.microtask(() async {
-                            try {
-                              if (storage.isUnlocked) {
-                                await storage.box.put('servers', _servers.map((s) => s.toMap()).toList());
-                              }
-                            } on StateError catch (_) {
-                              // ignore when storage is locked
-                            } catch (e) {
-                              developer.log('HomePage: failed to persist servers after new account: $e', name: 'HomePage');
-                            }
-                          });
-                        }
-                      }
-                    } else {
-                      // If no server selected, append to in-memory list only
-                      setState(() {
-                        _currentItems.add(acct);
-                        _selectedGroup = 'All (${_currentItems.length})';
-                      });
-
-                      // Attempt to persist as well (will write current _servers list)
-                      final storage = widget.settings.storage;
-                      if (storage != null) {
-                        Future.microtask(() async {
-                          try {
-                            if (storage.isUnlocked) {
-                              await storage.box.put('servers', _servers.map((s) => s.toMap()).toList());
-                            }
-                          } on StateError catch (_) {
-                            // ignore when storage is locked
-                          } catch (e) {
-                            developer.log('HomePage: failed to persist servers after new account (no selected server): $e', name: 'HomePage');
-                          }
-                        });
-                      }
-                    }
-                  },
-                ),
+                // Bottom bar
+                _buildBottomBar(),
               ],
             ),
-            if (_isSyncing && !_suppressFullScreenSyncIndicator)
-              Positioned.fill(
-                child: Container(
-                  color: const Color.fromRGBO(0, 0, 0, 0.35),
-                  child: Center(
-                    child: Card(
-                      elevation: 4,
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: const [
-                            CircularProgressIndicator(),
-                            SizedBox(height: 12),
-                            Text('Syncing...', style: TextStyle(fontSize: 16)),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
+            // Full screen sync indicator
+            if (_syncManager.isSyncing && !_syncManager.suppressFullScreenSyncIndicator)
+              _buildSyncOverlay(),
           ],
         ),
       ),
     );
   }
 
-  
-}
-
-class _SearchBar extends StatelessWidget {
-  final TextEditingController? controller;
-  final FocusNode? focusNode;
-  final ValueChanged<String>? onChanged;
-
-  const _SearchBar({this.controller, this.focusNode, this.onChanged});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 48,
-      decoration: BoxDecoration(
-        color: Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(24),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      child: Row(
-        children: [
-          const Icon(Icons.search, color: Colors.grey),
-          const SizedBox(width: 8),
-          Expanded(
-            child: ValueListenableBuilder<TextEditingValue>(
-              valueListenable: controller ?? TextEditingController(),
-              builder: (context, value, _) {
-                final hasText = value.text.isNotEmpty;
-                return TextField(
-                  controller: controller,
-                  focusNode: focusNode,
-                  onChanged: onChanged,
-                  textAlignVertical: TextAlignVertical.center,
-                  decoration: InputDecoration(
-                    hintText: 'Search',
-                    border: InputBorder.none,
-                    isDense: true,
-                    suffixIcon: hasText
-                        ? IconButton(
-                            icon: const Icon(Icons.clear, size: 18),
-                            onPressed: () {
-                              controller?.clear();
-                              onChanged?.call('');
-                              // keep focus after clearing
-                              focusNode?.requestFocus();
-                            },
-                          )
-                        : null,
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _AccountList extends StatelessWidget {
-  final String selectedGroup;
-  final String searchQuery;
-  final SettingsService settings;
-  final List<AccountEntry> items;
-  final Future<void> Function()? onRefresh;
-  final ScrollController? scrollController;
-
-  const _AccountList({required this.selectedGroup, required this.searchQuery, required this.settings, required this.items, this.onRefresh, this.scrollController});
-
-  @override
-  Widget build(BuildContext context) {
-    // Helper refresh wrapper that uses provided onRefresh when available.
-    Future<void> handleRefresh() async {
-      if (onRefresh != null) {
-        await onRefresh!();
-      }
-    }
-
-    // If no accounts/items available, return informative message but keep pull-to-refresh
-    if (items.isEmpty) {
-      // Safe check for no servers: avoid null lints
-      final storage = settings.storage;
-      bool noServers = false;
-      if (storage != null && storage.isUnlocked) {
-        final raw = storage.box.get('servers');
-        noServers = raw == null || (raw as List).isEmpty;
-      } else {
-        noServers = true; // Assume no servers if storage locked/unavailable
-      }
-      return RefreshIndicator(
-        onRefresh: handleRefresh,
-        child: ListView(
-          controller: scrollController,
-          physics: const AlwaysScrollableScrollPhysics(),
-          children: [
-            const SizedBox(height: 120),
-            Center(
-              child: Text(
-                noServers
-                    ? 'No servers configured. Configure a server in settings to get started.'
-                    : 'No accounts registered',
-                style: const TextStyle(color: Colors.grey, fontSize: 16),
-                textAlign: TextAlign.center,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    final base = selectedGroup == 'All' || selectedGroup.isEmpty
-      ? items
-      : items.where((i) => i.group == selectedGroup).toList();
-
-    final query = searchQuery.toLowerCase();
-    final filtered = query.isEmpty
-      ? base
-      : base.where((i) {
-        final s = i.service.toLowerCase();
-        final a = i.account.toLowerCase();
-        return s.contains(query) || a.contains(query);
-      }).toList();
-
-    // No results after filtering — still allow pull-to-refresh
-    if (filtered.isEmpty) {
-      return RefreshIndicator(
-        onRefresh: handleRefresh,
-        child: ListView(
-          controller: scrollController,
-          physics: const AlwaysScrollableScrollPhysics(),
-          children: const [
-            SizedBox(height: 120),
-            Center(child: Text('No results', style: TextStyle(color: Colors.grey))),
-          ],
-        ),
-      );
-    }
-
-    final width = MediaQuery.of(context).size.width;
-    int columns;
-    if (width > 1200) {
-      columns = 3;
-    } else if (width > 800) {
-      columns = 2;
-    } else {
-      columns = 1;
-    }
-
-    if (columns == 1) {
-      return RefreshIndicator(
-        onRefresh: handleRefresh,
-        child: ListView.separated(
-          controller: scrollController,
-          physics: const AlwaysScrollableScrollPhysics(),
-          itemCount: filtered.length,
-          separatorBuilder: (context, index) => Divider(indent: 20, endIndent: 20,),
-          itemBuilder: (context, index) {
-            try {
-              final item = filtered[index];
-              return AccountTile(item: item, settings: settings);
-            } catch (e) {
-              return ListTile(
-                leading: const Icon(Icons.error, color: Colors.red),
-                title: const Text('Error al mostrar cuenta'),
-                subtitle: Text(e.toString()),
-                isThreeLine: true,
-                dense: true,
-              );
-            }
-          },
-        ),
-      );
-    }
-
-    // Multi-column grid for wide screens (up to 3 columns) — wrap with RefreshIndicator
-    return RefreshIndicator(
-      onRefresh: handleRefresh,
-      child: GridView.builder(
-  controller: scrollController,
-  physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: columns,
-          crossAxisSpacing: 16,
-          mainAxisExtent: 92, // enough to contain the 72px tile plus spacing
-        ),
-        itemCount: filtered.length,
-        itemBuilder: (context, index) {
-          try {
-            final item = filtered[index];
-            return Container(
-              decoration: const BoxDecoration(
-                border: Border(bottom: BorderSide(color: Color(0xFFE0E0E0))),
-              ),
-              child: AccountTile(key: ValueKey(item.id), item: item, settings: settings),
-            );
-          } catch (e) {
-            return Container(
-              decoration: const BoxDecoration(
-                border: Border(bottom: BorderSide(color: Color(0xFFE0E0E0))),
-              ),
-              child: ListTile(
-                leading: const Icon(Icons.error, color: Colors.red),
-                title: const Text('Error al mostrar cuenta'),
-                subtitle: Text(e.toString()),
-                isThreeLine: true,
-                dense: true,
-              ),
-            );
-          }
-        },
-      ),
-    );
-  }
-}
-
-// _IconCircle removed (now unused after refactor)
-
-class _BottomBar extends StatelessWidget {
-  final SettingsService settings;
-  final List<ServerConnection> servers;
-  final String? selectedServerId;
-  final int? selectedAccountIndex;
-  final bool serverReachable;
-  final VoidCallback onOpenSelector;
-  final VoidCallback? onOpenAccounts;
-  final ValueChanged<AccountEntry>? onNewAccount;
-
-  const _BottomBar({required this.settings, required this.servers, required this.selectedServerId, required this.selectedAccountIndex, required this.onOpenSelector, this.onOpenAccounts, this.onNewAccount, required this.serverReachable});
-
-  @override
-  Widget build(BuildContext context) {
-    final bool hasServers = servers.isNotEmpty;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      color: Colors.white,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+  Widget _buildHeader() {
+    final groups = _serverManager.getGroups();
+    
+    return Column(
+      children: [
+        const SizedBox(height: 12),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: Row(
             children: [
-              ElevatedButton.icon(
-                onPressed: hasServers
-                    ? () async {
-                        // Open the new code screen and wait for a created AccountEntry
-                        final srv = selectedServerId != null
-                            ? servers.firstWhere((s) => s.id == selectedServerId, orElse: () => servers.first)
-                            : servers.first;
-                        final acct = (srv.userEmail.isNotEmpty) ? srv.userEmail : 'no email';
-                        final host = Uri.parse(srv.url).host;
-                        final result = await Navigator.of(context).push(MaterialPageRoute(builder: (c) => NewCodeScreen(userEmail: acct, serverHost: host, groups: srv.groups)));
-                        if (result is AccountEntry && onNewAccount != null) {
-                          onNewAccount!(result);
-                        }
-                      }
-                    : null,
-                icon: const Icon(Icons.qr_code, color: Colors.white),
-                style: ElevatedButton.styleFrom(
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                  backgroundColor: hasServers ? const Color(0xFF4F63E6) : Colors.grey,
-                  foregroundColor: Colors.white,
-                ),
-                label: const Text('New', style: TextStyle(color: Colors.white)),
-              ),
-              const SizedBox(width: 12),
-              OutlinedButton(
-                onPressed: hasServers
-                    ? () async {
-                        final messenger = ScaffoldMessenger.of(context);
-
-                        final srv = selectedServerId != null
-                            ? servers.firstWhere((s) => s.id == selectedServerId, orElse: () => servers.first)
-                            : servers.first;
-
-                        final urlStr = srv.url.trim();
-                        final parsed = Uri.tryParse(urlStr);
-                        if (parsed == null || parsed.scheme.isEmpty || !(parsed.scheme == 'http' || parsed.scheme == 'https') || parsed.host.isEmpty) {
-                          messenger.showSnackBar(const SnackBar(
-                            content: Text('Invalid server URL (missing http/https)'),
-                          ));
-                          return;
-                        }
-
-                        // Launch base server url in external browser
-                        final trimmed = urlStr.endsWith('/') ? urlStr.substring(0, urlStr.length - 1) : urlStr;
-                        final uri = Uri.parse(trimmed);
-                        await _launchExternal(uri, messenger);
-                      }
-                    : null,
-                style: OutlinedButton.styleFrom(
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                  foregroundColor: hasServers ? null : Colors.grey,
-                ),
-                child: const Text('2fauth web'),
-              ),
+              if (_serverManager.servers.isNotEmpty)
+                Expanded(
+                  child: HomeSearchBar(
+                    controller: _searchController,
+                    focusNode: _searchFocus,
+                    onChanged: (v) => setState(() => _searchQuery = v),
+                  ),
+                )
+              else
+                const Expanded(child: SizedBox()),
+              const SizedBox(width: 8),
+              _buildSyncButton(),
             ],
           ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Reachability indicator: icon + tooltip + semantics for accessibility
-                  Tooltip(
-                    message: serverReachable ? 'Online' : 'Offline',
-                    child: Semantics(
-                      label: serverReachable ? 'Server reachable' : 'Server unreachable',
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 6.0),
-                        child: Icon(
-                          serverReachable ? Icons.cloud : Icons.cloud_off,
-                          size: 14,
-                          color: serverReachable ? Colors.green : Colors.red,
-                        ),
-                      ),
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: onOpenSelector,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
-                      child: Builder(builder: (ctx) {
-                        // Compute display text from the selected server/account safely
-                        String displayText;
-                        if (servers.isEmpty) {
-                          displayText = 'no-server';
-                        } else {
-                          final srv = selectedServerId != null
-                              ? servers.firstWhere((s) => s.id == selectedServerId, orElse: () => servers.first)
-                              : servers.first;
-              // Show only the server/user email. Do not display the selected
-              // account name in this top/bottom summary to avoid confusion.
-              final acct = (srv.userEmail.isNotEmpty) ? srv.userEmail : 'no email';
-              displayText = '$acct - ${Uri.parse(srv.url).host}';
-                        }
-                        return Text(displayText, style: const TextStyle(color: Colors.grey));
-                      }),
-                    ),
-                  ),
-                  InkWell(
-                    onTap: () {
-                      final s = settings;
-                      final nav = Navigator.of(context);
-                      final messenger = ScaffoldMessenger.of(context);
-                      showModalBottomSheet<String>(
-                          context: context,
-                          backgroundColor: Colors.white,
-                          shape: const RoundedRectangleBorder(
-                            borderRadius: BorderRadius.vertical(top: Radius.circular(12.0)),
-                          ),
-                          builder: (ctx) {
-                            return SafeArea(
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  ListTile(
-                                    title: const Text('settings', textAlign: TextAlign.center),
-                                    onTap: () => Navigator.of(ctx).pop('settings'),
-                                  ),
-                                  ListTile(
-                                    title: const Text('accounts', textAlign: TextAlign.center),
-                                    onTap: () => Navigator.of(ctx).pop('accounts'),
-                                  ),
-                                  const SizedBox(height: 12),
-                                  const Divider(height: 1),
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.end,
-                                      children: [
-                                        IconButton(
-                                          icon: const Icon(Icons.close, color: Colors.grey),
-                                          onPressed: () => Navigator.of(ctx).pop(), // close without selecting
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                        ).then((value) {
-                          if (value != null) {
-                            if (value == 'settings') {
-                              // open full settings screen using captured Navigator
-                              nav.push(MaterialPageRoute(builder: (c) => SettingsScreen(settings: s)));
-                            } else if (value == 'accounts') {
-                              // delegate to the owner (HomePage) to open accounts so it can reload afterwards
-                              if (onOpenAccounts != null) {
-                                onOpenAccounts!();
-                              } else {
-                                // fallback behaviour: try to open directly if storage is available
-                                if (s.storage != null) {
-                                  nav.push(MaterialPageRoute(builder: (c) => AccountsScreen(storage: s.storage!)));
-                                } else {
-                                  messenger.showSnackBar(const SnackBar(content: Text('Storage not available')));
-                                }
-                              }
-                            }
-                          }
-                        });
-                      },
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: const [
-                    Icon(Icons.menu, size: 18, color: Colors.grey),
-                  ],
-                ),
+        ),
+        const SizedBox(height: 8),
+        // Group selector
+        Center(
+          child: _buildGroupSelector(groups),
+        ),
+        const SizedBox(height: 8),
+      ],
+    );
+  }
+
+  Widget _buildSyncButton() {
+    return _syncManager.isSyncing
+        ? const SizedBox(
+            width: 48,
+            height: 48,
+            child: Center(
+              child: SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
               ),
+            ),
+          )
+        : _serverManager.servers.isEmpty
+            ? const SizedBox(
+                width: 48,
+                height: 48,
+                child: Icon(Icons.sync, color: Colors.grey),
+              )
+            : Semantics(
+                label: 'Synchronize',
+                button: true,
+                child: IconButton(
+                  tooltip: 'Synchronize',
+                  icon: const Icon(Icons.sync),
+                  onPressed: _syncManager.manualSyncPressed,
+                ),
+              );
+  }
+
+  Widget _buildGroupSelector(List<String> groups) {
+    return _manageMode.isManageMode && _manageMode.selectedAccountIds.isNotEmpty
+        ? Text(
+            '${_manageMode.selectedAccountIds.length} selected',
+            style: TextStyle(color: Colors.grey.shade700),
+          )
+        : PopupMenuButton<String>(
+            initialValue: _selectedGroup,
+            onSelected: (value) {
+              setState(() {
+                _selectedGroup = value;
+              });
+            },
+            itemBuilder: (context) => groups
+                .map((g) => PopupMenuItem(value: g, child: Text(g)))
+                .toList(),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(_selectedGroup, style: TextStyle(color: Colors.grey.shade700)),
+                const SizedBox(width: 6),
+                Icon(Icons.keyboard_arrow_down, size: 18, color: Colors.grey.shade600),
+              ],
+            ),
+          );
+  }
+
+  Widget _buildAccountList() {
+    final screenW = MediaQuery.of(context).size.width;
+    if (screenW > 1400) {
+      return Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1400),
+          child: SizedBox.expand(
+            child: _buildAccountListContent(),
+          ),
+        ),
+      );
+    }
+    return SizedBox.expand(
+      child: _buildAccountListContent(),
+    );
+  }
+
+  Widget _buildAccountListContent() {
+    return AccountList(
+      selectedGroup: _serverManager.getGroupKey(_selectedGroup),
+      searchQuery: _searchQuery,
+      settings: widget.settings,
+      items: _serverManager.currentItems,
+      onRefresh: _syncManager.onRefreshFromPull,
+      scrollController: _headerAnimation.listScrollController,
+      isManageMode: _manageMode.isManageMode,
+      selectedAccountIds: _manageMode.selectedAccountIds,
+      onToggleAccountSelection: _manageMode.toggleAccountSelection,
+      onEditAccount: _editAccount,
+    );
+  }
+
+  Widget _buildBottomBar() {
+    return BottomBar(
+      settings: widget.settings,
+      servers: _serverManager.servers,
+      selectedServerId: _serverManager.selectedServerId,
+      selectedAccountIndex: _serverManager.selectedAccountIndex,
+      onOpenSelector: _openServerAccountSelector,
+      serverReachable: _serverManager.serverReachable,
+      isManageMode: _manageMode.isManageMode,
+      selectedAccountIds: _manageMode.selectedAccountIds,
+      onToggleManageMode: _manageMode.toggleManageMode,
+      onDeleteSelected: () => _manageMode.deleteSelectedAccounts(context),
+      onOpenAccounts: () async {
+        if (widget.settings.storage != null) {
+          await Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (c) => AccountsScreen(storage: widget.settings.storage!)
+            )
+          );
+          // After returning from AccountsScreen, reload servers from storage
+          await _serverManager.loadServers();
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Storage not available'))
+          );
+        }
+      },
+      onNewAccount: _serverManager.addNewAccount,
+    );
+  }
+
+  Widget _buildSyncOverlay() {
+    return Positioned.fill(
+      child: Container(
+        color: const Color.fromRGBO(0, 0, 0, 0.35),
+        child: Center(
+          child: Card(
+            elevation: 4,
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: const [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 12),
+                  Text('Syncing...', style: TextStyle(fontSize: 16)),
                 ],
               ),
-            ],
+            ),
           ),
-        ],
+        ),
       ),
     );
   }

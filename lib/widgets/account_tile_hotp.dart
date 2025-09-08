@@ -10,8 +10,20 @@ import 'account_tile_utils.dart';
 class AccountTileHOTP extends StatefulWidget {
   final AccountEntry item;
   final SettingsService? settings;
+  final bool isManageMode;
+  final bool isSelected;
+  final VoidCallback? onToggleSelection;
+  final VoidCallback? onEdit;
 
-  const AccountTileHOTP({required this.item, this.settings, super.key});
+  const AccountTileHOTP({
+    required this.item, 
+    this.settings, 
+    this.isManageMode = false,
+    this.isSelected = false,
+    this.onToggleSelection,
+    this.onEdit,
+    super.key,
+  });
 
   @override
   State<AccountTileHOTP> createState() => _AccountTileHOTPState();
@@ -112,6 +124,106 @@ class _AccountTileHOTPState extends State<AccountTileHOTP> {
   Widget build(BuildContext context) {
     final color = AccountTileUtils.getServiceColor(widget.item.service);
 
+    if (widget.isManageMode) {
+      return _buildManageModeUI(context, color);
+    }
+
+    return _buildNormalModeUI(context, color);
+  }
+
+  Widget _buildManageModeUI(BuildContext context, Color color) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final screenWidth = MediaQuery.of(context).size.width;
+        final tile = SizedBox(
+          height: 70, // Mantener la misma altura que en modo normal
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Top row: checkbox + avatar + service name + edit button
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // Checkbox para selección
+                  Padding(
+                    padding: const EdgeInsets.only(left: 8.0),
+                    child: Transform.scale(
+                      scale: 0.8, // Hacer el checkbox más pequeño
+                      child: Checkbox(
+                        value: widget.isSelected,
+                        onChanged: (_) => widget.onToggleSelection?.call(),
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+
+                  // Avatar
+                  AccountTileUi.buildServiceAvatar(widget.item, color),
+                  const SizedBox(width: 8),
+
+                  // Service name - expandible
+                  Expanded(
+                    child: Text(
+                      widget.item.service,
+                      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w400),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+
+                  // Edit button
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8.0),
+                    child: IconButton(
+                      icon: const Icon(Icons.edit, color: Colors.blue, size: 18),
+                      onPressed: widget.onEdit,
+                      padding: const EdgeInsets.all(4),
+                      constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                    ),
+                  ),
+                ],
+              ),
+
+              // Small spacer (reduced in manage mode)
+              //const SizedBox(height: 2),
+
+              // Bottom row: account username aligned under service (use left padding to align with avatar in manage mode)
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 56.0), // align under service like TOTP
+                      child: Text(
+                        widget.item.account,
+                        style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+
+        if (screenWidth > 1200) {
+          return Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 520),
+              child: tile,
+            ),
+          );
+        }
+
+        return tile;
+      },
+    );
+  }
+
+  Widget _buildNormalModeUI(BuildContext context, Color color) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final screenWidth = MediaQuery.of(context).size.width;

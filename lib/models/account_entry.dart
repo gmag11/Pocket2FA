@@ -20,6 +20,7 @@ class AccountEntry {
   // Whether this entry is synchronized with the server. True for accounts
   // received from the API; false for locally created unsynced accounts.
   final bool synchronized;
+  final bool deleted;
 
   AccountEntry({
     required this.id,
@@ -36,6 +37,7 @@ class AccountEntry {
     this.counter,
     this.localIcon,
     this.synchronized = true,
+    this.deleted = false,
   });
 
   Map<String, dynamic> toMap() => {
@@ -46,6 +48,7 @@ class AccountEntry {
         'secret': seed,
         'group': group,
         'synchronized': synchronized,
+        'deleted': deleted,
         if (groupId != null) 'group_id': groupId,
         if (otpType != null) 'otp_type': otpType,
         if (icon != null) 'icon': icon,
@@ -76,6 +79,7 @@ class AccountEntry {
   // If the server provided the entry, consider it synchronized. If the
   // map explicitly contains a 'synchronized' value, respect it.
   synchronized: m.containsKey('synchronized') ? (m['synchronized'] == true || m['synchronized']?.toString() == 'true') : true,
+  deleted: m.containsKey('deleted') ? (m['deleted'] == true || m['deleted']?.toString() == 'true') : false,
       );
 
   // Legacy conversion removed: UI should use AccountEntry directly and generate OTPs dynamically.
@@ -95,6 +99,7 @@ class AccountEntry {
     int? counter,
     String? localIcon,
     bool? synchronized,
+    bool? deleted,
   }) {
     return AccountEntry(
       id: id ?? this.id,
@@ -111,6 +116,7 @@ class AccountEntry {
       // counter: counter ?? this.counter,
       localIcon: localIcon ?? this.localIcon,
       synchronized: synchronized ?? this.synchronized,
+      deleted: deleted ?? this.deleted,
     );
   }
 }

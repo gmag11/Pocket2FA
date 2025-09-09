@@ -406,4 +406,25 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get unknown => 'Unknown';
+
+  @override
+  String get about => 'About';
+
+  @override
+  String aboutRepo(Object url) {
+    return 'Project repository: $url';
+  }
+
+  @override
+  String about2fauth(Object url) {
+    return '2FAuth project: $url';
+  }
+
+  @override
+  String aboutVersion(Object version) {
+    return 'Version: $version';
+  }
+
+  @override
+  String get aboutClose => 'Close';
 }

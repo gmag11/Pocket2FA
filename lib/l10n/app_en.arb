@@ -525,4 +525,28 @@
     "@unknown": {
         "description": "Fallback label used when a value is not available."
     }
+    ,
+    "about": "About",
+    "@about": {
+        "description": "Label for the About menu or dialog title."
+    },
+    "aboutRepo": "Project repository: {url}",
+    "@aboutRepo": {
+        "description": "Label showing the repository URL.",
+        "placeholders": { "url": {} }
+    },
+    "about2fauth": "2FAuth project: {url}",
+    "@about2fauth": {
+        "description": "Label showing the 2FAuth project URL.",
+        "placeholders": { "url": {} }
+    },
+    "aboutVersion": "Version: {version}",
+    "@aboutVersion": {
+        "description": "Label showing the current application version.",
+        "placeholders": { "version": {} }
+    },
+    "aboutClose": "Close",
+    "@aboutClose": {
+        "description": "Label for closing the About dialog."
+    }
 }

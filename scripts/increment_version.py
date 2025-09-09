@@ -153,6 +153,43 @@ def update_desktop_version(path: str, new_version: str) -> bool:
     return True
 
 
+def update_home_about_version(path: str, new_version: str) -> bool:
+    """If present, update the hardcoded appVersion const in
+    lib/screens/home_screen.dart to new_version.
+
+    Creates a .bak backup before writing. Returns True if file existed and
+    was modified, False if file not present or no match found.
+    """
+    home_path = os.path.join(path, 'lib', 'screens', 'home_screen.dart')
+    if not os.path.exists(home_path):
+        return False
+    text = open(home_path, 'r', encoding='utf-8').read()
+    bak_path = home_path + '.bak'
+    shutil.copyfile(home_path, bak_path)
+
+    # Match patterns like: const appVersion = '0.7.0'; or with double quotes
+    pattern = r"(const\s+appVersion\s*=\s*['\"])([^'\"]+)(['\"]\s*;)"
+    if re.search(pattern, text):
+        new_text = re.sub(pattern, lambda m: m.group(1) + new_version + m.group(3), text, count=1)
+    else:
+        # Fallback: locate line containing appVersion and replace digits between quotes
+        lines = text.splitlines()
+        replaced = False
+        for i, line in enumerate(lines):
+            if 'appVersion' in line and ('"' in line or "'" in line):
+                # replace the first run of digits.digits... inside quotes on that line
+                lines[i] = re.sub(r"(['\"])(\d+(?:\.\d+)*)(['\"])", lambda m: m.group(1) + new_version + m.group(3), line, count=1)
+                replaced = True
+                break
+        if not replaced:
+            return False
+        new_text = '\n'.join(lines)
+    with open(home_path, 'w', encoding='utf-8') as f:
+        f.write(new_text)
+
+    return True
+
+
 def main(argv: List[str]) -> int:
     parser = argparse.ArgumentParser(description="Increment Flutter project version (pubspec + android versionCode)")
     parser.add_argument("--path", "-p", default=".", help="Path to project root (default: current directory)")
@@ -219,6 +256,15 @@ def main(argv: List[str]) -> int:
             print(" - linux/net.gmartin.pocket2fa.desktop: not found, skipping")
     except Exception as e:
         print(f" - Warning: failed to update linux .desktop file: {e}")
+    # Update hardcoded about version in home screen (if present)
+    try:
+        modified_home = update_home_about_version(root, new_version)
+        if modified_home:
+            print(f" - lib/screens/home_screen.dart: appVersion updated to {new_version} (backup at lib/screens/home_screen.dart.bak)")
+        else:
+            print(" - lib/screens/home_screen.dart: no hardcoded appVersion found, skipping")
+    except Exception as e:
+        print(f" - Warning: failed to update home_screen.dart: {e}")
     return 0
 
 

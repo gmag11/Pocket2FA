@@ -841,6 +841,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Unknown'**
   String get unknown;
+
+  /// Label for the About menu or dialog title.
+  ///
+  /// In en, this message translates to:
+  /// **'About'**
+  String get about;
+
+  /// Label showing the repository URL.
+  ///
+  /// In en, this message translates to:
+  /// **'Project repository: {url}'**
+  String aboutRepo(Object url);
+
+  /// Label showing the 2FAuth project URL.
+  ///
+  /// In en, this message translates to:
+  /// **'2FAuth project: {url}'**
+  String about2fauth(Object url);
+
+  /// Label showing the current application version.
+  ///
+  /// In en, this message translates to:
+  /// **'Version: {version}'**
+  String aboutVersion(Object version);
+
+  /// Label for closing the About dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get aboutClose;
 }
 
 class _AppLocalizationsDelegate

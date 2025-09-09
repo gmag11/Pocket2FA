@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../l10n/app_localizations.dart';
 import '../services/settings_service.dart';
 import '../models/account_entry.dart';
+import '../widgets/about_dialog.dart';
 import 'accounts_screen.dart';
 import 'search_bar.dart';
 import 'account_list.dart';
@@ -346,15 +347,46 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 height: 48,
                 child: Icon(Icons.sync, color: Colors.grey),
               )
-            : Semantics(
-                label: l10n.synchronize,
-                button: true,
-                child: IconButton(
-                  tooltip: l10n.synchronize,
-                  icon: const Icon(Icons.sync),
-                  onPressed: _syncManager.manualSyncPressed,
-                ),
+            : Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Semantics(
+                    label: l10n.synchronize,
+                    button: true,
+                    child: IconButton(
+                      tooltip: l10n.synchronize,
+                      icon: const Icon(Icons.sync),
+                      onPressed: _syncManager.manualSyncPressed,
+                    ),
+                  ),
+                  // Popup menu with About entry
+                  PopupMenuButton<String>(
+                    tooltip: l10n.about,
+                    onSelected: (v) async {
+                      if (v == 'about') {
+                        _showAboutDialog();
+                      }
+                    },
+                    itemBuilder: (ctx) => [
+                      PopupMenuItem(value: 'about', child: Text(l10n.about)),
+                    ],
+                    child: const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 6.0),
+                      child: Icon(Icons.more_vert),
+                    ),
+                  ),
+                ],
               );
+  }
+
+  void _showAboutDialog() {
+    // NOTE: appVersion is kept in sync manually with pubspec.yaml's version: field.
+    const appVersion = '0.7.0';
+
+    showDialog<void>(
+      context: context,
+      builder: (c) => AboutDialogContent(appVersion: appVersion),
+    );
   }
 
   Widget _buildGroupSelector(List<String> groups) {

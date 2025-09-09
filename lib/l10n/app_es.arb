@@ -525,4 +525,28 @@
     "@unknown": {
         "description": "Etiqueta por defecto cuando un valor no esté disponible."
     }
+    ,
+    "about": "Acerca de",
+    "@about": {
+        "description": "Etiqueta para el menú Acerca de o título del diálogo."
+    },
+    "aboutRepo": "Repositorio del proyecto: {url}",
+    "@aboutRepo": {
+        "description": "Etiqueta que muestra la URL del repositorio.",
+        "placeholders": { "url": {} }
+    },
+    "about2fauth": "Proyecto 2FAuth: {url}",
+    "@about2fauth": {
+        "description": "Etiqueta que muestra la URL del proyecto 2FAuth.",
+        "placeholders": { "url": {} }
+    },
+    "aboutVersion": "Versión: {version}",
+    "@aboutVersion": {
+        "description": "Etiqueta que muestra la versión actual de la aplicación.",
+        "placeholders": { "version": {} }
+    },
+    "aboutClose": "Cerrar",
+    "@aboutClose": {
+        "description": "Etiqueta para cerrar el diálogo Acerca de."
+    }
 }

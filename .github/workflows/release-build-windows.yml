@@ -1,0 +1,60 @@
+name: Build Windows and Create Installer
+
+on:
+  workflow_dispatch:
+
+jobs:
+  windows:
+    name: Build Windows and create installer
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter (stable)
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.35.1'
+          channel: stable
+
+      - name: Flutter version
+        run: flutter --version
+
+      - name: Fetch Flutter dependencies
+        run: flutter pub get
+
+      - name: Build Windows Release
+        run: flutter build windows --release
+
+      - name: Download Inno Setup installer
+        shell: powershell
+        run: |
+          $url = 'https://jrsoftware.org/download.php/is.exe?site=1'
+          Write-Host "Downloading Inno Setup from $url"
+          Invoke-WebRequest -Uri $url -OutFile is.exe
+
+      - name: Install Inno Setup silently
+        shell: powershell
+        run: |
+          Write-Host 'Attempting silent install of Inno Setup to "C:\Program Files (x86)\Inno Setup 6"'
+          # Try a silent install. This may require elevation; if it fails, see notes in the workflow file.
+          Start-Process -FilePath .\is.exe -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART','/SP-','/DIR="C:\Program Files (x86)\Inno Setup 6"' -Wait -NoNewWindow
+
+      - name: Confirm ISCC exists
+        shell: powershell
+        run: |
+          $iscc = 'C:\Program Files (x86)\Inno Setup 6\ISCC.exe'
+          if (-not (Test-Path $iscc)) {
+            Write-Error "ISCC.exe not found at $iscc"
+            exit 1
+          }
+          Write-Host "Found ISCC at $iscc"
+
+      - name: Build installer (PowerShell script)
+        shell: powershell
+        run: |
+          Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+          .\scripts\build_and_package.ps1
+
+      # For testing convenience you can optionally upload the generated installer as an artifact,
+      # but per request we do not push it to a GitHub release automatically.

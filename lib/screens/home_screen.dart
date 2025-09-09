@@ -37,6 +37,7 @@ class _HomePageState extends State<HomePage>
   late final HomeHeaderAnimation _headerAnimation;
   Timer? _autoSyncTimer;
   bool _initialSyncDone = false;
+  bool _wasInManageMode = false;
 
   // Convenience getter for localized strings
   AppLocalizations get l10n => AppLocalizations.of(context)!;
@@ -88,9 +89,25 @@ class _HomePageState extends State<HomePage>
 
   void _onManageModeChanged() {
     if (mounted) {
+      final was = _wasInManageMode;
       setState(() {});
       // When entering/exiting manage mode, (re)configure auto-sync
       _setupAutoSync();
+      // If we just exited manage mode (was true, now false), trigger a forced sync
+      if (was && !_manageMode.isManageMode) {
+        developer.log('HomePage: exited manage mode - performing forced sync', name: 'HomePage');
+        if (_serverManager.servers.isNotEmpty) {
+          _syncManager.forceSyncCurrentServer().catchError((e) {
+            developer.log('HomePage: forced sync after manage exit failed: $e', name: 'HomePage');
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(l10n.cannotSync)),
+              );
+            }
+          });
+        }
+      }
+      _wasInManageMode = _manageMode.isManageMode;
     }
   }
 
@@ -126,16 +143,15 @@ class _HomePageState extends State<HomePage>
     developer.log('HomePage: starting autoSync timer interval=${interval.inMinutes}min', name: 'HomePage');
     // Start periodic timer
     _autoSyncTimer = Timer.periodic(interval, (_) async {
+      // Respect manage mode at execution time as well
+      if (_manageMode.isManageMode) return;
+      if (_serverManager.servers.isEmpty) return;
+      developer.log('HomePage: autoSync timer fired - attempting forced sync', name: 'HomePage');
       try {
-        // Respect manage mode at execution time as well
-        if (_manageMode.isManageMode) return;
-        if (_serverManager.servers.isNotEmpty) {
-          developer.log('HomePage: autoSync timer fired - attempting performThrottledSync', name: 'HomePage');
-          await _syncManager.performThrottledSync();
-        }
+        await _syncManager.forceSyncCurrentServer();
+        developer.log('HomePage: autoSync forced sync completed', name: 'HomePage');
       } catch (e) {
-        // Swallow errors to avoid noisy background failures; update reachability
-        developer.log('HomePage: autoSync timer performThrottledSync error: $e', name: 'HomePage');
+        developer.log('HomePage: autoSync forced sync error: $e', name: 'HomePage');
         _serverManager.updateServerReachability(false);
       }
     });
@@ -469,6 +485,7 @@ class _HomePageState extends State<HomePage>
               : _syncManager.manualSyncPressed,
                     ),
                   ),
+                  // no countdown displayed
                   // Popup menu with About entry
                   PopupMenuButton<String>(
                     tooltip: l10n.about,
@@ -488,6 +505,8 @@ class _HomePageState extends State<HomePage>
                 ],
               );
   }
+
+  // Countdown helper removed
 
   void _showAboutDialog() {
     // NOTE: appVersion is kept in sync manually with pubspec.yaml's version: field.

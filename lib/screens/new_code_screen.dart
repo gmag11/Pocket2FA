@@ -88,7 +88,7 @@ class NewCodeScreen extends StatelessWidget {
                 }
               },
               icon: const Icon(Icons.edit),
-              label: Text(AppLocalizations.of(context)!.useAdvancedForm),
+              label: Text(AppLocalizations.of(context)!.useAdvancedForm, style: const TextStyle(fontSize: 16)),
             ),
             const SizedBox(height: 12),
             // Space before the cancel button to separate it from the alternate methods
@@ -96,7 +96,7 @@ class NewCodeScreen extends StatelessWidget {
             ElevatedButton.icon(
               onPressed: () => Navigator.of(context).pop(),
               icon: const Icon(Icons.arrow_back),
-              label: Text(AppLocalizations.of(context)!.back),
+              label: Text(AppLocalizations.of(context)!.back, style: const TextStyle(fontSize: 16)),
             ),
             const SizedBox(height: 12),
             // Push the user/server line to the bottom

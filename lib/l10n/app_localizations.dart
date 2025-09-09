@@ -6,6 +6,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/intl.dart' as intl;
 
 import 'app_localizations_en.dart';
+import 'app_localizations_es.dart';
 
 // ignore_for_file: type=lint
 
@@ -92,7 +93,10 @@ abstract class AppLocalizations {
   ];
 
   /// A list of this localizations delegate's supported locales.
-  static const List<Locale> supportedLocales = <Locale>[Locale('en')];
+  static const List<Locale> supportedLocales = <Locale>[
+    Locale('en'),
+    Locale('es')
+  ];
 
   /// Application short title shown in the app window and app switcher.
   ///
@@ -130,11 +134,23 @@ abstract class AppLocalizations {
   /// **'Service'**
   String get serviceLabel;
 
+  /// Help text for the service input field.
+  ///
+  /// In en, this message translates to:
+  /// **'Google, Twitter, Apple'**
+  String get serviceHint;
+
   /// Input field label for account identifier when creating a new account.
   ///
   /// In en, this message translates to:
   /// **'Account'**
   String get accountLabel;
+
+  /// Help text for the account input field.
+  ///
+  /// In en, this message translates to:
+  /// **'John Doe'**
+  String get accountHint;
 
   /// Input field label for OTP seed when creating a new account.
   ///
@@ -280,11 +296,23 @@ abstract class AppLocalizations {
   /// **'- No group -'**
   String get noGroupOption;
 
+  /// Help text for the group input field.
+  ///
+  /// In en, this message translates to:
+  /// **'The group to which the account is to be assigned'**
+  String get groupHint;
+
   /// Heading for OTP type picker.
   ///
   /// In en, this message translates to:
   /// **'Choose the type of OTP to create'**
   String get chooseOtpType;
+
+  /// Help text for the OTP type selection.
+  ///
+  /// In en, this message translates to:
+  /// **'Time-based OTP or HMAC-based OTP or Steam OTP'**
+  String get otpTypeHint;
 
   /// Label for the secret input field.
   ///
@@ -322,6 +350,12 @@ abstract class AppLocalizations {
   /// **'Account is required'**
   String get accountRequired;
 
+  /// Help text for the secret input field.
+  ///
+  /// In en, this message translates to:
+  /// **'The key used to generate the security codes'**
+  String get secretHint;
+
   /// Label for advanced options section.
   ///
   /// In en, this message translates to:
@@ -331,7 +365,7 @@ abstract class AppLocalizations {
   /// Help text for advanced options.
   ///
   /// In en, this message translates to:
-  /// **'You can leave the following options blank if you don\'t know how to set them.\nThe most commonly used values will be applied.'**
+  /// **'You can leave default values in next options if you don\'t know how to set them. They are the most commonly used values.'**
   String get optionsHint;
 
   /// Label for digits selector.
@@ -796,7 +830,7 @@ class _AppLocalizationsDelegate
 
   @override
   bool isSupported(Locale locale) =>
-      <String>['en'].contains(locale.languageCode);
+      <String>['en', 'es'].contains(locale.languageCode);
 
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
@@ -807,6 +841,8 @@ AppLocalizations lookupAppLocalizations(Locale locale) {
   switch (locale.languageCode) {
     case 'en':
       return AppLocalizationsEn();
+    case 'es':
+      return AppLocalizationsEs();
   }
 
   throw FlutterError(

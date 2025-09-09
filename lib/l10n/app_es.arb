@@ -1,0 +1,498 @@
+{
+    "@@locale": "es",
+    "appTitle": "Pocket2FA",
+    "@appTitle": {
+        "description": "Título corto de la aplicación mostrado en la ventana y selector de apps."
+    },
+    "homeTitle": "Inicio",
+    "@homeTitle": {
+        "description": "Título de la pantalla Inicio."
+    },
+    "settingsTitle": "Ajustes",
+    "@settingsTitle": {
+        "description": "Título de la pantalla de ajustes y etiquetas relacionadas."
+    },
+    "addAccount": "Añadir cuenta",
+    "@addAccount": {
+        "description": "Etiqueta para la acción de añadir una nueva cuenta."
+    },
+    "add": "Añadir",
+    "@add": {
+        "description": "Etiqueta genérica de añadir usada en botones."
+    },
+    "serviceLabel": "Servicio",
+    "@serviceLabel": {
+        "description": "Etiqueta del campo servicio al crear una cuenta."
+    },
+    "serviceHint": "Google, Twitter, Apple",
+    "@serviceHint": {
+        "description": "Texto de ayuda para el campo servicio."
+    },
+    "accountLabel": "Cuenta",
+    "@accountLabel": {
+        "description": "Etiqueta del campo cuenta al crear una cuenta."
+    },
+    "accountHint": "John Doe",
+    "@accountHint": {
+        "description": "Texto de ayuda para el campo cuenta."
+    },
+    "seedLabel": "Semilla",
+    "@seedLabel": {
+        "description": "Etiqueta para la semilla OTP al crear una cuenta."
+    },
+    "serverLabel": "Servidor",
+    "@serverLabel": {
+        "description": "Prefijo de etiqueta usado al mostrar el servidor en la barra de la app."
+    },
+    "errorParsingQr": "Error al analizar QR: {error}",
+    "@errorParsingQr": {
+        "description": "Mostrado cuando falla el parseo de un QR.",
+        "placeholders": {
+            "error": {}
+        }
+    },
+    "noQrInImage": "No se encontró un código QR en la imagen",
+    "@noQrInImage": {
+        "description": "Mostrado cuando no se halla un QR en la imagen seleccionada."
+    },
+    "errorScanningImage": "Error al escanear la imagen: {error}",
+    "@errorScanningImage": {
+        "description": "Mostrado cuando falla el escaneo de la imagen.",
+        "placeholders": {
+            "error": {}
+        }
+    },
+    "selectQrImageTitle": "Seleccionar imagen QR",
+    "@selectQrImageTitle": {
+        "description": "Título para el selector de imágenes con QR."
+    },
+    "selectImageFromGallery": "Selecciona una imagen de la galería que contenga un código QR",
+    "@selectImageFromGallery": {
+        "description": "Texto de ayuda para pedir al usuario que elija una imagen con QR."
+    },
+    "selectImageButton": "Seleccionar imagen",
+    "@selectImageButton": {
+        "description": "Etiqueta del botón para elegir una imagen."
+    },
+    "scanningFromImage": "Escaneando QR desde imagen...",
+    "@scanningFromImage": {
+        "description": "Etiqueta de progreso mostrada mientras se escanea una imagen."
+    },
+    "back": "Atrás",
+    "@back": {
+        "description": "Etiqueta genérica de volver/atrás."
+    },
+    "createNewCodeTitle": "Crear nuevo código",
+    "@createNewCodeTitle": {
+        "description": "Título de la pantalla Crear nuevo código."
+    },
+    "chooseHowToCreate": "Elige cómo crear un nuevo código:",
+    "@chooseHowToCreate": {
+        "description": "Instrucción para elegir el método de creación."
+    },
+    "alternateMethods": "Métodos alternativos",
+    "@alternateMethods": {
+        "description": "Etiqueta para la sección de métodos alternativos."
+    },
+    "useAdvancedForm": "Usar el formulario avanzado",
+    "@useAdvancedForm": {
+        "description": "Etiqueta para abrir el formulario avanzado."
+    },
+    "urlRequired": "URL requerida",
+    "@urlRequired": {
+        "description": "Mensaje de validación cuando falta la URL en el diálogo del servidor."
+    },
+    "apiKeyLabel": "Clave API",
+    "@apiKeyLabel": {
+        "description": "Etiqueta para la clave API."
+    },
+    "nameLabel": "Nombre",
+    "@nameLabel": {
+        "description": "Etiqueta para el nombre en el diálogo del servidor."
+    },
+    "urlLabel": "URL",
+    "@urlLabel": {
+        "description": "Etiqueta para la URL en el diálogo del servidor."
+    },
+    "save": "Guardar",
+    "@save": {
+        "description": "Etiqueta genérica de guardar."
+    },
+    "totpLabel": "TOTP",
+    "@totpLabel": {
+        "description": "Etiqueta para la opción de OTP basada en tiempo."
+    },
+    "hotpLabel": "HOTP",
+    "@hotpLabel": {
+        "description": "Etiqueta para la opción de OTP basada en contador (HOTP)."
+    },
+    "steamLabel": "STEAM",
+    "@steamLabel": {
+        "description": "Etiqueta para el OTP estilo Steam."
+    },
+    "groupLabel": "Grupo",
+    "@groupLabel": {
+        "description": "Etiqueta para el campo grupo en el formulario avanzado."
+    },
+    "noGroupOption": "- Sin grupo -",
+    "@noGroupOption": {
+        "description": "Elemento del desplegable indicando ausencia de grupo."
+    },
+    "groupHint": "El grupo al que se asignará la cuenta",
+    "@groupHint": {
+        "description": "Texto de ayuda para el campo grupo."
+    },
+    "chooseOtpType": "Elige el tipo de OTP a crear",
+    "@chooseOtpType": {
+        "description": "Encabezado para el selector de tipo OTP."
+    },
+    "otpTypeHint": "OTP basada en tiempo, HOTP (contador) o Steam OTP",
+    "@otpTypeHint": {
+        "description": "Texto de ayuda para la selección del tipo de OTP."
+    },
+    "secretLabel": "Secreto",
+    "@secretLabel": {
+        "description": "Etiqueta para el campo secreto."
+    },
+    "secretLockedHint": "El secreto está bloqueado - toca el candado para editar",
+    "@secretLockedHint": {
+        "description": "Sugerencia mostrada cuando el campo secreto está bloqueado en modo edición."
+    },
+    "secretRequired": "El secreto es obligatorio",
+    "@secretRequired": {
+        "description": "Error de validación cuando falta el secreto."
+    },
+    "secretBase32Error": "El secreto debe ser Base32 (letras A-Z en mayúsculas y dígitos 2-7)",
+    "@secretBase32Error": {
+        "description": "Error de validación cuando el secreto no es Base32 válido."
+    },
+    "serviceRequired": "El servicio es obligatorio",
+    "@serviceRequired": {
+        "description": "Error de validación cuando falta el servicio."
+    },
+    "accountRequired": "La cuenta es obligatoria",
+    "@accountRequired": {
+        "description": "Error de validación cuando falta la cuenta."
+    },
+    "secretHint": "La clave usada para generar los códigos de seguridad",
+    "@secretHint": {
+        "description": "Texto de ayuda para el campo secreto."
+    },
+    "optionsLabel": "Opciones",
+    "@optionsLabel": {
+        "description": "Etiqueta para la sección de opciones avanzadas."
+    },
+    "optionsHint": "Puedes dejar lso valores predeterminados en estas opciones si no sabes cómo configurarlas. Son los valores más utilizados.",
+    "@optionsHint": {
+        "description": "Texto de ayuda para las opciones avanzadas."
+    },
+    "digitsLabel": "Dígitos",
+    "@digitsLabel": {
+        "description": "Etiqueta para el selector de dígitos."
+    },
+    "digitsHint": "Número de dígitos de los códigos de seguridad generados",
+    "@digitsHint": {
+        "description": "Texto de ayuda para el selector de dígitos."
+    },
+    "algorithmLabel": "Algoritmo",
+    "@algorithmLabel": {
+        "description": "Etiqueta para el selector de algoritmo."
+    },
+    "algorithmHint": "Algoritmo usado para proteger los códigos de seguridad",
+    "@algorithmHint": {
+        "description": "Texto de ayuda para el selector de algoritmo."
+    },
+    "periodLabel": "Periodo",
+    "@periodLabel": {
+        "description": "Etiqueta para el campo periodo."
+    },
+    "periodDefaultHint": "Por defecto es 30",
+    "@periodDefaultHint": {
+        "description": "Sugerencia mostrando el valor por defecto del periodo."
+    },
+    "periodHint": "Periodo de validez de los códigos de seguridad en segundos",
+    "@periodHint": {
+        "description": "Texto de ayuda para el campo periodo."
+    },
+    "counterLabel": "Contador",
+    "@counterLabel": {
+        "description": "Etiqueta para el campo contador (HOTP)."
+    },
+    "counterDefaultHint": "Por defecto es 0",
+    "@counterDefaultHint": {
+        "description": "Sugerencia mostrando el valor por defecto del contador."
+    },
+    "counterHint": "Valor inicial del contador",
+    "@counterHint": {
+        "description": "Texto de ayuda para el campo contador."
+    },
+    "update": "Actualizar",
+    "@update": {
+        "description": "Etiqueta para la acción de actualizar en el formulario avanzado."
+    },
+    "create": "Crear",
+    "@create": {
+        "description": "Etiqueta para la acción crear en el formulario avanzado."
+    },
+    "remove": "Eliminar",
+    "@remove": {
+        "description": "Etiqueta genérica de eliminar/usar en botones o menús."
+    },
+    "confirm": "Confirmar",
+    "@confirm": {
+        "description": "Etiqueta genérica de confirmar usada en diálogos."
+    },
+    "cancel": "Cancelar",
+    "@cancel": {
+        "description": "Etiqueta genérica de cancelar."
+    },
+    "noAccounts": "No se encontraron cuentas",
+    "@noAccounts": {
+        "description": "Mensaje de estado vacío cuando no hay cuentas."
+    },
+    "scanQRCode": "Escanear código QR",
+    "@scanQRCode": {
+        "description": "Etiqueta o título para la UI de escaneo QR."
+    },
+    "copy": "Copiar",
+    "@copy": {
+        "description": "Etiqueta para copiar contenido al portapapeles."
+    },
+    "copied": "Copiado al portapapeles",
+    "@copied": {
+        "description": "Mensaje de confirmación tras copiar al portapapeles."
+    },
+    "accountUpdated": "Cuenta actualizada correctamente",
+    "@accountUpdated": {
+        "description": "Snackbar mostrado cuando una cuenta fue editada y guardada."
+    },
+    "cannotSync": "No se puede sincronizar: sin conexión o servidor inalcanzable",
+    "@cannotSync": {
+        "description": "Error mostrado cuando falla la sincronización por red o servidor."
+    },
+    "serversTitle": "Servidores",
+    "@serversTitle": {
+        "description": "Título del selector de servidores en la pantalla Inicio."
+    },
+    "synchronize": "Sincronizar",
+    "@synchronize": {
+        "description": "Tooltip y etiqueta semántica para el botón de sincronizar."
+    },
+    "selectedCount": "{count} seleccionados",
+    "@selectedCount": {
+        "description": "Texto que muestra el número de cuentas seleccionadas.",
+        "placeholders": {
+            "count": {}
+        }
+    },
+    "deleteAccountsTitle": "Eliminar cuentas",
+    "@deleteAccountsTitle": {
+        "description": "Título del diálogo de confirmación al eliminar múltiples cuentas."
+    },
+    "deleteAccountsConfirm": "¿Seguro que quieres eliminar {count} cuenta(s) seleccionada(s)?",
+    "@deleteAccountsConfirm": {
+        "description": "Confirmación antes de eliminar cuentas.",
+        "placeholders": {
+            "count": {}
+        }
+    },
+    "delete": "Eliminar",
+    "@delete": {
+        "description": "Etiqueta para la acción eliminar en diálogos."
+    },
+    "noServerSelected": "No hay servidor seleccionado",
+    "@noServerSelected": {
+        "description": "Mostrado cuando se requiere un servidor pero no hay ninguno seleccionado."
+    },
+    "accountsDeleted": "Cuentas eliminadas",
+    "@accountsDeleted": {
+        "description": "Snackbar que confirma que las cuentas fueron eliminadas."
+    },
+    "storageNotAvailable": "Almacenamiento no disponible",
+    "@storageNotAvailable": {
+        "description": "Error mostrado al intentar acceder al almacenamiento pero no hay ninguno configurado."
+    },
+    "syncing": "Sincronizando...",
+    "@syncing": {
+        "description": "Etiqueta corta mostrada durante una sincronización a pantalla completa."
+    },
+    "couldNotOpenUrl": "No se pudo abrir la URL",
+    "@couldNotOpenUrl": {
+        "description": "Error mostrado cuando no se puede abrir una URL externa; se añade la excepción."
+    },
+    "done": "Listo",
+    "@done": {
+        "description": "Etiqueta para terminar una edición o salir del modo de gestión."
+    },
+    "newLabel": "Nuevo",
+    "@newLabel": {
+        "description": "Etiqueta para el botón que añade una nueva cuenta."
+    },
+    "manage": "Editar",
+    "@manage": {
+        "description": "Etiqueta para entrar en modo de gestión de elementos."
+    },
+    "online": "En línea",
+    "@online": {
+        "description": "Etiqueta corta indicando que el servidor es accesible."
+    },
+    "offline": "Sin conexión",
+    "@offline": {
+        "description": "Etiqueta corta indicando que el servidor no es accesible."
+    },
+    "serverReachable": "Servidor accesible",
+    "@serverReachable": {
+        "description": "Etiqueta de accesibilidad cuando el servidor es accesible."
+    },
+    "serverUnreachable": "Servidor inaccesible",
+    "@serverUnreachable": {
+        "description": "Etiqueta de accesibilidad cuando el servidor no es accesible."
+    },
+    "noServer": "sin servidor",
+    "@noServer": {
+        "description": "Texto marcador cuando no hay servidor configurado."
+    },
+    "noEmail": "sin correo",
+    "@noEmail": {
+        "description": "Marcador usado cuando el servidor no tiene correo configurado."
+    },
+    "settingsLabel": "Ajustes",
+    "@settingsLabel": {
+        "description": "Etiqueta del menú para abrir ajustes."
+    },
+    "accountsLabel": "Cuentas",
+    "@accountsLabel": {
+        "description": "Etiqueta del menú para abrir la lista de cuentas."
+    },
+    "noCodeToCopy": "No hay código para copiar",
+    "@noCodeToCopy": {
+        "description": "Mostrado cuando se intenta copiar pero no hay código disponible."
+    },
+    "errorCopyingToClipboard": "Error al copiar al portapapeles",
+    "@errorCopyingToClipboard": {
+        "description": "Mostrado cuando falla la copia al portapapeles."
+    },
+    "generate": "Generar",
+    "@generate": {
+        "description": "Etiqueta para el botón de generación HOTP."
+    },
+    "hotpCounter": "contador {count}",
+    "@hotpCounter": {
+        "description": "Etiqueta mostrando el valor del contador HOTP.",
+        "placeholders": {
+            "count": {}
+        }
+    },
+    "qrScannerError": "Error",
+    "@qrScannerError": {
+        "description": "Prefijo usado cuando se muestran errores del escáner QR en un snackbar."
+    },
+    "positionQr": "Posiciona el código QR en el marco",
+    "@positionQr": {
+        "description": "Instrucción mostrada sobre la vista de cámara para escanear."
+    },
+    "addServerTitle": "Añadir servidor",
+    "@addServerTitle": {
+        "description": "Título del diálogo para añadir una nueva conexión de servidor."
+    },
+    "serverSaved": "Conexión con el servidor guardada y validada",
+    "@serverSaved": {
+        "description": "Confirmación tras guardar un nuevo servidor."
+    },
+    "editServerTitle": "Editar servidor",
+    "@editServerTitle": {
+        "description": "Título del diálogo para editar un servidor existente."
+    },
+    "serverUpdated": "Servidor actualizado y validado",
+    "@serverUpdated": {
+        "description": "Confirmación tras editar un servidor."
+    },
+    "accountsTitle": "Cuentas / Servidores",
+    "@accountsTitle": {
+        "description": "Título para la pantalla de cuentas/servidores."
+    },
+    "localDataProtected": "Los datos locales están protegidos",
+    "@localDataProtected": {
+        "description": "Encabezado mostrado cuando el almacenamiento está bloqueado."
+    },
+    "authenticateToUnlock": "Autentícate con biometría para desbloquear tus datos locales.",
+    "@authenticateToUnlock": {
+        "description": "Instrucción para autenticar cuando el almacenamiento está protegido."
+    },
+    "authenticationFailed": "Autenticación fallida",
+    "@authenticationFailed": {
+        "description": "Mostrado cuando la autenticación biométrica falla."
+    },
+    "unlock": "Desbloquear",
+    "@unlock": {
+        "description": "Etiqueta para el botón que intenta desbloquear el almacenamiento."
+    },
+    "codeFormatting": "Formato de código",
+    "@codeFormatting": {
+        "description": "Etiqueta para la sección de formato de código en ajustes."
+    },
+    "byTrio": "por tríos",
+    "@byTrio": {
+        "description": "Etiqueta que describe un agrupado en 3 dígitos."
+    },
+    "byPair": "por pares",
+    "@byPair": {
+        "description": "Etiqueta que describe un agrupado en 2 dígitos."
+    },
+    "biometricEnabled": "Biometría activada",
+    "@biometricEnabled": {
+        "description": "Snackbar mostrado cuando la biometría se activa."
+    },
+    "biometricDisabled": "Biometría desactivada",
+    "@biometricDisabled": {
+        "description": "Snackbar mostrado cuando la biometría se desactiva."
+    },
+    "operationFailed": "La operación falló",
+    "@operationFailed": {
+        "description": "Mensaje genérico de fallo en operaciones de ajustes."
+    },
+    "biometricsNotAvailable": "Biometría no disponible en este dispositivo",
+    "@biometricsNotAvailable": {
+        "description": "Mostrado cuando no hay hardware biométrico o enrolamiento."
+    },
+    "biometricProtection": "Protección biométrica",
+    "@biometricProtection": {
+        "description": "Etiqueta para la protección biométrica."
+    },
+    "hideOtpsOnHome": "Ocultar OTPs en la pantalla de inicio",
+    "@hideOtpsOnHome": {
+        "description": "Etiqueta para ocultar códigos OTP en la pantalla principal."
+    },
+    "longPressReveal": "Mantén pulsado un OTP en la pantalla de inicio para revelarlo durante 10 segundos.",
+    "@longPressReveal": {
+        "description": "Texto de ayuda explicando la pulsación larga para revelar OTPs."
+    },
+    "biometricAuthFailed": "La autenticación biométrica falló o se canceló. Por favor reintenta para desbloquear tus datos locales.",
+    "@biometricAuthFailed": {
+        "description": "Mostrado cuando falla el desbloqueo biométrico y el usuario debe reintentar."
+    },
+    "retry": "Reintentar",
+    "@retry": {
+        "description": "Etiqueta para reintentar la autenticación biométrica."
+    },
+    "search": "Buscar",
+    "@search": {
+        "description": "Texto de marcador para campos de búsqueda."
+    },
+    "noServersConfigured": "No hay servidores configurados. Configura un servidor en ajustes para empezar.",
+    "@noServersConfigured": {
+        "description": "Mensaje mostrado cuando no hay servidores en almacenamiento."
+    },
+    "noResults": "Sin resultados",
+    "@noResults": {
+        "description": "Mostrado cuando una búsqueda no devuelve resultados."
+    },
+    "errorDisplayingAccount": "Error al mostrar la cuenta",
+    "@errorDisplayingAccount": {
+        "description": "Mostrado cuando no se puede renderizar una cuenta debido a un error."
+    },
+    "pendingUpload": "No sincronizado (pendiente de subida)",
+    "@pendingUpload": {
+        "description": "Tooltip que explica que la cuenta no se ha subido al servidor aún."
+    }
+}

@@ -27,7 +27,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get serviceLabel => 'Service';
 
   @override
+  String get serviceHint => 'Google, Twitter, Apple';
+
+  @override
   String get accountLabel => 'Account';
+
+  @override
+  String get accountHint => 'John Doe';
 
   @override
   String get seedLabel => 'Seed';
@@ -107,7 +113,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noGroupOption => '- No group -';
 
   @override
+  String get groupHint => 'The group to which the account is to be assigned';
+
+  @override
   String get chooseOtpType => 'Choose the type of OTP to create';
+
+  @override
+  String get otpTypeHint => 'Time-based OTP or HMAC-based OTP or Steam OTP';
 
   @override
   String get secretLabel => 'Secret';
@@ -129,11 +141,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accountRequired => 'Account is required';
 
   @override
+  String get secretHint => 'The key used to generate the security codes';
+
+  @override
   String get optionsLabel => 'Options';
 
   @override
   String get optionsHint =>
-      'You can leave the following options blank if you don\'t know how to set them.\nThe most commonly used values will be applied.';
+      'You can leave default values in next options if you don\'t know how to set them. They are the most commonly used values.';
 
   @override
   String get digitsLabel => 'Digits';

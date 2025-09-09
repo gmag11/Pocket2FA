@@ -244,7 +244,7 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
                     TextFormField(
                       controller: _serviceCtrl,
             decoration: InputDecoration(
-              hintText: AppLocalizations.of(context)!.serviceLabel),
+              hintText: AppLocalizations.of(context)!.serviceHint),
             validator: (v) => (v == null || v.trim().isEmpty) ? AppLocalizations.of(context)!.serviceRequired : null,
                     ),
                     const SizedBox(height: 20),
@@ -253,7 +253,7 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
               fontWeight: FontWeight.w600, fontSize: 20)),
                     TextFormField(
                       controller: _accountCtrl,
-            decoration: InputDecoration(hintText: AppLocalizations.of(context)!.accountLabel),
+            decoration: InputDecoration(hintText: AppLocalizations.of(context)!.accountHint),
             validator: (v) => (v == null || v.trim().isEmpty) ? AppLocalizations.of(context)!.accountRequired : null,
                     ),
                     const SizedBox(height: 20),
@@ -275,7 +275,7 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      AppLocalizations.of(context)!.optionsHint,
+                      AppLocalizations.of(context)!.groupHint,
                       style: const TextStyle(fontSize: 12, color: Colors.grey),
                     ),
                     const SizedBox(height: 20),
@@ -284,7 +284,7 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
                             fontWeight: FontWeight.w600, fontSize: 20)),
                     const SizedBox(height: 4),
                     Text(
-                      AppLocalizations.of(context)!.optionsHint,
+                      AppLocalizations.of(context)!.otpTypeHint,
                       style: const TextStyle(fontSize: 12, color: Colors.grey),
                     ),
                     const SizedBox(height: 4),
@@ -300,7 +300,7 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
                       _buildSecretField(),
                       const SizedBox(height: 4),
                       Text(
-                        AppLocalizations.of(context)!.optionsHint,
+                        AppLocalizations.of(context)!.secretHint,
                         style: const TextStyle(fontSize: 12, color: Colors.grey),
                       ),
                       const SizedBox(height: 16),

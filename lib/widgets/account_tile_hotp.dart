@@ -150,7 +150,7 @@ class _AccountTileHOTPState extends State<AccountTileHOTP> {
       builder: (context, constraints) {
         final screenWidth = MediaQuery.of(context).size.width;
         final tile = SizedBox(
-          height: 70, // Mantener la misma altura que en modo normal
+          height: 70, // Keep the same height as in normal mode
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -158,11 +158,11 @@ class _AccountTileHOTPState extends State<AccountTileHOTP> {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // Checkbox para selección
+                  // Checkbox for selection
                   Padding(
                     padding: const EdgeInsets.only(left: 8.0),
                     child: Transform.scale(
-                      scale: 0.8, // Hacer el checkbox más pequeño
+                      scale: 0.8, // Make the checkbox smaller
                       child: Checkbox(
                         value: widget.isSelected,
                         onChanged: (_) => widget.onToggleSelection?.call(),

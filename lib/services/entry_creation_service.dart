@@ -88,16 +88,16 @@ class EntryCreationService {
       final algorithm = params['algorithm']?.toUpperCase() ?? 'SHA1';
       final digits = int.tryParse(params['digits'] ?? '6') ?? 6;
 
-      // Usamos los campos correctos según el tipo
+      // Use the correct fields according to the type
       int? period;
       int? counter;
       if (otpType == 'hotp') {
-        // Para HOTP usamos el campo counter
+        // For HOTP we use the counter field
         counter = int.tryParse(params['counter'] ?? '0') ?? 0;
         developer.log('$sourceTag: HOTP counter value: $counter',
             name: sourceTag);
       } else {
-        // Para TOTP usamos el campo period
+        // For TOTP we use the period field
         period = int.tryParse(params['period'] ?? '30') ?? 30;
       }
 
@@ -145,7 +145,7 @@ class EntryCreationService {
     }
 
     try {
-      // Creamos un mapa para la API con los campos correctos según el tipo
+      // Create a map for the API with the correct fields based on the type
       final Map<String, dynamic> payload = {
         'service': entry.service,
         'account': entry.account,
@@ -155,23 +155,23 @@ class EntryCreationService {
         if (entry.algorithm != null) 'algorithm': entry.algorithm,
       };
 
-      // Añadimos period o counter según el tipo
+      // Add period or counter depending on the type
       if (entry.otpType?.toLowerCase() == 'hotp') {
-        // Para HOTP, enviar counter
+        // For HOTP, send counter
         if (entry.counter != null) {
           payload['counter'] = entry.counter;
         } else if (entry.period != null) {
-          // Fallback a usar period como counter si no hay counter (compatibilidad)
+          // Fallback to use period as counter if no counter (compatibility)
           payload['counter'] = entry.period;
         } else {
-          payload['counter'] = 0; // Valor predeterminado
+          payload['counter'] = 0; // Default value
         }
       } else {
-        // Para TOTP, enviar period
+        // For TOTP, send period
         if (entry.period != null) {
           payload['period'] = entry.period;
         } else {
-          payload['period'] = 30; // Valor predeterminado
+          payload['period'] = 30; // Default value
         }
       }
 
@@ -183,8 +183,8 @@ class EntryCreationService {
           name: sourceTag);
       developer.log('$sourceTag: API payload: $payload', name: sourceTag);
 
-      // Llamar directamente a createAccount en lugar de createAccountFromEntry
-      // para evitar que el API siempre incluya period
+      // Call createAccount directly instead of createAccountFromEntry
+      // to avoid the API always including period
       final response = await ApiService.instance.createAccount(payload);
 
       // On success, update with server data
@@ -233,21 +233,20 @@ class EntryCreationService {
     required String otpType,
     required int digits,
     required String algorithm,
-    required int period, // Para TOTP es period, para HOTP puede ser el counter
+    required int period, // For TOTP it's period, for HOTP it may be the counter
     String group = '',
     int? groupId,
   }) {
-    // Asignamos period o counter según el tipo
+    // Assign period or counter according to the type
     int? actualPeriod;
     int? actualCounter;
 
     if (otpType.toUpperCase() == 'HOTP') {
       actualCounter =
-          period >= 0 ? period : 0; // Usamos el parámetro period como counter
+          period >= 0 ? period : 0; // Use the period parameter as counter
     } else {
-      actualPeriod = period >= 1
-          ? period
-          : 30; // Aseguramos que period sea al menos 1 para TOTP
+      actualPeriod =
+          period >= 1 ? period : 30; // Ensure period is at least 1 for TOTP
     }
 
     return AccountEntry(

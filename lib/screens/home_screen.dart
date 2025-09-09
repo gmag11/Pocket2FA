@@ -89,17 +89,17 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             userEmail: selectedServer?.userEmail ?? l10n.unknown,
             serverHost: selectedServer?.url ?? l10n.unknown,
             groups: selectedServer?.groups,
-            existingEntry: account, // Pasar la entrada existente para edición
+            existingEntry: account, // Pass the existing entry for editing
           );
         },
       ),
     );
 
     if (result != null) {
-      // La entrada fue editada, actualizarla en el servidor manager
+  // The entry was edited, update it in the server manager
       await _serverManager.updateAccount(result);
 
-      // Mostrar mensaje de confirmación
+  // Show confirmation message
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(l10n.accountUpdated)),

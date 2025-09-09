@@ -80,7 +80,7 @@ class BottomBar extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               if (isManageMode) ...[
-                // Modo Manage: Mostrar botones Delete y Done
+                // Manage mode: show Delete and Done buttons
                 ElevatedButton(
                   onPressed:
                       selectedAccountIds.isNotEmpty ? onDeleteSelected : null,
@@ -107,7 +107,7 @@ class BottomBar extends StatelessWidget {
                   child: Text(l10n.done),
                 ),
               ] else ...[
-                // Modo Normal: Mostrar botones New y Manage
+                // Normal mode: show New and Manage buttons
                 ElevatedButton.icon(
                   onPressed: hasServers
                       ? () async {
@@ -158,7 +158,7 @@ class BottomBar extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          // Mostrar siempre la información del servidor/cuenta, incluso en modo edición
+          // Always show server/account information, even in edit mode
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [

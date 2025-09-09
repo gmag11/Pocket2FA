@@ -181,7 +181,7 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
         final screenWidth = MediaQuery.of(context).size.width;
         final tile = borderWrap(
           SizedBox(
-            height: 70, // Mantener la misma altura en ambos modos
+            height: 70, // Keep the same height in both modes
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -189,13 +189,13 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    // En modo manage: Checkbox + Avatar, en modo normal: solo Avatar con padding
+                    // In manage mode: Checkbox + Avatar, in normal mode: only Avatar with padding
                     if (widget.isManageMode) ...[
                       borderWrap(
                         Padding(
                           padding: const EdgeInsets.only(left: 8.0),
                           child: Transform.scale(
-                            scale: 0.8, // Hacer el checkbox más pequeño
+                            scale: 0.8, // Make the checkbox smaller
                             child: Checkbox(
                               value: widget.isSelected,
                               onChanged: (_) =>
@@ -238,7 +238,7 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
                       ),
                     ),
 
-                    // En modo manage: Botones de edición, en modo normal: OTP code
+                    // In manage mode: edit buttons, in normal mode: OTP code
                     if (widget.isManageMode)
                       Padding(
                         padding: const EdgeInsets.only(right: 8.0),
@@ -278,10 +278,11 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
                                                 _revealTimerCurrent = Timer(
                                                     const Duration(seconds: 10),
                                                     () {
-                                                  if (mounted)
+                                                  if (mounted) {
                                                     setState(() {
                                                       _revealCurrent = false;
                                                     });
+                                                  }
                                                 });
                                               }
                                             },
@@ -330,7 +331,7 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
                   ],
                 ),
 
-                // En modo normal: espaciado completo, en modo manage: reducido
+                // In normal mode: full spacing, in manage mode: reduced
                 if (!widget.isManageMode) const SizedBox(height: 6),
 
                 // Bottom row: Account user + Next OTP + Progress dots (solo account en modo manage)
@@ -342,7 +343,7 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
                       child: borderWrap(
                         Padding(
                           // add left padding so username is not flush with the tile edge
-                          // En modo manage, agregar más padding para alinear con el checkbox
+                          // In manage mode, add more padding to align with the checkbox
                           padding: EdgeInsets.only(
                               left: widget.isManageMode ? 56.0 : 12.0),
                           child: Text(
@@ -357,7 +358,7 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
                       ),
                     ),
 
-                    // Solo mostrar Next OTP y Progress dots en modo normal
+                    // Only show Next OTP and Progress dots in normal mode
                     if (!widget.isManageMode) ...[
                       // Next OTP (takes needed space, no clipping, right aligned)
                       borderWrap(
@@ -388,10 +389,11 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
                                           _revealTimerNext?.cancel();
                                           _revealTimerNext = Timer(
                                               const Duration(seconds: 10), () {
-                                            if (mounted)
+                                            if (mounted) {
                                               setState(() {
                                                 _revealNext = false;
                                               });
+                                            }
                                           });
                                         }
                                       },

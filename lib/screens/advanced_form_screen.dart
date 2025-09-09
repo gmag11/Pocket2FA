@@ -11,7 +11,7 @@ class AdvancedFormScreen extends StatefulWidget {
   final String userEmail;
   final String serverHost;
   final List<GroupEntry>? groups;
-  final AccountEntry? existingEntry; // Para edición
+  final AccountEntry? existingEntry; // For editing
 
   const AdvancedFormScreen({
     super.key,
@@ -38,7 +38,7 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
   final _periodCtrl = TextEditingController();
   final _counterCtrl = TextEditingController();
   bool _secretUnlocked =
-      false; // Estado para controlar si el secret está desbloqueado
+      false; // State to control whether the secret is unlocked
   AppLocalizations get l10n => AppLocalizations.of(context)!;
 
   @override
@@ -55,14 +55,14 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
   void initState() {
     super.initState();
 
-    // Si hay una entrada existente, inicializar los campos con sus valores
+    // If an existing entry is present, initialize fields with its values
     if (widget.existingEntry != null) {
       final entry = widget.existingEntry!;
       _serviceCtrl.text = entry.service;
       _accountCtrl.text = entry.account;
       _secretCtrl.text = entry.seed;
 
-      // Configurar el grupo
+      // Configure the group
       if (entry.group.isNotEmpty) {
         _selectedGroup = entry.group;
       }
@@ -74,17 +74,17 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
       _digits = entry.digits ?? 6;
       _algorithm = entry.algorithm?.toLowerCase() ?? 'sha1';
 
-      // Configurar period o counter según el tipo
+      // Configure period or counter according to the type
       if (_otpType == 'HOTP') {
         _counterCtrl.text = (entry.counter ?? 0).toString();
       } else {
         _periodCtrl.text = (entry.period ?? 30).toString();
       }
 
-      // En modo edición, el secret inicia bloqueado
+      // In edit mode, the secret starts locked
       _secretUnlocked = false;
     } else {
-      // En modo creación, el secret siempre está desbloqueado
+      // In create mode, the secret is always unlocked
       _secretUnlocked = true;
     }
   }
@@ -150,8 +150,8 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
       enabled: true,
       readOnly: !canEdit,
       enableInteractiveSelection: canEdit,
-      obscureText:
-          isEditMode && !_secretUnlocked, // Ocultar texto cuando está bloqueado
+    obscureText:
+      isEditMode && !_secretUnlocked, // Hide text when it's locked
       decoration: InputDecoration(
         hintText: canEdit ? '' : l10n.secretLockedHint,
         filled: !canEdit,
@@ -172,7 +172,7 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
                   setState(() {
                     _secretUnlocked = !_secretUnlocked;
                     if (!_secretUnlocked) {
-                      // Al bloquear, limpiar la selección
+                      // When locking, clear the selection
                       _secretCtrl.selection =
                           TextSelection.collapsed(offset: 0);
                     }
@@ -485,7 +485,7 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
                       final ok = _formKey.currentState?.validate() ?? false;
                       if (!ok) return;
 
-                      // Determinar el ID del grupo seleccionado (si hay alguno)
+                      // Determine the selected group ID (if any)
                       int? selectedGroupId;
                       if (_selectedGroup != '- No group -' &&
                           widget.groups != null) {
@@ -500,7 +500,7 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
                       final navigator = Navigator.of(context);
 
                       if (widget.existingEntry != null) {
-                        // EDICIÓN: Actualizar entrada existente
+                        // EDIT: Update existing entry
                         final updatedEntry = widget.existingEntry!.copyWith(
                           service: _serviceCtrl.text.trim(),
                           account: _accountCtrl.text.trim(),
@@ -572,7 +572,7 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
                         // If we reach here, server update did not succeed — return local unsynced entry
                         navigator.pop(updatedEntry);
                       } else {
-                        // CREACIÓN: Crear nueva entrada
+                        // CREATE: Create new entry
                         final entry = EntryCreationService.buildManualEntry(
                           service: _serviceCtrl.text.trim(),
                           account: _accountCtrl.text.trim(),
@@ -594,7 +594,7 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
                             'AdvancedForm: local entry created service=${entry.service} account=${entry.account} id=${entry.id} synchronized=${entry.synchronized}',
                             name: 'AdvancedForm');
 
-                        // Usar nuestro servicio para intentar crear en el servidor
+                        // Use our service to attempt server-side creation
                         developer.log(
                             'AdvancedForm: attempting immediate server create for service=${entry.service} account=${entry.account}',
                             name: 'AdvancedForm');

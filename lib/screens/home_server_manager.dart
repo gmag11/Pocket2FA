@@ -256,7 +256,7 @@ class HomeServerManager extends ChangeNotifier {
     }
   }
 
-  /// Obtiene el servidor actualmente seleccionado
+  // Returns the currently selected server
   ServerConnection? getSelectedServer() {
     if (_selectedServerId != null) {
       final idx = _servers.indexWhere((s) => s.id == _selectedServerId);
@@ -267,7 +267,7 @@ class HomeServerManager extends ChangeNotifier {
     return null;
   }
 
-  /// Actualiza una cuenta existente
+  // Update an existing account
   Future<void> updateAccount(AccountEntry updatedAccount) async {
     if (_selectedServerId != null) {
       final idx = _servers.indexWhere((s) => s.id == _selectedServerId);
@@ -281,7 +281,7 @@ class HomeServerManager extends ChangeNotifier {
           _currentItems = srv.accounts.where((a) => !a.deleted).toList();
           notifyListeners();
 
-          // Persistir cambios
+          // Persist changes
           await persistServersToStorage();
 
           developer.log(

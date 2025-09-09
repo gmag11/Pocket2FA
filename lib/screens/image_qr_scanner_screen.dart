@@ -62,7 +62,7 @@ class _ImageQrScannerScreenState extends State<ImageQrScannerScreen> {
             developer.log('ImageQrScannerScreen: Returning with entry',
                 name: 'ImageQrScannerScreen');
             Navigator.of(context).pop(entry);
-            return; // Importante: salir después de navegar
+            return; // Important: exit after navigating
           }
         }
       } else {
@@ -83,10 +83,11 @@ class _ImageQrScannerScreenState extends State<ImageQrScannerScreen> {
             SnackBar(content: Text(err), backgroundColor: Colors.red));
       }
     } finally {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _isProcessing = false;
         });
+      }
       _isPicking = false;
     }
   }
@@ -142,8 +143,8 @@ class _ImageQrScannerScreenState extends State<ImageQrScannerScreen> {
           name: 'ImageQrScannerScreen');
     }
 
-    // Retornar la entrada local
-    return entry;
+  // Return the local entry
+  return entry;
   }
 
   @override

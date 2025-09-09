@@ -11,7 +11,7 @@ class AccountTile extends StatelessWidget {
   final bool isManageMode;
   final bool isSelected;
   final VoidCallback? onToggleSelection;
-  final VoidCallback? onEdit; // Nuevo callback para edición
+  final VoidCallback? onEdit; // New callback for edit
 
   const AccountTile({
     super.key,
@@ -20,7 +20,7 @@ class AccountTile extends StatelessWidget {
     this.isManageMode = false,
     this.isSelected = false,
     this.onToggleSelection,
-    this.onEdit, // Agregar al constructor
+    this.onEdit, // Add to constructor
   });
 
   @override

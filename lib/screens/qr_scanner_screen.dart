@@ -90,7 +90,7 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
           name: 'QrScannerScreen');
     }
 
-    // Retornar la entrada local
+    // Return the local entry
     return entry;
   }
 
@@ -105,7 +105,7 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
     final qrErrorMsg = l10n.qrScannerError;
 
     try {
-      // Pausa el detector para evitar múltiples detecciones
+      // Pause the detector to avoid multiple detections
       await _controller?.stop();
 
       final barcode = capture.barcodes.first;
@@ -114,7 +114,7 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
             name: 'QrScannerScreen');
         final entry = await _parseAndCreateEntry(barcode.rawValue!);
 
-        // Si la entrada no es nula, regresamos a la pantalla anterior con la entrada
+        // If the entry is not null, return to the previous screen with the entry
         if (entry != null && mounted) {
           developer.log('QrScannerScreen: Returning with entry',
               name: 'QrScannerScreen');
@@ -129,7 +129,7 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
             content: Text('$qrErrorMsg: $e'), backgroundColor: Colors.red));
       }
     } finally {
-      // Aseguramos que _isProcessing se restablezca incluso si hay error
+      // Ensure _isProcessing is reset even if there's an error
       if (mounted) {
         setState(() {
           _isProcessing = false;

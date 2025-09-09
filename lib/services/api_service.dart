@@ -11,7 +11,7 @@ import '../models/account_entry.dart';
 /// - Call `setServer` to configure the server (base URL and Authorization).
 /// - Provides convenient private HTTP helpers: `_get`/`_post`/`_put`/`_delete`.
 ///
-/// Ejemplo de uso:
+/// Example usage:
 ///
 /// ```dart
 /// final api = ApiService.instance;
@@ -165,7 +165,7 @@ class ApiService {
     _dio!.interceptors.add(interceptor);
   }
 
-  /// Permite acceso a la lista de interceptores para mayor control.
+  /// Allows access to the interceptors list for advanced control.
   List<Interceptor> get interceptors {
     _ensureReady();
     return _dio!.interceptors;
@@ -553,7 +553,7 @@ class ApiService {
       'otp_type': entry.otpType ?? 'totp',
       if (entry.digits != null) 'digits': entry.digits,
       if (entry.algorithm != null) 'algorithm': entry.algorithm,
-      // Para HOTP, enviar counter (que almacenamos en period) y para TOTP enviar period
+      // For HOTP, send counter (we store it in period) and for TOTP send period
       if (entry.otpType?.toLowerCase() == 'hotp' && entry.period != null)
         'counter': entry.period
       else if (entry.period != null)
@@ -780,9 +780,9 @@ class ApiService {
         'Unexpected response downloading icon: ${resp.statusCode}');
   }
 
-  /// Get a persistently cached icon file. If the file does not exist locally
-  /// it will be downloaded via `downloadIcon` and saved to the application
-  /// support directory. Returns the bytes read from disk.
+  // Get a persistently cached icon file. If the file does not exist locally
+  // it will be downloaded via `downloadIcon` and saved to the application
+  // support directory. Returns the bytes read from disk.
   // Persistent icon caching moved to `IconCacheService` to keep network and
   // storage responsibilities separated.
 }

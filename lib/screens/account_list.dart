@@ -14,8 +14,7 @@ class AccountList extends StatefulWidget {
   final bool isManageMode;
   final Set<int> selectedAccountIds;
   final ValueChanged<int> onToggleAccountSelection;
-  final ValueChanged<AccountEntry>?
-      onEditAccount; // Nuevo callback para edición
+  final ValueChanged<AccountEntry>? onEditAccount; // New callback for edit
 
   const AccountList({
     required this.selectedGroup,
@@ -27,7 +26,7 @@ class AccountList extends StatefulWidget {
     required this.isManageMode,
     required this.selectedAccountIds,
     required this.onToggleAccountSelection,
-    this.onEditAccount, // Agregar al constructor
+    this.onEditAccount, // Add to constructor
     super.key,
   });
 

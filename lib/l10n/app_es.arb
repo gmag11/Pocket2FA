@@ -583,5 +583,13 @@
                 "example": "30"
             }
         }
+    },
+    "syncEvery": "Sincronizar cada",
+    "@syncEvery": {
+        "description": "Etiqueta 'Sincronizar cada' usada en los ajustes."
+    },
+    "minutesLabel": "minutos",
+    "@minutesLabel": {
+        "description": "Etiqueta corta para la palabra 'minutos'."
     }
 }

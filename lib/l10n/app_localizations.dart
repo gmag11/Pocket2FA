@@ -907,6 +907,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{minutes} minutes'**
   String autoSyncIntervalMinutes(int minutes);
+
+  /// Label for 'Sync every' text in settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync every'**
+  String get syncEvery;
+
+  /// Short label for minutes unit in settings.
+  ///
+  /// In en, this message translates to:
+  /// **'minutes'**
+  String get minutesLabel;
 }
 
 class _AppLocalizationsDelegate

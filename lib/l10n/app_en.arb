@@ -583,5 +583,13 @@
                 "example": "30"
             }
         }
+    },
+    "syncEvery": "Sync every",
+    "@syncEvery": {
+        "description": "Label for 'Sync every' text in settings."
+    },
+    "minutesLabel": "minutes",
+    "@minutesLabel": {
+        "description": "Short label for minutes unit in settings."
     }
 }

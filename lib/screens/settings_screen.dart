@@ -23,7 +23,7 @@ class SettingsScreen extends StatelessWidget {
             padding: const EdgeInsets.all(16.0),
             children: [
               // GENERAL Section
-              _buildSectionHeader('GENERAL'),
+              _buildSectionHeader(l10n.settingsGeneral),
               const SizedBox(height: 12),
               
               // Code formatting setting
@@ -64,7 +64,7 @@ class SettingsScreen extends StatelessWidget {
               const SizedBox(height: 24),
               
               // SECURITY Section
-              _buildSectionHeader('SECURITY'),
+              _buildSectionHeader(l10n.settingsSecurity),
               const SizedBox(height: 12),
               
               // Biometric protection
@@ -119,7 +119,7 @@ class SettingsScreen extends StatelessWidget {
               const SizedBox(height: 24),
               
               // SYNCHRONIZATION Section
-              _buildSectionHeader('SYNCHRONIZATION'),
+              _buildSectionHeader(l10n.settingsSynchronization),
               const SizedBox(height: 12),
               
               // Sync on Home open
@@ -151,11 +151,11 @@ class SettingsScreen extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
                   child: Row(
                     children: [
-                      const Text('Sync every', style: TextStyle(fontSize: 16)),
+                      Text(l10n.syncEvery, style: const TextStyle(fontSize: 16)),
                       const SizedBox(width: 12),
                       _buildIntervalSelector(),
                       const SizedBox(width: 12),
-                      const Text('minutes', style: TextStyle(fontSize: 16)),
+                      Text(l10n.minutesLabel, style: const TextStyle(fontSize: 16)),
                     ],
                   ),
                 ),

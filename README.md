@@ -42,6 +42,8 @@ This project complements the official 2FAuth web application by offering:
 - **Platform Support**: Native support for Android, Windows, and Linux
 - **Biometric Protection**: Optional biometric authentication (fingerprint/face) to protect local data
 - **Privacy Controls**: Option to hide OTP codes on screen for privacy, with long-press to reveal
+- **Synchronization Controls**: Settings section to enable/disable automatic sync, set sync interval, and sync on app open
+- **About Dialog**: View app version and project links from the new About dialog
 - **Real-time Updates**: Codes refresh automatically every 30 seconds
 - **Copy to Clipboard**: One-tap copying of generated codes
 - **Group Organization**: Browse accounts organized by groups

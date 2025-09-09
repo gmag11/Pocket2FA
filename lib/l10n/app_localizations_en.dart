@@ -447,4 +447,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String autoSyncIntervalMinutes(int minutes) {
     return '$minutes minutes';
   }
+
+  @override
+  String get syncEvery => 'Sync every';
+
+  @override
+  String get minutesLabel => 'minutes';
 }

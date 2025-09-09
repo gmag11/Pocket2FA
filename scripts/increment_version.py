@@ -123,6 +123,36 @@ def update_iss_version(path: str, new_version: str) -> bool:
     return True
 
 
+def update_desktop_version(path: str, new_version: str) -> bool:
+    """If present, update linux/net.gmartin.pocket2fa.desktop Version to new_version.
+
+    Creates a .bak backup before writing. Returns True if file existed and was
+    modified, False if file not present.
+    """
+    desktop_path = os.path.join(path, 'linux', 'net.gmartin.pocket2fa.desktop')
+    if not os.path.exists(desktop_path):
+        return False
+    text = open(desktop_path, 'r', encoding='utf-8').read()
+    bak_path = desktop_path + '.bak'
+    shutil.copyfile(desktop_path, bak_path)
+
+    # Replace existing Version= line if present, otherwise try to insert after
+    # [Desktop Entry] header; if neither, append at EOF.
+    if re.search(r"(?m)^(Version\s*=).*$", text):
+        new_text = re.sub(r"(?m)^(Version\s*=).*$", lambda m: m.group(1) + new_version, text)
+    else:
+        # Try insert after [Desktop Entry] header
+        if re.search(r"(?m)^\[Desktop Entry\]\s*$", text):
+            new_text = re.sub(r"(?m)^(\[Desktop Entry\]\s*$)", lambda m: m.group(1) + '\nVersion=' + new_version, text, count=1)
+        else:
+            new_text = text + '\nVersion=' + new_version + '\n'
+
+    with open(desktop_path, 'w', encoding='utf-8') as f:
+        f.write(new_text)
+
+    return True
+
+
 def main(argv: List[str]) -> int:
     parser = argparse.ArgumentParser(description="Increment Flutter project version (pubspec + android versionCode)")
     parser.add_argument("--path", "-p", default=".", help="Path to project root (default: current directory)")
@@ -180,6 +210,15 @@ def main(argv: List[str]) -> int:
             print(" - windows/installer/pocket2fa.iss: not found, skipping")
     except Exception as e:
         print(f" - Warning: failed to update pocket2fa.iss: {e}")
+    # Update linux .desktop file if present
+    try:
+        modified_desktop = update_desktop_version(root, new_version)
+        if modified_desktop:
+            print(f" - linux/net.gmartin.pocket2fa.desktop: Version updated to {new_version} (backup at linux/net.gmartin.pocket2fa.desktop.bak)")
+        else:
+            print(" - linux/net.gmartin.pocket2fa.desktop: not found, skipping")
+    except Exception as e:
+        print(f" - Warning: failed to update linux .desktop file: {e}")
     return 0
 
 

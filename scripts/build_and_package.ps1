@@ -53,12 +53,13 @@ if ($exit -ne 0) {
 # Optional signing
 if ($Sign) {
   # The Inno Setup output typically goes to windows\installer\Output by the .iss script; keep that convention
-  $installer = Resolve-Path (Join-Path $repoRoot "windows\installer\Output\Pocket2FA.exe") -ErrorAction SilentlyContinue
+  # New installer name includes platform suffix
+  $installer = Resolve-Path (Join-Path $repoRoot "windows\installer\Output\Pocket2FA_Installer_Windows_x64.exe") -ErrorAction SilentlyContinue
   if ($installer -and (Test-Path $installer.Path)) {
     Write-Output "Signing installer: $($installer.Path)"
     & signtool sign /a /tr http://timestamp.digicert.com /td sha256 /fd sha256 $installer.Path
   } else {
-    Write-Warning "Installer not found to sign: $($repoRoot)\windows\installer\Output\Pocket2FA.exe"
+    Write-Warning "Installer not found to sign: $($repoRoot)\windows\installer\Output\Pocket2FA_Installer_Windows_x64.exe"
   }
 }
 

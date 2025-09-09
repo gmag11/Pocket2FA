@@ -60,9 +60,9 @@ jobs:
       - name: Verify installer exists
         shell: powershell
         run: |
-          $installer = Resolve-Path -Path "windows\installer\Output\Pocket2FA_Installer.exe" -ErrorAction SilentlyContinue
+          $installer = Resolve-Path -Path "windows\installer\Output\Pocket2FA_Installer_Windows_x64.exe" -ErrorAction SilentlyContinue
           if (-not $installer) {
-            Write-Error "Installer not found at windows\\installer\\Output\\Pocket2FA_Installer.exe"
+            Write-Error "Installer not found at windows\\installer\\Output\\Pocket2FA_Installer_Windows_x64.exe"
             exit 1
           }
           Write-Host "Installer found: $($installer.Path)"
@@ -73,6 +73,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.TOKEN }}
         with:
           upload_url: ${{ github.event.release.upload_url }}
-          asset_path: windows/installer/Output/Pocket2FA_Installer.exe
-          asset_name: Pocket2FA_Installer.exe
+          asset_path: windows/installer/Output/Pocket2FA_Installer_Windows_x64.exe
+          asset_name: Pocket2FA_Installer_Windows_x64.exe
           asset_content_type: application/x-msdownload

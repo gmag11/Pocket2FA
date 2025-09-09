@@ -102,7 +102,7 @@ class _AccountTileHOTPState extends State<AccountTileHOTP> {
       await Clipboard.setData(ClipboardData(text: digits));
       if (!mounted) return;
       final horizontalMargin = MediaQuery.of(context).size.width * 0.12;
-      final copiedMsg = l10n?.copied ?? 'Copied to clipboard';
+      final copiedMsg = l10n.copied;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Center(
             child:
@@ -119,7 +119,7 @@ class _AccountTileHOTPState extends State<AccountTileHOTP> {
       if (!mounted) return;
       final horizontalMargin = MediaQuery.of(context).size.width * 0.12;
       final errorCopyMsg =
-          l10n?.errorCopyingToClipboard ?? 'Error copying to clipboard';
+          l10n.errorCopyingToClipboard;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Center(
             child: Text(errorCopyMsg,

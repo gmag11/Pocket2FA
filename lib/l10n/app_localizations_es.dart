@@ -18,6 +18,15 @@ class AppLocalizationsEs extends AppLocalizations {
   String get settingsTitle => 'Ajustes';
 
   @override
+  String get settingsGeneral => 'GENERAL';
+
+  @override
+  String get settingsSecurity => 'SEGURIDAD';
+
+  @override
+  String get settingsSynchronization => 'SINCRONIZACIÓN';
+
+  @override
   String get addAccount => 'Añadir cuenta';
 
   @override
@@ -432,7 +441,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get aboutClose => 'Cerrar';
 
   @override
-  String get syncOnHomeOpen => 'Sincronizar al abrir la pantalla Inicio';
+  String get syncOnHomeOpen => 'Sincronizar al abrir la aplicación';
 
   @override
   String get autoSync => 'Sincronización automática';

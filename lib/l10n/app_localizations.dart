@@ -116,6 +116,24 @@ abstract class AppLocalizations {
   /// **'Settings'**
   String get settingsTitle;
 
+  /// Label for the General settings section.
+  ///
+  /// In en, this message translates to:
+  /// **'GENERAL'**
+  String get settingsGeneral;
+
+  /// Label for the Security settings section.
+  ///
+  /// In en, this message translates to:
+  /// **'SECURITY'**
+  String get settingsSecurity;
+
+  /// Label for the Synchronization settings section.
+  ///
+  /// In en, this message translates to:
+  /// **'SYNCHRONIZATION'**
+  String get settingsSynchronization;
+
   /// Label for action that adds a new account entry.
   ///
   /// In en, this message translates to:
@@ -875,7 +893,7 @@ abstract class AppLocalizations {
   /// Sync when opening the Home screen.
   ///
   /// In en, this message translates to:
-  /// **'Sync when opening Home screen'**
+  /// **'Sync when opening application'**
   String get syncOnHomeOpen;
 
   /// Label for automatic synchronization setting.

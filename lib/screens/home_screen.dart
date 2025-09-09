@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../l10n/app_localizations.dart';
 import 'dart:async';
+import 'dart:developer' as developer;
 import '../services/settings_service.dart';
 import '../models/account_entry.dart';
 import '../widgets/about_dialog.dart';
@@ -22,7 +23,8 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
+class _HomePageState extends State<HomePage>
+  with TickerProviderStateMixin, WidgetsBindingObserver {
   String _selectedGroup = 'All';
   String _searchQuery = '';
   late final TextEditingController _searchController;
@@ -34,6 +36,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   late final HomeManageMode _manageMode;
   late final HomeHeaderAnimation _headerAnimation;
   Timer? _autoSyncTimer;
+  bool _initialSyncDone = false;
 
   // Convenience getter for localized strings
   AppLocalizations get l10n => AppLocalizations.of(context)!;
@@ -58,8 +61,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     _syncManager.addListener(_onSyncManagerChanged);
     _manageMode.addListener(_onManageModeChanged);
   widget.settings.addListener(_onSettingsChanged);
+  WidgetsBinding.instance.addObserver(this);
 
-  // Load servers and perform initial connectivity check
+    developer.log('HomePage: initState - starting loadServersAndInitialize', name: 'HomePage');
+    // Load servers and perform initial connectivity check
   _loadServersAndInitialize();
   }
 
@@ -69,6 +74,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         // Keep the logical group key; UI will localize the display.
         _selectedGroup = 'All';
       });
+  // If servers became available after load, attempt initial sync if needed
+  developer.log('HomePage: server manager changed; servers=${_serverManager.servers.length}', name: 'HomePage');
+  _maybePerformInitialSync();
     }
   }
 
@@ -90,13 +98,20 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     // Settings changed (auto-sync toggle/interval or sync-on-open). Reconfigure auto-sync.
     if (mounted) {
       setState(() {});
-      _setupAutoSync();
+    developer.log('HomePage: settings changed; syncOnOpen=${widget.settings.syncOnOpen} autoSyncEnabled=${widget.settings.autoSyncEnabled} interval=${widget.settings.autoSyncIntervalMinutes}',
+      name: 'HomePage');
+    _setupAutoSync();
+  // If the user enabled syncOnOpen after settings loaded, attempt initial sync
+  _maybePerformInitialSync();
     }
   }
 
   void _setupAutoSync() {
     // Cancel any existing timer
-    _autoSyncTimer?.cancel();
+    if (_autoSyncTimer != null) {
+      developer.log('HomePage: cancelling existing autoSync timer', name: 'HomePage');
+      _autoSyncTimer?.cancel();
+    }
 
     // Do not start auto-sync if disabled, if there are no servers, or when in manage mode
     if (!widget.settings.autoSyncEnabled || _serverManager.servers.isEmpty || _manageMode.isManageMode) {
@@ -108,16 +123,19 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     // Guard against invalid values
     final interval = Duration(minutes: mins > 0 ? mins : 30);
 
+    developer.log('HomePage: starting autoSync timer interval=${interval.inMinutes}min', name: 'HomePage');
     // Start periodic timer
     _autoSyncTimer = Timer.periodic(interval, (_) async {
       try {
         // Respect manage mode at execution time as well
         if (_manageMode.isManageMode) return;
         if (_serverManager.servers.isNotEmpty) {
+          developer.log('HomePage: autoSync timer fired - attempting performThrottledSync', name: 'HomePage');
           await _syncManager.performThrottledSync();
         }
       } catch (e) {
         // Swallow errors to avoid noisy background failures; update reachability
+        developer.log('HomePage: autoSync timer performThrottledSync error: $e', name: 'HomePage');
         _serverManager.updateServerReachability(false);
       }
     });
@@ -155,21 +173,45 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     await _serverManager.loadServers();
     await _serverManager.initialConnectivityCheck();
 
-    // Attempt throttled sync on open only when enabled in settings
-    if (_serverManager.servers.isNotEmpty && widget.settings.syncOnOpen) {
-      try {
-        await _syncManager.performThrottledSync();
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(l10n.cannotSync)),
-          );
-        }
-      }
-    }
+  // Attempt initial throttled sync according to settings; may run later if
+  // settings or servers become available after startup.
+  _maybePerformInitialSync();
 
     // Configure auto-sync timer if enabled
     _setupAutoSync();
+  }
+
+  void _maybePerformInitialSync() async {
+    // Only attempt once per HomePage lifecycle
+    if (_initialSyncDone) {
+      developer.log('HomePage: skipping initial sync - already done', name: 'HomePage');
+      return;
+    }
+    // Do not attempt while in manage mode
+    if (_manageMode.isManageMode) return;
+    // Ensure settings wants sync on open and servers exist
+    if (!widget.settings.syncOnOpen) {
+      developer.log('HomePage: syncOnOpen disabled - not performing initial sync', name: 'HomePage');
+      return;
+    }
+    if (_serverManager.servers.isEmpty) {
+      developer.log('HomePage: no servers available - not performing initial sync', name: 'HomePage');
+      return;
+    }
+
+    developer.log('HomePage: conditions met - performing initial forced sync', name: 'HomePage');
+    _initialSyncDone = true;
+    try {
+      await _syncManager.forceSyncCurrentServer();
+      developer.log('HomePage: initial forced sync completed', name: 'HomePage');
+    } catch (e) {
+      developer.log('HomePage: initial forced sync failed: $e', name: 'HomePage');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.cannotSync)),
+        );
+      }
+    }
   }
 
   Future<void> _openServerAccountSelector() async {
@@ -242,7 +284,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       if (success) {
         // Trigger sync for newly selected server
         try {
-          await _syncManager.performThrottledSync();
+      developer.log('HomePage: server selected - performing throttled sync', name: 'HomePage');
+      await _syncManager.performThrottledSync();
         } catch (_) {
           // Ignore sync errors on server selection
         }
@@ -260,7 +303,27 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     _manageMode.removeListener(_onManageModeChanged);
   widget.settings.removeListener(_onSettingsChanged);
   _autoSyncTimer?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // App returned to foreground. If user enabled sync-on-open, trigger a sync.
+      if (mounted && widget.settings.syncOnOpen && !_manageMode.isManageMode) {
+        if (_serverManager.servers.isNotEmpty) {
+          // Fire-and-forget but surface errors as SnackBar like initial sync
+          _syncManager.forceSyncCurrentServer().catchError((e) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(AppLocalizations.of(context)!.cannotSync)),
+              );
+            }
+          });
+        }
+      }
+    }
   }
 
   @override
@@ -330,10 +393,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 _buildBottomBar(),
               ],
             ),
-            // Full screen sync indicator
-            if (_syncManager.isSyncing &&
-                !_syncManager.suppressFullScreenSyncIndicator)
-              _buildSyncOverlay(),
+            // Full screen sync indicator removed: sync is signaled only via
+            // the small spinner in the search bar's sync icon.
           ],
         ),
       ),
@@ -538,27 +599,5 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildSyncOverlay() {
-    return Positioned.fill(
-      child: Container(
-        color: const Color.fromRGBO(0, 0, 0, 0.35),
-        child: Center(
-          child: Card(
-            elevation: 4,
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const CircularProgressIndicator(),
-                  const SizedBox(height: 12),
-                  Text(l10n.syncing, style: const TextStyle(fontSize: 16)),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+  // _buildSyncOverlay removed: full-screen sync overlay is no longer used.
 }

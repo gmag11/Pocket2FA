@@ -12,6 +12,18 @@
     "@settingsTitle": {
         "description": "Title for the Settings screen and related labels."
     },
+    "settingsGeneral": "GENERAL",
+    "@settingsGeneral": {
+        "description": "Label for the General settings section."
+    },
+    "settingsSecurity": "SECURITY",
+    "@settingsSecurity": {
+        "description": "Label for the Security settings section."
+    },
+    "settingsSynchronization": "SYNCHRONIZATION",
+    "@settingsSynchronization": {
+        "description": "Label for the Synchronization settings section."
+    },
     "addAccount": "Add account",
     "@addAccount": {
         "description": "Label for action that adds a new account entry."
@@ -524,8 +536,7 @@
     "unknown": "Unknown",
     "@unknown": {
         "description": "Fallback label used when a value is not available."
-    }
-    ,
+    },
     "about": "About",
     "@about": {
         "description": "Label for the About menu or dialog title."
@@ -533,24 +544,29 @@
     "aboutRepo": "Project repository: {url}",
     "@aboutRepo": {
         "description": "Label showing the repository URL.",
-        "placeholders": { "url": {} }
+        "placeholders": {
+            "url": {}
+        }
     },
     "about2fauth": "2FAuth project: {url}",
     "@about2fauth": {
         "description": "Label showing the 2FAuth project URL.",
-        "placeholders": { "url": {} }
+        "placeholders": {
+            "url": {}
+        }
     },
     "aboutVersion": "Version: {version}",
     "@aboutVersion": {
         "description": "Label showing the current application version.",
-        "placeholders": { "version": {} }
+        "placeholders": {
+            "version": {}
+        }
     },
     "aboutClose": "Close",
     "@aboutClose": {
         "description": "Label for closing the About dialog."
-    }
-    ,
-    "syncOnHomeOpen": "Sync when opening Home screen",
+    },
+    "syncOnHomeOpen": "Sync when opening application",
     "@syncOnHomeOpen": {
         "description": "Sync when opening the Home screen."
     },
@@ -561,6 +577,11 @@
     "autoSyncIntervalMinutes": "{minutes} minutes",
     "@autoSyncIntervalMinutes": {
         "description": "Label showing number of minutes for auto-sync interval.",
-        "placeholders": { "minutes": { "type": "int", "example": "30" } }
+        "placeholders": {
+            "minutes": {
+                "type": "int",
+                "example": "30"
+            }
+        }
     }
 }

@@ -12,6 +12,18 @@
     "@settingsTitle": {
         "description": "Título de la pantalla de ajustes y etiquetas relacionadas."
     },
+    "settingsGeneral": "GENERAL",
+    "@settingsGeneral": {
+        "description": "Label for the General settings section."
+    },
+    "settingsSecurity": "SEGURIDAD",
+    "@settingsSecurity": {
+        "description": "Label for the Security settings section."
+    },
+    "settingsSynchronization": "SINCRONIZACIÓN",
+    "@settingsSynchronization": {
+        "description": "Label for the Synchronization settings section."
+    },
     "addAccount": "Añadir cuenta",
     "@addAccount": {
         "description": "Etiqueta para la acción de añadir una nueva cuenta."
@@ -524,8 +536,7 @@
     "unknown": "Desconocido",
     "@unknown": {
         "description": "Etiqueta por defecto cuando un valor no esté disponible."
-    }
-    ,
+    },
     "about": "Acerca de",
     "@about": {
         "description": "Etiqueta para el menú Acerca de o título del diálogo."
@@ -533,34 +544,44 @@
     "aboutRepo": "Repositorio del proyecto: {url}",
     "@aboutRepo": {
         "description": "Etiqueta que muestra la URL del repositorio.",
-        "placeholders": { "url": {} }
+        "placeholders": {
+            "url": {}
+        }
     },
     "about2fauth": "Proyecto 2FAuth: {url}",
     "@about2fauth": {
         "description": "Etiqueta que muestra la URL del proyecto 2FAuth.",
-        "placeholders": { "url": {} }
+        "placeholders": {
+            "url": {}
+        }
     },
     "aboutVersion": "Versión: {version}",
     "@aboutVersion": {
         "description": "Etiqueta que muestra la versión actual de la aplicación.",
-        "placeholders": { "version": {} }
+        "placeholders": {
+            "version": {}
+        }
     },
     "aboutClose": "Cerrar",
     "@aboutClose": {
         "description": "Etiqueta para cerrar el diálogo Acerca de."
-    }
-        ,
-        "syncOnHomeOpen": "Sincronizar al abrir la pantalla Inicio",
-        "@syncOnHomeOpen": {
-            "description": "Sincronizar al abrir la pantalla Inicio."
-        },
-        "autoSync": "Sincronización automática",
-        "@autoSync": {
-            "description": "Etiqueta para la sincronización automática."
-        },
-        "autoSyncIntervalMinutes": "{minutes} minutos",
-        "@autoSyncIntervalMinutes": {
-            "description": "Etiqueta que muestra el intervalo de sincronización automática en minutos.",
-            "placeholders": { "minutes": { "type": "int", "example": "30" } }
+    },
+    "syncOnHomeOpen": "Sincronizar al abrir la aplicación",
+    "@syncOnHomeOpen": {
+        "description": "Sincronizar al abrir la pantalla Inicio."
+    },
+    "autoSync": "Sincronización automática",
+    "@autoSync": {
+        "description": "Etiqueta para la sincronización automática."
+    },
+    "autoSyncIntervalMinutes": "{minutes} minutos",
+    "@autoSyncIntervalMinutes": {
+        "description": "Etiqueta que muestra el intervalo de sincronización automática en minutos.",
+        "placeholders": {
+            "minutes": {
+                "type": "int",
+                "example": "30"
+            }
         }
+    }
 }

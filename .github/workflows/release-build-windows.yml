@@ -1,7 +1,8 @@
 name: Build Windows and Create Installer
 
 on:
-  workflow_dispatch:
+  release:
+    types: [published]
 
 jobs:
   windows:
@@ -56,5 +57,22 @@ jobs:
           Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
           .\scripts\build_and_package.ps1
 
-      # For testing convenience you can optionally upload the generated installer as an artifact,
-      # but per request we do not push it to a GitHub release automatically.
+      - name: Verify installer exists
+        shell: powershell
+        run: |
+          $installer = Resolve-Path -Path "windows\installer\Output\Pocket2FA_Installer.exe" -ErrorAction SilentlyContinue
+          if (-not $installer) {
+            Write-Error "Installer not found at windows\\installer\\Output\\Pocket2FA_Installer.exe"
+            exit 1
+          }
+          Write-Host "Installer found: $($installer.Path)"
+
+      - name: Upload installer to release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: windows/installer/Output/Pocket2FA_Installer.exe
+          asset_name: Pocket2FA_Installer.exe
+          asset_content_type: application/x-msdownload

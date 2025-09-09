@@ -82,7 +82,7 @@ Future<ServerConnection?> showServerAddEditDialog({
             controller: apiCtrl,
             focusNode: apiFocus,
             decoration: InputDecoration(
-              labelText: 'API key',
+              labelText: AppLocalizations.of(context)!.apiKeyLabel,
               suffixIcon: IconButton(
                 icon: Icon(obscure ? Icons.visibility_off : Icons.visibility),
                 onPressed: revealEnabled ? () => setStateSB(() => obscure = !obscure) : null,

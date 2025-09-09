@@ -144,6 +144,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get secretHint => 'The key used to generate the security codes';
 
   @override
+  String groupAll(int count) {
+    return 'All ($count)';
+  }
+
+  @override
   String get optionsLabel => 'Options';
 
   @override
@@ -184,7 +189,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get counterHint => 'The initial counter value';
 
   @override
-  String get update => 'Update';
+  String get update => 'Edit';
 
   @override
   String get create => 'Create';
@@ -388,4 +393,17 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get pendingUpload => 'Not synchronized (pending upload)';
+
+  @override
+  String userAtHost(Object user, Object host) {
+    return '$user - $host';
+  }
+
+  @override
+  String serverWithHost(Object name, Object host) {
+    return '$name ($host)';
+  }
+
+  @override
+  String get unknown => 'Unknown';
 }

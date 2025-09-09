@@ -33,7 +33,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get accountLabel => 'Cuenta';
 
   @override
-  String get accountHint => 'John Doe';
+  String get accountHint => 'Juan Pérez';
 
   @override
   String get seedLabel => 'Semilla';
@@ -146,6 +146,11 @@ class AppLocalizationsEs extends AppLocalizations {
       'La clave usada para generar los códigos de seguridad';
 
   @override
+  String groupAll(int count) {
+    return 'Todos ($count)';
+  }
+
+  @override
   String get optionsLabel => 'Opciones';
 
   @override
@@ -186,7 +191,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get counterHint => 'Valor inicial del contador';
 
   @override
-  String get update => 'Actualizar';
+  String get update => 'Editar';
 
   @override
   String get create => 'Crear';
@@ -367,7 +372,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get longPressReveal =>
-      'Mantén pulsado un OTP en la pantalla de inicio para revelarlo durante 10 segundos.';
+      'Mantén pulsado un OTP en la pantalla de inicio para mostrarlo durante 10 segundos.';
 
   @override
   String get biometricAuthFailed =>
@@ -391,4 +396,17 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get pendingUpload => 'No sincronizado (pendiente de subida)';
+
+  @override
+  String userAtHost(Object user, Object host) {
+    return '$user - $host';
+  }
+
+  @override
+  String serverWithHost(Object name, Object host) {
+    return '$name ($host)';
+  }
+
+  @override
+  String get unknown => 'Desconocido';
 }

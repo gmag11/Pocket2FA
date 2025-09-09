@@ -21,11 +21,11 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
-  String _selectedGroup = 'All (0)';
+  String _selectedGroup = 'All';
   String _searchQuery = '';
   late final TextEditingController _searchController;
   late final FocusNode _searchFocus;
-  
+
   // Managers
   late final HomeServerManager _serverManager;
   late final HomeSyncManager _syncManager;
@@ -37,21 +37,21 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     super.initState();
     _searchController = TextEditingController();
     _searchFocus = FocusNode();
-    
+
     // Initialize managers
     _serverManager = HomeServerManager(widget.settings);
     _syncManager = HomeSyncManager(_serverManager);
     _manageMode = HomeManageMode(_serverManager);
     _headerAnimation = HomeHeaderAnimation();
-    
+
     // Initialize header animation
     _headerAnimation.initialize(this);
-    
+
     // Add listeners
     _serverManager.addListener(_onServerManagerChanged);
     _syncManager.addListener(_onSyncManagerChanged);
     _manageMode.addListener(_onManageModeChanged);
-    
+
     // Load servers and perform initial connectivity check
     _loadServersAndInitialize();
   }
@@ -59,7 +59,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   void _onServerManagerChanged() {
     if (mounted) {
       setState(() {
-        _selectedGroup = 'All (${_serverManager.currentItems.length})';
+        // Keep the logical group key; UI will localize the display.
+        _selectedGroup = 'All';
       });
     }
   }
@@ -82,8 +83,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         builder: (context) {
           final selectedServer = _serverManager.getSelectedServer();
           return AdvancedFormScreen(
-            userEmail: selectedServer?.userEmail ?? 'Unknown',
-            serverHost: selectedServer?.url ?? 'Unknown',
+            userEmail: selectedServer?.userEmail ??
+                AppLocalizations.of(context)!.unknown,
+            serverHost:
+                selectedServer?.url ?? AppLocalizations.of(context)!.unknown,
             groups: selectedServer?.groups,
             existingEntry: account, // Pasar la entrada existente para edición
           );
@@ -91,23 +94,23 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       ),
     );
 
-  if (result != null) {
+    if (result != null) {
       // La entrada fue editada, actualizarla en el servidor manager
       await _serverManager.updateAccount(result);
-      
+
       // Mostrar mensaje de confirmación
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(AppLocalizations.of(context)!.accountUpdated)),
-          );
-        }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppLocalizations.of(context)!.accountUpdated)),
+        );
+      }
     }
   }
 
   Future<void> _loadServersAndInitialize() async {
     await _serverManager.loadServers();
     await _serverManager.initialConnectivityCheck();
-    
+
     // Attempt throttled sync if we have servers
     if (_serverManager.servers.isNotEmpty) {
       try {
@@ -124,13 +127,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   Future<void> _openServerAccountSelector() async {
     if (_serverManager.servers.isEmpty) return;
-    
+
     final choice = await showModalBottomSheet<Map<String, dynamic>>(
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(12))
-      ),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(12))),
       builder: (c) {
         // Size the sheet based on number of servers
         final mq = MediaQuery.of(c).size;
@@ -146,10 +148,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             child: Column(
               children: [
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0, vertical: 8.0),
                   child: Align(
                     alignment: Alignment.centerLeft,
-                    child: Text(AppLocalizations.of(context)!.serversTitle, style: Theme.of(context).textTheme.titleMedium),
+                    child: Text(AppLocalizations.of(context)!.serversTitle,
+                        style: Theme.of(context).textTheme.titleMedium),
                   ),
                 ),
                 const Divider(height: 1),
@@ -158,13 +162,18 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     itemCount: _serverManager.servers.length,
                     itemBuilder: (ctx, idx) {
                       final srv = _serverManager.servers[idx];
-                      final isActive = srv.id == _serverManager.selectedServerId;
+                      final isActive =
+                          srv.id == _serverManager.selectedServerId;
                       return ListTile(
-                        title: Text('${srv.name} (${Uri.parse(srv.url).host})'),
+                        title: Text(AppLocalizations.of(context)!
+                            .serverWithHost(srv.name, Uri.parse(srv.url).host)),
                         subtitle: Text(srv.url),
-                        trailing: isActive ? const Icon(Icons.check, color: Colors.green) : null,
+                        trailing: isActive
+                            ? const Icon(Icons.check, color: Colors.green)
+                            : null,
                         onTap: () {
-                          Navigator.of(ctx).pop({'serverId': srv.id, 'accountIndex': null});
+                          Navigator.of(ctx)
+                              .pop({'serverId': srv.id, 'accountIndex': null});
                         },
                       );
                     },
@@ -180,8 +189,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     if (choice != null && mounted) {
       final serverId = choice['serverId'] as String;
       final accountIndex = choice['accountIndex'] as int?;
-      
-      final success = await _serverManager.selectServer(serverId, accountIndex: accountIndex);
+
+      final success = await _serverManager.selectServer(serverId,
+          accountIndex: accountIndex);
       if (success) {
         // Trigger sync for newly selected server
         try {
@@ -207,7 +217,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     final storage = widget.settings.storage;
-    
+
     // If storage exists but is locked (biometric required and not yet satisfied),
     // show a minimal screen with a single centered 'Retry' button
     if (storage != null && !storage.isUnlocked) {
@@ -230,14 +240,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   onPressed: () async {
                     final messenger = ScaffoldMessenger.of(context);
                     // capture localized message before await to avoid context-after-await lint
-                    final authFailedMsg = AppLocalizations.of(context)!.authenticationFailed;
+                    final authFailedMsg =
+                        AppLocalizations.of(context)!.authenticationFailed;
                     final ok = await storage.attemptUnlock();
                     if (ok) {
                       await _serverManager.loadServers();
                     } else {
-                      messenger.showSnackBar(
-                        SnackBar(content: Text(authFailedMsg))
-                      );
+                      messenger
+                          .showSnackBar(SnackBar(content: Text(authFailedMsg)));
                     }
                   },
                   child: Text(AppLocalizations.of(context)!.retry),
@@ -273,7 +283,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               ],
             ),
             // Full screen sync indicator
-            if (_syncManager.isSyncing && !_syncManager.suppressFullScreenSyncIndicator)
+            if (_syncManager.isSyncing &&
+                !_syncManager.suppressFullScreenSyncIndicator)
               _buildSyncOverlay(),
           ],
         ),
@@ -283,7 +294,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   Widget _buildHeader() {
     final groups = _serverManager.getGroups();
-    
+
     return Column(
       children: [
         const SizedBox(height: 12),
@@ -335,39 +346,54 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 height: 48,
                 child: Icon(Icons.sync, color: Colors.grey),
               )
-                : Semantics(
-                    label: AppLocalizations.of(context)!.synchronize,
-                    button: true,
-                    child: IconButton(
-                      tooltip: AppLocalizations.of(context)!.synchronize,
-                      icon: const Icon(Icons.sync),
-                      onPressed: _syncManager.manualSyncPressed,
-                    ),
-                  );
+            : Semantics(
+                label: AppLocalizations.of(context)!.synchronize,
+                button: true,
+                child: IconButton(
+                  tooltip: AppLocalizations.of(context)!.synchronize,
+                  icon: const Icon(Icons.sync),
+                  onPressed: _syncManager.manualSyncPressed,
+                ),
+              );
   }
 
   Widget _buildGroupSelector(List<String> groups) {
     return _manageMode.isManageMode && _manageMode.selectedAccountIds.isNotEmpty
         ? Text(
-            AppLocalizations.of(context)!.selectedCount(_manageMode.selectedAccountIds.length),
+            AppLocalizations.of(context)!
+                .selectedCount(_manageMode.selectedAccountIds.length),
             style: TextStyle(color: Colors.grey.shade700),
           )
         : PopupMenuButton<String>(
             initialValue: _selectedGroup,
             onSelected: (value) {
               setState(() {
+                // Store the logical group key; format when rendering.
                 _selectedGroup = value;
               });
             },
             itemBuilder: (context) => groups
-                .map((g) => PopupMenuItem(value: g, child: Text(g)))
+                .map((g) => PopupMenuItem(
+                    value: g,
+                    child: Text(g == 'All'
+                        ? AppLocalizations.of(context)!
+                            .groupAll(_serverManager.currentItems.length)
+                        : '$g (${_serverManager.currentItems.where((a) => a.group.trim() == g).length})')))
                 .toList(),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(_selectedGroup, style: TextStyle(color: Colors.grey.shade700)),
+                Builder(builder: (ctx) {
+                  final display = _selectedGroup == 'All'
+                      ? AppLocalizations.of(ctx)!
+                          .groupAll(_serverManager.currentItems.length)
+                      : '$_selectedGroup (${_serverManager.currentItems.where((a) => a.group.trim() == _selectedGroup).length})';
+                  return Text(display,
+                      style: TextStyle(color: Colors.grey.shade700));
+                }),
                 const SizedBox(width: 6),
-                Icon(Icons.keyboard_arrow_down, size: 18, color: Colors.grey.shade600),
+                Icon(Icons.keyboard_arrow_down,
+                    size: 18, color: Colors.grey.shade600),
               ],
             ),
           );
@@ -419,16 +445,16 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       onDeleteSelected: () => _manageMode.deleteSelectedAccounts(context),
       onOpenAccounts: () async {
         if (widget.settings.storage != null) {
-          await Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (c) => AccountsScreen(storage: widget.settings.storage!)
-            )
-          );
+          await Navigator.of(context).push(MaterialPageRoute(
+              builder: (c) =>
+                  AccountsScreen(storage: widget.settings.storage!)));
           // After returning from AccountsScreen, reload servers from storage
           await _serverManager.loadServers();
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(AppLocalizations.of(context)!.storageNotAvailable)),
+            SnackBar(
+                content:
+                    Text(AppLocalizations.of(context)!.storageNotAvailable)),
           );
         }
       },
@@ -450,7 +476,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 children: [
                   const CircularProgressIndicator(),
                   const SizedBox(height: 12),
-                  Text(AppLocalizations.of(context)!.syncing, style: const TextStyle(fontSize: 16)),
+                  Text(AppLocalizations.of(context)!.syncing,
+                      style: const TextStyle(fontSize: 16)),
                 ],
               ),
             ),

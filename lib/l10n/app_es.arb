@@ -32,7 +32,7 @@
     "@accountLabel": {
         "description": "Etiqueta del campo cuenta al crear una cuenta."
     },
-    "accountHint": "John Doe",
+    "accountHint": "Juan Pérez",
     "@accountHint": {
         "description": "Texto de ayuda para el campo cuenta."
     },
@@ -178,6 +178,11 @@
     "@secretHint": {
         "description": "Texto de ayuda para el campo secreto."
     },
+    "groupAll": "Todos ({count})",
+    "@groupAll": {
+        "description": "Etiqueta para el grupo 'Todos' con el recuento de elementos",
+        "placeholders": { "count": { "type": "int", "example": "12" } }
+    },
     "optionsLabel": "Opciones",
     "@optionsLabel": {
         "description": "Etiqueta para la sección de opciones avanzadas."
@@ -226,9 +231,9 @@
     "@counterHint": {
         "description": "Texto de ayuda para el campo contador."
     },
-    "update": "Actualizar",
+    "update": "Editar",
     "@update": {
-        "description": "Etiqueta para la acción de actualizar en el formulario avanzado."
+        "description": "Etiqueta para la acción de editar en el formulario avanzado."
     },
     "create": "Crear",
     "@create": {
@@ -463,7 +468,7 @@
     "@hideOtpsOnHome": {
         "description": "Etiqueta para ocultar códigos OTP en la pantalla principal."
     },
-    "longPressReveal": "Mantén pulsado un OTP en la pantalla de inicio para revelarlo durante 10 segundos.",
+    "longPressReveal": "Mantén pulsado un OTP en la pantalla de inicio para mostrarlo durante 10 segundos.",
     "@longPressReveal": {
         "description": "Texto de ayuda explicando la pulsación larga para revelar OTPs."
     },
@@ -494,5 +499,20 @@
     "pendingUpload": "No sincronizado (pendiente de subida)",
     "@pendingUpload": {
         "description": "Tooltip que explica que la cuenta no se ha subido al servidor aún."
+    }
+    ,
+    "userAtHost": "{user} - {host}",
+    "@userAtHost": {
+        "description": "Línea corta mostrando el correo del usuario y el host del servidor.",
+        "placeholders": { "user": {}, "host": {} }
+    },
+    "serverWithHost": "{name} ({host})",
+    "@serverWithHost": {
+        "description": "Visualización del servidor combinando nombre y host.",
+        "placeholders": { "name": {}, "host": {} }
+    },
+    "unknown": "Desconocido",
+    "@unknown": {
+        "description": "Etiqueta por defecto cuando un valor no esté disponible."
     }
 }

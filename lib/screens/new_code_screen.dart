@@ -108,7 +108,7 @@ class NewCodeScreen extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text('$userEmail - $serverHost', style: const TextStyle(color: Colors.grey)),
+                    Text(AppLocalizations.of(context)!.userAtHost(userEmail, serverHost), style: const TextStyle(color: Colors.grey)),
                   ],
                 ),
               ),

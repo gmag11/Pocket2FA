@@ -356,6 +356,12 @@ abstract class AppLocalizations {
   /// **'The key used to generate the security codes'**
   String get secretHint;
 
+  /// Label for the 'All' group with item count
+  ///
+  /// In en, this message translates to:
+  /// **'All ({count})'**
+  String groupAll(int count);
+
   /// Label for advanced options section.
   ///
   /// In en, this message translates to:
@@ -428,10 +434,10 @@ abstract class AppLocalizations {
   /// **'The initial counter value'**
   String get counterHint;
 
-  /// Label for update action on advanced form.
+  /// Label for edit action on advanced form.
   ///
   /// In en, this message translates to:
-  /// **'Update'**
+  /// **'Edit'**
   String get update;
 
   /// Label for create action on advanced form.
@@ -817,6 +823,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Not synchronized (pending upload)'**
   String get pendingUpload;
+
+  /// Short line showing user email and server host.
+  ///
+  /// In en, this message translates to:
+  /// **'{user} - {host}'**
+  String userAtHost(Object user, Object host);
+
+  /// Server display combining server name and host.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} ({host})'**
+  String serverWithHost(Object name, Object host);
+
+  /// Fallback label used when a value is not available.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown'**
+  String get unknown;
 }
 
 class _AppLocalizationsDelegate

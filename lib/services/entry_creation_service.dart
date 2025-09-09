@@ -67,7 +67,7 @@ class EntryCreationService {
         account = parts.sublist(1).join(':').trim();
       }
 
-      if (account.isEmpty) account = 'Unknown';
+  if (account.isEmpty) account = 'Unknown';
       if (service.isEmpty) {
         service = account.split('@').firstOrNull ?? account;
       }

@@ -287,8 +287,9 @@ class HomeServerManager extends ChangeNotifier {
       counts[g] = (counts[g] ?? 0) + 1;
     }
     developer.log('HomeServerManager: computed group counts=${counts.toString()} from ${_currentItems.length} items', name: 'HomeServerManager');
-    final groups = ['All (${_currentItems.length})'];
-    groups.addAll(counts.keys.map((k) => '$k (${counts[k]})'));
+  // Return group keys (unlocalized). The UI will localize formatting.
+  final groups = ['All'];
+  groups.addAll(counts.keys);
     return groups;
   }
 

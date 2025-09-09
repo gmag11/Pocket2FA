@@ -583,9 +583,9 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
                 ],
               ),
               const SizedBox(height: 12),
-              Center(
-                  child: Text('${widget.userEmail} - ${widget.serverHost}',
-                      style: const TextStyle(color: Colors.grey))),
+        Center(
+          child: Text(AppLocalizations.of(context)!.userAtHost(widget.userEmail, widget.serverHost),
+            style: const TextStyle(color: Colors.grey))),
             ],
           ),
         ),

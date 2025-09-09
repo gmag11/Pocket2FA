@@ -16,7 +16,7 @@ if (-not $buildDir) {
 $buildDir = $buildDir.Path
 
 $src = Join-Path $buildDir "pocket2fa.exe"
-$dst = Join-Path $buildDir "pocket2fa.exe"
+# $dst = Join-Path $buildDir "pocket2fa.exe"
 
 if (-not (Test-Path $src)) {
   Write-Error "Source executable not found: $src"
@@ -24,8 +24,8 @@ if (-not (Test-Path $src)) {
 }
 
 # Copy/rename (keeps the original)
-Copy-Item -Path $src -Destination $dst -Force
-Write-Output "Renamed: $src -> $dst"
+# Copy-Item -Path $src -Destination $dst -Force
+# Write-Output "Renamed: $src -> $dst"
 
 # Path to Inno Setup compiler and .iss. Assume installer files are in windows\installer relative to repo root
 $iscc = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"

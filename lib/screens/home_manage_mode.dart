@@ -38,20 +38,20 @@ class HomeManageMode extends ChangeNotifier {
 
   Future<bool> deleteSelectedAccounts(BuildContext context) async {
     if (_selectedAccountIds.isEmpty) return false;
-    
+    final l10n = AppLocalizations.of(context)!;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(AppLocalizations.of(context)!.deleteAccountsTitle),
-        content: Text(AppLocalizations.of(context)!.deleteAccountsConfirm(_selectedAccountIds.length)),
+        title: Text(l10n.deleteAccountsTitle),
+        content: Text(l10n.deleteAccountsConfirm(_selectedAccountIds.length)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: Text(AppLocalizations.of(context)!.cancel),
+            child: Text(l10n.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: Text(AppLocalizations.of(context)!.delete),
+            child: Text(l10n.delete),
           ),
         ],
       ),
@@ -68,7 +68,7 @@ class HomeManageMode extends ChangeNotifier {
       serverManager.updateServerReachability(false);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context)!.noServerSelected))
+          SnackBar(content: Text(l10n.noServerSelected))
         );
       }
       return false;
@@ -126,7 +126,7 @@ class HomeManageMode extends ChangeNotifier {
     if (!context.mounted) return true;
     
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(AppLocalizations.of(context)!.accountsDeleted))
+      SnackBar(content: Text(l10n.accountsDeleted))
     );
     
     return true;

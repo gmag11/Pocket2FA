@@ -25,6 +25,7 @@ class QrScannerScreen extends StatefulWidget {
 class _QrScannerScreenState extends State<QrScannerScreen> {
   MobileScannerController? _controller;
   bool _isProcessing = false;
+  AppLocalizations get l10n => AppLocalizations.of(context)!;
 
   @override
   void initState() {
@@ -93,7 +94,7 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
     });
   // Capture localized strings and messenger before async gaps
   final messenger = ScaffoldMessenger.of(context);
-  final qrErrorMsg = AppLocalizations.of(context)?.qrScannerError ?? 'Error';
+  final qrErrorMsg = l10n.qrScannerError;
     
     try {
       // Pausa el detector para evitar múltiples detecciones
@@ -131,7 +132,7 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(AppLocalizations.of(context)!.scanQRCode),
+        title: Text(l10n.scanQRCode),
         actions: [
           IconButton(
             icon: const Icon(Icons.flash_on),
@@ -165,11 +166,11 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
             child: Center(
               child: Column(
                 children: [
-                  Text(AppLocalizations.of(context)!.positionQr, style: const TextStyle(color: Colors.white, fontSize: 16)),
+                  Text(l10n.positionQr, style: const TextStyle(color: Colors.white, fontSize: 16)),
                   const SizedBox(height: 8),
                   ElevatedButton(
                     onPressed: () => Navigator.of(context).pop(),
-                    child: Text(AppLocalizations.of(context)!.cancel),
+                    child: Text(l10n.cancel),
                   ),
                 ],
               ),

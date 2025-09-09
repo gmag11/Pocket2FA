@@ -14,6 +14,7 @@ Future<ServerConnection?> showServerAddEditDialog({
   final urlCtrl = TextEditingController(text: initial?.url ?? '');
   final apiCtrl = TextEditingController(text: initial?.apiKey ?? '');
   final isEdit = initial != null;
+  final l10n = AppLocalizations.of(context)!;
 
   bool obscure = true;
   bool revealEnabled = !isEdit;
@@ -28,11 +29,17 @@ Future<ServerConnection?> showServerAddEditDialog({
     builder: (c) => StatefulBuilder(
       builder: (c2, setStateSB) {
         Future<void> validateAndClose() async {
-          setStateSB(() { errorText = null; loading = true; });
+          setStateSB(() {
+            errorText = null;
+            loading = true;
+          });
           final urlText = urlCtrl.text.trim();
           final apiKeyText = apiCtrl.text.trim();
           if (urlText.isEmpty) {
-            setStateSB(() { errorText = AppLocalizations.of(context)!.urlRequired; loading = false; });
+            setStateSB(() {
+              errorText = l10n.urlRequired;
+              loading = false;
+            });
             return;
           }
 
@@ -48,7 +55,8 @@ Future<ServerConnection?> showServerAddEditDialog({
           try {
             final m = await ApiService.instance.validateServer(temp);
             try {
-              developer.log('AccountsScreen: /api/v1/user response -> $m', name: 'AccountsScreen');
+              developer.log('AccountsScreen: /api/v1/user response -> $m',
+                  name: 'AccountsScreen');
             } catch (_) {}
 
             final sc = ServerConnection(
@@ -57,22 +65,32 @@ Future<ServerConnection?> showServerAddEditDialog({
               url: temp.url,
               apiKey: temp.apiKey,
               accounts: temp.accounts,
-              userId: m['id'] is int ? m['id'] as int : int.tryParse(m['id'].toString()),
+              userId: m['id'] is int
+                  ? m['id'] as int
+                  : int.tryParse(m['id'].toString()),
               userName: m['name'] as String?,
               userEmail: m['email'] as String? ?? '',
               oauthProvider: m['oauth_provider']?.toString(),
               authenticatedByProxy: m['authenticated_by_proxy'] as bool?,
-              preferences: m['preferences'] != null ? UserPreferences.fromMap(Map<dynamic, dynamic>.from(m['preferences'] as Map)) : null,
+              preferences: m['preferences'] != null
+                  ? UserPreferences.fromMap(
+                      Map<dynamic, dynamic>.from(m['preferences'] as Map))
+                  : null,
               isAdmin: m['is_admin'] as bool?,
             );
 
             if (!context.mounted) return;
-            setStateSB(() { loading = false; });
+            setStateSB(() {
+              loading = false;
+            });
             Navigator.of(context).pop(sc);
             return;
           } catch (e) {
             final msg = ApiService.instance.friendlyErrorMessage(e);
-            setStateSB(() { errorText = msg; loading = false; });
+            setStateSB(() {
+              errorText = msg;
+              loading = false;
+            });
             return;
           }
         }
@@ -82,10 +100,12 @@ Future<ServerConnection?> showServerAddEditDialog({
             controller: apiCtrl,
             focusNode: apiFocus,
             decoration: InputDecoration(
-              labelText: AppLocalizations.of(context)!.apiKeyLabel,
+              labelText: l10n.apiKeyLabel,
               suffixIcon: IconButton(
                 icon: Icon(obscure ? Icons.visibility_off : Icons.visibility),
-                onPressed: revealEnabled ? () => setStateSB(() => obscure = !obscure) : null,
+                onPressed: revealEnabled
+                    ? () => setStateSB(() => obscure = !obscure)
+                    : null,
               ),
             ),
             obscureText: obscure,
@@ -108,8 +128,14 @@ Future<ServerConnection?> showServerAddEditDialog({
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextField(controller: nameCtrl, decoration: InputDecoration(labelText: AppLocalizations.of(context)!.nameLabel)),
-              TextField(controller: urlCtrl, decoration: InputDecoration(labelText: AppLocalizations.of(context)!.urlLabel)),
+              TextField(
+                  controller: nameCtrl,
+                  decoration: InputDecoration(
+                      labelText: l10n.nameLabel)),
+              TextField(
+                  controller: urlCtrl,
+                  decoration: InputDecoration(
+                      labelText: l10n.urlLabel)),
               apiFieldLocal(),
               if (errorText != null) ...[
                 const SizedBox(height: 8),
@@ -118,12 +144,23 @@ Future<ServerConnection?> showServerAddEditDialog({
             ],
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.of(c).pop(null), child: Text(AppLocalizations.of(context)!.cancel)),
+            TextButton(
+                onPressed: () => Navigator.of(c).pop(null),
+                child: Text(l10n.cancel)),
             ElevatedButton(
-              onPressed: loading ? null : () async { await validateAndClose(); },
-              child: loading 
-                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)) 
-                : Text(isEdit ? AppLocalizations.of(context)!.save : AppLocalizations.of(context)!.add),
+              onPressed: loading
+                  ? null
+                  : () async {
+                      await validateAndClose();
+                    },
+              child: loading
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2))
+                  : Text(isEdit
+                      ? l10n.save
+                      : l10n.add),
             ),
           ],
         );

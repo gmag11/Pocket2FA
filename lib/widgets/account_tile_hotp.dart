@@ -17,8 +17,8 @@ class AccountTileHOTP extends StatefulWidget {
   final VoidCallback? onEdit;
 
   const AccountTileHOTP({
-    required this.item, 
-    this.settings, 
+    required this.item,
+    this.settings,
     this.isManageMode = false,
     this.isSelected = false,
     this.onToggleSelection,
@@ -35,6 +35,7 @@ class _AccountTileHOTPState extends State<AccountTileHOTP> {
   late AccountTileOtpService _otpService;
   Timer? _revealTimer;
   bool _reveal = false;
+  AppLocalizations get l10n => AppLocalizations.of(context)!;
 
   @override
   void initState() {
@@ -45,7 +46,7 @@ class _AccountTileHOTPState extends State<AccountTileHOTP> {
       refreshUi: () {
         if (mounted) setState(() {});
       },
-          // HOTP does not require animations
+      // HOTP does not require animations
       startAnimationCallback: null,
     );
     _otpService.refreshCodes();
@@ -71,23 +72,26 @@ class _AccountTileHOTPState extends State<AccountTileHOTP> {
 
   @override
   void dispose() {
-  _revealTimer?.cancel();
-  _otpService.dispose();
+    _revealTimer?.cancel();
+    _otpService.dispose();
     super.dispose();
   }
 
   void _copyToClipboard(String code) async {
     if (!mounted) return;
     final trimmed = code.trim();
-      if (trimmed.isEmpty || trimmed.toLowerCase() == 'offline') {
+    if (trimmed.isEmpty || trimmed.toLowerCase() == 'offline') {
       final horizontalMargin = MediaQuery.of(context).size.width * 0.12;
-      final noCodeMsg = AppLocalizations.of(context)?.noCodeToCopy ?? 'No code to copy';
+      final noCodeMsg = l10n.noCodeToCopy;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Center(child: Text(noCodeMsg, style: const TextStyle(color: Colors.white))),
+        content: Center(
+            child:
+                Text(noCodeMsg, style: const TextStyle(color: Colors.white))),
         behavior: SnackBarBehavior.floating,
         margin: EdgeInsets.fromLTRB(horizontalMargin, 0, horizontalMargin, 96),
         padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 10.0),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(16.0))),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(16.0))),
         backgroundColor: const Color(0xFF666666),
         duration: const Duration(milliseconds: 1500),
       ));
@@ -98,26 +102,33 @@ class _AccountTileHOTPState extends State<AccountTileHOTP> {
       await Clipboard.setData(ClipboardData(text: digits));
       if (!mounted) return;
       final horizontalMargin = MediaQuery.of(context).size.width * 0.12;
-      final copiedMsg = AppLocalizations.of(context)?.copied ?? 'Copied to clipboard';
+      final copiedMsg = l10n?.copied ?? 'Copied to clipboard';
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Center(child: Text(copiedMsg, style: const TextStyle(color: Colors.white))),
+        content: Center(
+            child:
+                Text(copiedMsg, style: const TextStyle(color: Colors.white))),
         behavior: SnackBarBehavior.floating,
         margin: EdgeInsets.fromLTRB(horizontalMargin, 0, horizontalMargin, 96),
         padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 10.0),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(16.0))),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(16.0))),
         backgroundColor: const Color(0xFF00C853),
         duration: const Duration(milliseconds: 1500),
       ));
     } catch (_) {
       if (!mounted) return;
       final horizontalMargin = MediaQuery.of(context).size.width * 0.12;
-      final errorCopyMsg = AppLocalizations.of(context)?.errorCopyingToClipboard ?? 'Error copying to clipboard';
+      final errorCopyMsg =
+          l10n?.errorCopyingToClipboard ?? 'Error copying to clipboard';
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Center(child: Text(errorCopyMsg, style: const TextStyle(color: Colors.white))),
+        content: Center(
+            child: Text(errorCopyMsg,
+                style: const TextStyle(color: Colors.white))),
         behavior: SnackBarBehavior.floating,
         margin: EdgeInsets.fromLTRB(horizontalMargin, 0, horizontalMargin, 96),
         padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 10.0),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(16.0))),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(16.0))),
         backgroundColor: const Color(0xFFFF0000),
         duration: const Duration(milliseconds: 1500),
       ));
@@ -170,7 +181,8 @@ class _AccountTileHOTPState extends State<AccountTileHOTP> {
                   Expanded(
                     child: Text(
                       widget.item.service,
-                      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w400),
+                      style: const TextStyle(
+                          fontSize: 24, fontWeight: FontWeight.w400),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -180,10 +192,12 @@ class _AccountTileHOTPState extends State<AccountTileHOTP> {
                   Padding(
                     padding: const EdgeInsets.only(right: 8.0),
                     child: IconButton(
-                      icon: const Icon(Icons.edit, color: Colors.blue, size: 18),
+                      icon:
+                          const Icon(Icons.edit, color: Colors.blue, size: 18),
                       onPressed: widget.onEdit,
                       padding: const EdgeInsets.all(4),
-                      constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                      constraints:
+                          const BoxConstraints(minWidth: 32, minHeight: 32),
                     ),
                   ),
                 ],
@@ -198,10 +212,12 @@ class _AccountTileHOTPState extends State<AccountTileHOTP> {
                 children: [
                   Expanded(
                     child: Padding(
-                      padding: const EdgeInsets.only(left: 56.0), // align under service like TOTP
+                      padding: const EdgeInsets.only(
+                          left: 56.0), // align under service like TOTP
                       child: Text(
                         widget.item.account,
-                        style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+                        style: TextStyle(
+                            fontSize: 14, color: Colors.grey.shade600),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -285,13 +301,13 @@ class _AccountTileHOTPState extends State<AccountTileHOTP> {
                   return Container(
                     padding: const EdgeInsets.only(right: 12.0),
                     child: Center(
-                        child: ConstrainedBox(
+                      child: ConstrainedBox(
                         constraints: const BoxConstraints(maxWidth: 180),
                         child: ElevatedButton(
                           onPressed: _otpService.requestHotp,
                           style: ElevatedButton.styleFrom(
                               minimumSize: const Size(0, 36)),
-                          child: Text(AppLocalizations.of(context)!.generate),
+                          child: Text(l10n.generate),
                         ),
                       ),
                     ),
@@ -308,7 +324,7 @@ class _AccountTileHOTPState extends State<AccountTileHOTP> {
                       // OTP right-aligned, no clipping
                       Align(
                         alignment: Alignment.centerRight,
-                          child: settings != null
+                        child: settings != null
                             ? AnimatedBuilder(
                                 animation: settings!,
                                 builder: (context, _) {
@@ -316,22 +332,32 @@ class _AccountTileHOTPState extends State<AccountTileHOTP> {
                                     color: Colors.transparent,
                                     child: InkWell(
                                       borderRadius: BorderRadius.zero,
-                                      onTap: () => _copyToClipboard(_otpService.hotpCode ?? ''),
+                                      onTap: () => _copyToClipboard(
+                                          _otpService.hotpCode ?? ''),
                                       onLongPress: () {
                                         if (settings?.hideOtps == true) {
-                                          setState(() { _reveal = true; });
+                                          setState(() {
+                                            _reveal = true;
+                                          });
                                           _revealTimer?.cancel();
-                                          _revealTimer = Timer(const Duration(seconds: 10), () {
-                                            if (mounted) setState(() { _reveal = false; });
+                                          _revealTimer = Timer(
+                                              const Duration(seconds: 10), () {
+                                            if (mounted) {
+                                              setState(() {
+                                                _reveal = false;
+                                              });
+                                            }
                                           });
                                         }
                                       },
                                       child: Padding(
-                                        padding: const EdgeInsets.symmetric(vertical: 0.0, horizontal: 2.0),
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 0.0, horizontal: 2.0),
                                         child: Text(
                                           AccountTileUtils.formatCode(
                                               _otpService.hotpCode ?? '',
-                                              settings, forceVisible: _reveal),
+                                              settings,
+                                              forceVisible: _reveal),
                                           style: const TextStyle(
                                             fontSize: 24,
                                             fontWeight: FontWeight.w700,
@@ -364,13 +390,14 @@ class _AccountTileHOTPState extends State<AccountTileHOTP> {
                       if (_otpService.hotpCounter != null)
                         Align(
                           alignment: Alignment.center,
-              child: Text(
-                AppLocalizations.of(context)!.hotpCounter(_otpService.hotpCounter ?? 0),
-                style: TextStyle(
-                  fontSize: 14, color: Colors.grey.shade500),
-                maxLines: 1,
-                overflow: TextOverflow.visible,
-                ),
+                          child: Text(
+                            l10n
+                                .hotpCounter(_otpService.hotpCounter ?? 0),
+                            style: TextStyle(
+                                fontSize: 14, color: Colors.grey.shade500),
+                            maxLines: 1,
+                            overflow: TextOverflow.visible,
+                          ),
                         ),
                     ],
                   ),

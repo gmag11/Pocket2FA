@@ -15,6 +15,7 @@ class AccountsScreen extends StatefulWidget {
 
 class _AccountsScreenState extends State<AccountsScreen> {
   List<ServerConnection> _servers = [];
+  AppLocalizations get l10n => AppLocalizations.of(context)!;
 
   static const Color _baseAccent = Color(0xFF4F63E6);
 
@@ -61,9 +62,9 @@ class _AccountsScreenState extends State<AccountsScreen> {
   }
 
   Future<void> _addServer() async {
-    final title = AppLocalizations.of(context)!.addServerTitle;
+    final title = l10n.addServerTitle;
     // Capture messages before awaiting async operations to avoid using BuildContext across async gaps
-    final serverSavedMsg = AppLocalizations.of(context)!.serverSaved;
+    final serverSavedMsg = l10n.serverSaved;
     final result = await showServerAddEditDialog(context: context, title: title);
     if (result != null) {
       setState(() => _servers.add(result));
@@ -73,8 +74,8 @@ class _AccountsScreenState extends State<AccountsScreen> {
   }
 
   Future<void> _editServer(ServerConnection server, int index) async {
-    final title = AppLocalizations.of(context)!.editServerTitle;
-    final serverUpdatedMsg = AppLocalizations.of(context)!.serverUpdated;
+    final title = l10n.editServerTitle;
+    final serverUpdatedMsg = l10n.serverUpdated;
     final result = await showServerAddEditDialog(context: context, title: title, initial: server);
     if (result != null) {
       setState(() => _servers[index] = result);
@@ -115,21 +116,21 @@ class _AccountsScreenState extends State<AccountsScreen> {
     // If storage is locked, show an unlock screen instead of the list.
     if (!widget.storage.isUnlocked) {
       return Scaffold(
-        appBar: AppBar(title: Text(AppLocalizations.of(context)!.accountsTitle)),
+        appBar: AppBar(title: Text(l10n.accountsTitle)),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24.0),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(AppLocalizations.of(context)!.localDataProtected, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                Text(l10n.localDataProtected, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
-                Text(AppLocalizations.of(context)!.authenticateToUnlock, textAlign: TextAlign.center),
+                Text(l10n.authenticateToUnlock, textAlign: TextAlign.center),
                 const SizedBox(height: 16),
                 ElevatedButton.icon(
                   onPressed: () async {
                     final messenger = ScaffoldMessenger.of(context);
-                    final authenticationFailedMsg = AppLocalizations.of(context)!.authenticationFailed;
+                    final authenticationFailedMsg = l10n.authenticationFailed;
                     final ok = await widget.storage.attemptUnlock();
                     if (ok) {
                       // Reload servers and update UI
@@ -141,7 +142,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
                     }
                   },
                   icon: const Icon(Icons.fingerprint),
-                  label: Text(AppLocalizations.of(context)!.unlock),
+                  label: Text(l10n.unlock),
                 ),
               ],
             ),
@@ -151,7 +152,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: Text(AppLocalizations.of(context)!.accountsTitle)),
+      appBar: AppBar(title: Text(l10n.accountsTitle)),
       body: ListView.builder(
         itemCount: _servers.length,
         itemBuilder: (context, index) {

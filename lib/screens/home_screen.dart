@@ -32,6 +32,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   late final HomeManageMode _manageMode;
   late final HomeHeaderAnimation _headerAnimation;
 
+  // Convenience getter for localized strings
+  AppLocalizations get l10n => AppLocalizations.of(context)!;
+
   @override
   void initState() {
     super.initState();
@@ -82,11 +85,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       MaterialPageRoute(
         builder: (context) {
           final selectedServer = _serverManager.getSelectedServer();
-          return AdvancedFormScreen(
-            userEmail: selectedServer?.userEmail ??
-                AppLocalizations.of(context)!.unknown,
-            serverHost:
-                selectedServer?.url ?? AppLocalizations.of(context)!.unknown,
+            return AdvancedFormScreen(
+              userEmail: selectedServer?.userEmail ?? l10n.unknown,
+              serverHost: selectedServer?.url ?? l10n.unknown,
             groups: selectedServer?.groups,
             existingEntry: account, // Pasar la entrada existente para edición
           );
@@ -101,7 +102,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       // Mostrar mensaje de confirmación
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context)!.accountUpdated)),
+            SnackBar(content: Text(l10n.accountUpdated)),
         );
       }
     }
@@ -117,9 +118,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         await _syncManager.performThrottledSync();
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(AppLocalizations.of(context)!.cannotSync)),
-          );
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(l10n.cannotSync)),
+            );
         }
       }
     }
@@ -152,7 +153,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       horizontal: 16.0, vertical: 8.0),
                   child: Align(
                     alignment: Alignment.centerLeft,
-                    child: Text(AppLocalizations.of(context)!.serversTitle,
+                    child: Text(l10n.serversTitle,
                         style: Theme.of(context).textTheme.titleMedium),
                   ),
                 ),
@@ -165,7 +166,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       final isActive =
                           srv.id == _serverManager.selectedServerId;
                       return ListTile(
-                        title: Text(AppLocalizations.of(context)!
+                        title: Text(l10n
                             .serverWithHost(srv.name, Uri.parse(srv.url).host)),
                         subtitle: Text(srv.url),
                         trailing: isActive
@@ -230,7 +231,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24.0),
                   child: Text(
-                    AppLocalizations.of(context)!.biometricAuthFailed,
+                    l10n.biometricAuthFailed,
                     textAlign: TextAlign.center,
                     style: const TextStyle(fontSize: 16, color: Colors.red),
                   ),
@@ -241,7 +242,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     final messenger = ScaffoldMessenger.of(context);
                     // capture localized message before await to avoid context-after-await lint
                     final authFailedMsg =
-                        AppLocalizations.of(context)!.authenticationFailed;
+                        l10n.authenticationFailed;
                     final ok = await storage.attemptUnlock();
                     if (ok) {
                       await _serverManager.loadServers();
@@ -250,7 +251,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           .showSnackBar(SnackBar(content: Text(authFailedMsg)));
                     }
                   },
-                  child: Text(AppLocalizations.of(context)!.retry),
+                  child: Text(l10n.retry),
                 ),
               ],
             ),
@@ -347,10 +348,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 child: Icon(Icons.sync, color: Colors.grey),
               )
             : Semantics(
-                label: AppLocalizations.of(context)!.synchronize,
+                label: l10n.synchronize,
                 button: true,
                 child: IconButton(
-                  tooltip: AppLocalizations.of(context)!.synchronize,
+                  tooltip: l10n.synchronize,
                   icon: const Icon(Icons.sync),
                   onPressed: _syncManager.manualSyncPressed,
                 ),
@@ -360,8 +361,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Widget _buildGroupSelector(List<String> groups) {
     return _manageMode.isManageMode && _manageMode.selectedAccountIds.isNotEmpty
         ? Text(
-            AppLocalizations.of(context)!
-                .selectedCount(_manageMode.selectedAccountIds.length),
+              l10n.selectedCount(_manageMode.selectedAccountIds.length),
             style: TextStyle(color: Colors.grey.shade700),
           )
         : PopupMenuButton<String>(
@@ -373,20 +373,18 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               });
             },
             itemBuilder: (context) => groups
-                .map((g) => PopupMenuItem(
-                    value: g,
-                    child: Text(g == 'All'
-                        ? AppLocalizations.of(context)!
-                            .groupAll(_serverManager.currentItems.length)
-                        : '$g (${_serverManager.currentItems.where((a) => a.group.trim() == g).length})')))
+        .map((g) => PopupMenuItem(
+          value: g,
+          child: Text(g == 'All'
+            ? l10n.groupAll(_serverManager.currentItems.length)
+            : '$g (${_serverManager.currentItems.where((a) => a.group.trim() == g).length})')))
                 .toList(),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Builder(builder: (ctx) {
                   final display = _selectedGroup == 'All'
-                      ? AppLocalizations.of(ctx)!
-                          .groupAll(_serverManager.currentItems.length)
+                      ? l10n.groupAll(_serverManager.currentItems.length)
                       : '$_selectedGroup (${_serverManager.currentItems.where((a) => a.group.trim() == _selectedGroup).length})';
                   return Text(display,
                       style: TextStyle(color: Colors.grey.shade700));
@@ -451,11 +449,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           // After returning from AccountsScreen, reload servers from storage
           await _serverManager.loadServers();
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-                content:
-                    Text(AppLocalizations.of(context)!.storageNotAvailable)),
-          );
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                  content: Text(l10n.storageNotAvailable)),
+            );
         }
       },
       onNewAccount: _serverManager.addNewAccount,
@@ -476,7 +473,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 children: [
                   const CircularProgressIndicator(),
                   const SizedBox(height: 12),
-                  Text(AppLocalizations.of(context)!.syncing,
+                    Text(l10n.syncing,
                       style: const TextStyle(fontSize: 16)),
                 ],
               ),

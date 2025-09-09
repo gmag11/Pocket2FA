@@ -65,8 +65,8 @@ class AccountTile extends StatelessWidget {
               alignment: Alignment.bottomCenter,
               child: Padding(
                 padding: const EdgeInsets.only(bottom: 20.0),
-                child: Tooltip(
-                  message: AppLocalizations.of(context)!.pendingUpload,
+        child: Tooltip(
+          message: AppLocalizations.of(context)!.pendingUpload,
                   child: Container(
                     width: 28,
                     height: 28,

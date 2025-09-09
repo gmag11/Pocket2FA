@@ -15,15 +15,16 @@ class NewCodeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(title: Text(AppLocalizations.of(context)!.createNewCodeTitle)),
+      appBar: AppBar(title: Text(l10n.createNewCodeTitle)),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const SizedBox(height: 32),
-            Text(AppLocalizations.of(context)!.chooseHowToCreate, style: Theme.of(context).textTheme.bodyLarge),
+            Text(l10n.chooseHowToCreate, style: Theme.of(context).textTheme.bodyLarge),
             const SizedBox(height: 16),
             // Prominent primary action: Scan QR
             SizedBox(
@@ -44,7 +45,7 @@ class NewCodeScreen extends StatelessWidget {
                   }
                 },
                 icon: const Icon(Icons.qr_code_scanner, size: 28, color: Colors.white),
-                label: Text(AppLocalizations.of(context)!.scanQRCode, style: const TextStyle(fontSize: 16, color: Colors.white)),
+                label: Text(l10n.scanQRCode, style: const TextStyle(fontSize: 16, color: Colors.white)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF4F63E6),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
@@ -52,7 +53,7 @@ class NewCodeScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 64),
-            Center(child: Text(AppLocalizations.of(context)!.alternateMethods, style: const TextStyle(color: Colors.grey))),
+            Center(child: Text(l10n.alternateMethods, style: const TextStyle(color: Colors.grey))),
             const SizedBox(height: 12),
             SizedBox(
               height: 50,
@@ -71,7 +72,7 @@ class NewCodeScreen extends StatelessWidget {
                   }
                 },
                 icon: const Icon(Icons.image),
-                label: Text(AppLocalizations.of(context)!.selectImageButton, style: const TextStyle(fontSize: 16)),
+                label: Text(l10n.selectImageButton, style: const TextStyle(fontSize: 16)),
                 style: ElevatedButton.styleFrom(
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                 ),
@@ -88,7 +89,7 @@ class NewCodeScreen extends StatelessWidget {
                 }
               },
               icon: const Icon(Icons.edit),
-              label: Text(AppLocalizations.of(context)!.useAdvancedForm, style: const TextStyle(fontSize: 16)),
+              label: Text(l10n.useAdvancedForm, style: const TextStyle(fontSize: 16)),
             ),
             const SizedBox(height: 12),
             // Space before the cancel button to separate it from the alternate methods
@@ -96,7 +97,7 @@ class NewCodeScreen extends StatelessWidget {
             ElevatedButton.icon(
               onPressed: () => Navigator.of(context).pop(),
               icon: const Icon(Icons.arrow_back),
-              label: Text(AppLocalizations.of(context)!.back, style: const TextStyle(fontSize: 16)),
+              label: Text(l10n.back, style: const TextStyle(fontSize: 16)),
             ),
             const SizedBox(height: 12),
             // Push the user/server line to the bottom
@@ -108,7 +109,7 @@ class NewCodeScreen extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(AppLocalizations.of(context)!.userAtHost(userEmail, serverHost), style: const TextStyle(color: Colors.grey)),
+                    Text(l10n.userAtHost(userEmail, serverHost), style: const TextStyle(color: Colors.grey)),
                   ],
                 ),
               ),

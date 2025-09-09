@@ -37,6 +37,7 @@ class AccountList extends StatefulWidget {
 class _AccountListState extends State<AccountList> {
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     // Filter out deleted items to prevent crashes
     final filteredItems = widget.items.where((item) => !item.deleted).toList();
     
@@ -72,8 +73,8 @@ class _AccountListState extends State<AccountList> {
             Center(
               child: Text(
                 noServers
-                    ? AppLocalizations.of(context)!.noServersConfigured
-                    : AppLocalizations.of(context)!.noAccounts,
+                    ? l10n.noServersConfigured
+                    : l10n.noAccounts,
                 style: const TextStyle(color: Colors.grey, fontSize: 16),
                 textAlign: TextAlign.center,
               ),
@@ -105,7 +106,7 @@ class _AccountListState extends State<AccountList> {
           physics: const AlwaysScrollableScrollPhysics(),
             children: [
             const SizedBox(height: 120),
-            Center(child: Text(AppLocalizations.of(context)!.noResults, style: const TextStyle(color: Colors.grey))),
+            Center(child: Text(l10n.noResults, style: const TextStyle(color: Colors.grey))),
           ],
         ),
       );
@@ -143,7 +144,7 @@ class _AccountListState extends State<AccountList> {
             } catch (e) {
                 return ListTile(
                 leading: const Icon(Icons.error, color: Colors.red),
-                title: Text(AppLocalizations.of(context)!.errorDisplayingAccount),
+                title: Text(l10n.errorDisplayingAccount),
                 subtitle: Text(e.toString()),
                 isThreeLine: true,
                 dense: true,
@@ -191,7 +192,7 @@ class _AccountListState extends State<AccountList> {
               ),
               child: ListTile(
                 leading: const Icon(Icons.error, color: Colors.red),
-                title: Text(AppLocalizations.of(context)!.errorDisplayingAccount),
+                title: Text(l10n.errorDisplayingAccount),
                 subtitle: Text(e.toString()),
                 isThreeLine: true,
                 dense: true,

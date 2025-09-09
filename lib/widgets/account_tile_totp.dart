@@ -98,10 +98,11 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
     // Capture values that use BuildContext before any await to avoid
     // use_build_context_synchronously lint warnings.
     final horizontalMargin = MediaQuery.of(context).size.width * 0.12;
-    final messenger = ScaffoldMessenger.of(context);
-    final noCodeMsg = AppLocalizations.of(context)!.noCodeToCopy;
-    final copiedMsg = AppLocalizations.of(context)!.copied;
-    final errorCopyMsg = AppLocalizations.of(context)!.errorCopyingToClipboard;
+  final messenger = ScaffoldMessenger.of(context);
+  final l10n = AppLocalizations.of(context)!;
+  final noCodeMsg = l10n.noCodeToCopy;
+  final copiedMsg = l10n.copied;
+  final errorCopyMsg = l10n.errorCopyingToClipboard;
 
     if (trimmed.isEmpty || trimmed.toLowerCase() == 'offline') {
       messenger.showSnackBar(SnackBar(

@@ -38,6 +38,7 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
   final _periodCtrl = TextEditingController();
   final _counterCtrl = TextEditingController();
   bool _secretUnlocked = false; // Estado para controlar si el secret está desbloqueado
+  AppLocalizations get l10n => AppLocalizations.of(context)!;
 
   @override
   void dispose() {
@@ -89,7 +90,6 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
 
   Widget _buildOtpTypeButtons() {
     final isEditMode = widget.existingEntry != null;
-    
     return Row(
       children: [
         Expanded(
@@ -98,7 +98,7 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
             style: OutlinedButton.styleFrom(
                 backgroundColor:
                     _otpType == 'TOTP' ? const Color(0xFF4F63E6) : null),
-      child: Text(AppLocalizations.of(context)!.totpLabel,
+      child: Text(l10n.totpLabel,
         style:
           TextStyle(color: _otpType == 'TOTP' ? Colors.white : (isEditMode ? Colors.grey : null))),
           ),
@@ -110,7 +110,7 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
             style: OutlinedButton.styleFrom(
                 backgroundColor:
                     _otpType == 'HOTP' ? const Color(0xFF4F63E6) : null),
-      child: Text(AppLocalizations.of(context)!.hotpLabel,
+      child: Text(l10n.hotpLabel,
         style:
           TextStyle(color: _otpType == 'HOTP' ? Colors.white : (isEditMode ? Colors.grey : null))),
           ),
@@ -122,7 +122,7 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
             style: OutlinedButton.styleFrom(
                 backgroundColor:
                     _otpType == 'STEAM' ? const Color(0xFF4F63E6) : null),
-      child: Text(AppLocalizations.of(context)!.steamLabel,
+      child: Text(l10n.steamLabel,
         style: TextStyle(
           color: _otpType == 'STEAM' ? Colors.white : (isEditMode ? Colors.grey : null))),
           ),
@@ -134,7 +134,6 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
   Widget _buildSecretField() {
     final isEditMode = widget.existingEntry != null;
     final canEdit = !isEditMode || _secretUnlocked;
-
     return TextFormField(
       controller: _secretCtrl,
       // Keep the field enabled so suffixIcon remains interactive; use readOnly to prevent editing when locked.
@@ -143,7 +142,7 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
       enableInteractiveSelection: canEdit,
       obscureText: isEditMode && !_secretUnlocked, // Ocultar texto cuando está bloqueado
       decoration: InputDecoration(
-        hintText: canEdit ? '' : AppLocalizations.of(context)!.secretLockedHint,
+        hintText: canEdit ? '' : l10n.secretLockedHint,
         filled: !canEdit,
         fillColor: !canEdit ? Colors.grey[100] : null,
         border: OutlineInputBorder(
@@ -173,13 +172,13 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
       ),
       validator: (v) {
         final s = v?.trim() ?? '';
-        if (s.isEmpty) return AppLocalizations.of(context)!.secretRequired;
+        if (s.isEmpty) return l10n.secretRequired;
         // Normalize by removing spaces but do NOT change case; Base32 must be uppercase
         final cleaned = s.replaceAll(' ', '');
         // Base32: letters A-Z and digits 2-7, optionally padded with '=' characters at the end
         final base32Regex = RegExp(r'^[A-Z2-7]+=*$');
         if (!base32Regex.hasMatch(cleaned)) {
-          return AppLocalizations.of(context)!.secretBase32Error;
+          return l10n.secretBase32Error;
         }
         return null;
       },
@@ -226,7 +225,7 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.existingEntry != null ? AppLocalizations.of(context)!.update : AppLocalizations.of(context)!.create)),
+      appBar: AppBar(title: Text(widget.existingEntry != null ? l10n.update : l10n.create)),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
@@ -238,33 +237,33 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-          Text(AppLocalizations.of(context)!.serviceLabel,
+          Text(l10n.serviceLabel,
             style: const TextStyle(
               fontWeight: FontWeight.w600, fontSize: 20)),
                     TextFormField(
                       controller: _serviceCtrl,
             decoration: InputDecoration(
-              hintText: AppLocalizations.of(context)!.serviceHint),
-            validator: (v) => (v == null || v.trim().isEmpty) ? AppLocalizations.of(context)!.serviceRequired : null,
+              hintText: l10n.serviceHint),
+            validator: (v) => (v == null || v.trim().isEmpty) ? l10n.serviceRequired : null,
                     ),
                     const SizedBox(height: 20),
-          Text(AppLocalizations.of(context)!.accountLabel,
+          Text(l10n.accountLabel,
             style: const TextStyle(
               fontWeight: FontWeight.w600, fontSize: 20)),
                     TextFormField(
                       controller: _accountCtrl,
-            decoration: InputDecoration(hintText: AppLocalizations.of(context)!.accountHint),
-            validator: (v) => (v == null || v.trim().isEmpty) ? AppLocalizations.of(context)!.accountRequired : null,
+            decoration: InputDecoration(hintText: l10n.accountHint),
+            validator: (v) => (v == null || v.trim().isEmpty) ? l10n.accountRequired : null,
                     ),
                     const SizedBox(height: 20),
-          Text(AppLocalizations.of(context)!.groupLabel,
+          Text(l10n.groupLabel,
             style: const TextStyle(
               fontWeight: FontWeight.w600, fontSize: 20)),
                     const SizedBox(height: 8),
                     DropdownButtonFormField<String>(
                       initialValue: _selectedGroup,
                       items: [
-                        DropdownMenuItem(value: '- No group -', child: Text(AppLocalizations.of(context)!.noGroupOption)),
+                        DropdownMenuItem(value: '- No group -', child: Text(l10n.noGroupOption)),
                         if (widget.groups != null && widget.groups!.isNotEmpty) ...widget.groups!
                             .where((g) => !g.name.toLowerCase().startsWith('all'))
                             .map((g) => DropdownMenuItem(value: g.name, child: Text(g.name)))
@@ -275,16 +274,16 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      AppLocalizations.of(context)!.groupHint,
+                      l10n.groupHint,
                       style: const TextStyle(fontSize: 12, color: Colors.grey),
                     ),
                     const SizedBox(height: 20),
-                    Text(AppLocalizations.of(context)!.chooseOtpType,
+                    Text(l10n.chooseOtpType,
                         style: const TextStyle(
                             fontWeight: FontWeight.w600, fontSize: 20)),
                     const SizedBox(height: 4),
                     Text(
-                      AppLocalizations.of(context)!.otpTypeHint,
+                      l10n.otpTypeHint,
                       style: const TextStyle(fontSize: 12, color: Colors.grey),
                     ),
                     const SizedBox(height: 4),
@@ -294,47 +293,47 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
 
                     // Secret and options depend on OTP type
                     if (_otpType == 'TOTP') ...[
-                      Text(AppLocalizations.of(context)!.secretLabel,
+                      Text(l10n.secretLabel,
                           style: const TextStyle(
                               fontWeight: FontWeight.w600, fontSize: 20)),
                       _buildSecretField(),
                       const SizedBox(height: 4),
                       Text(
-                        AppLocalizations.of(context)!.secretHint,
+                        l10n.secretHint,
                         style: const TextStyle(fontSize: 12, color: Colors.grey),
                       ),
                       const SizedBox(height: 16),
-            Text(AppLocalizations.of(context)!.optionsLabel,
+            Text(l10n.optionsLabel,
               style: const TextStyle(
                 fontWeight: FontWeight.w600, fontSize: 20)),
                       const SizedBox(height: 4),
             Text(
-              AppLocalizations.of(context)!.optionsHint,
+              l10n.optionsHint,
               style: const TextStyle(fontSize: 12, color: Colors.grey)),
                       const SizedBox(height: 12),
-            Text(AppLocalizations.of(context)!.digitsLabel,
+            Text(l10n.digitsLabel,
               style: const TextStyle(
                 fontWeight: FontWeight.w600, fontSize: 16)),
                       const SizedBox(height: 4),
                       Text(
-                        AppLocalizations.of(context)!.digitsHint,
+                        l10n.digitsHint,
                         style: const TextStyle(fontSize: 12, color: Colors.grey),
                       ),
                       const SizedBox(height: 4),
                       _buildDigitsSelector(),
                       const SizedBox(height: 12),
-            Text(AppLocalizations.of(context)!.algorithmLabel,
+            Text(l10n.algorithmLabel,
               style: const TextStyle(
                 fontWeight: FontWeight.w600, fontSize: 16)),
                       const SizedBox(height: 4),
                       Text(
-                        AppLocalizations.of(context)!.algorithmHint,
+                        l10n.algorithmHint,
                         style: const TextStyle(fontSize: 12, color: Colors.grey),
                       ),
                       const SizedBox(height: 4),
                       _buildAlgorithmButtons(),
                       const SizedBox(height: 12),
-            Text(AppLocalizations.of(context)!.periodLabel,
+            Text(l10n.periodLabel,
               style: const TextStyle(
                 fontWeight: FontWeight.w600, fontSize: 16)),
                       const SizedBox(height: 8),
@@ -342,82 +341,82 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
                           controller: _periodCtrl,
                           keyboardType: TextInputType.number,
                           decoration:
-                              InputDecoration(hintText: AppLocalizations.of(context)!.periodDefaultHint),
+                              InputDecoration(hintText: l10n.periodDefaultHint),
                           validator: (v) {
                             if (v == null || v.trim().isEmpty) return null;
-                            return int.tryParse(v.trim()) == null ? AppLocalizations.of(context)!.periodDefaultHint : null;
+                            return int.tryParse(v.trim()) == null ? l10n.periodDefaultHint : null;
                           }),
                       const SizedBox(height: 4),
                       Text(
-                        AppLocalizations.of(context)!.periodHint,
+                        l10n.periodHint,
                         style: const TextStyle(fontSize: 12, color: Colors.grey),
                       ),
                       const SizedBox(height: 16),
                     ] else if (_otpType == 'HOTP') ...[
-            Text(AppLocalizations.of(context)!.secretLabel,
+            Text(l10n.secretLabel,
               style: const TextStyle(
                 fontWeight: FontWeight.w600, fontSize: 20)),
                       _buildSecretField(),
                       const SizedBox(height: 4),
                       Text(
-                        AppLocalizations.of(context)!.secretLockedHint,
+                        l10n.secretLockedHint,
                         style: const TextStyle(fontSize: 12, color: Colors.grey),
                       ),
                       const SizedBox(height: 16),
-            Text(AppLocalizations.of(context)!.optionsLabel,
+            Text(l10n.optionsLabel,
               style: const TextStyle(
                 fontWeight: FontWeight.w600, fontSize: 20)),
                       const SizedBox(height: 4),
             Text(
-              AppLocalizations.of(context)!.optionsHint,
+              l10n.optionsHint,
               style: const TextStyle(fontSize: 12, color: Colors.grey)),
                       const SizedBox(height: 12),
-            Text(AppLocalizations.of(context)!.digitsLabel,
+            Text(l10n.digitsLabel,
               style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
                       const SizedBox(height: 4),
                       Text(
-                        AppLocalizations.of(context)!.digitsHint,
+                        l10n.digitsHint,
                         style: const TextStyle(fontSize: 12, color: Colors.grey),
                       ),
                       const SizedBox(height: 4),
                       _buildDigitsSelector(),
                       const SizedBox(height: 12),
-            Text(AppLocalizations.of(context)!.algorithmLabel,
+            Text(l10n.algorithmLabel,
               style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
                      const SizedBox(height: 4),
                       Text(
-                        AppLocalizations.of(context)!.algorithmHint,
+                        l10n.algorithmHint,
                         style: const TextStyle(fontSize: 12, color: Colors.grey),
                       ),
                       const SizedBox(height: 4),
                       _buildAlgorithmButtons(),
                       const SizedBox(height: 12),
-            Text(AppLocalizations.of(context)!.counterLabel,
+            Text(l10n.counterLabel,
               style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
                       const SizedBox(height: 8),
                       TextFormField(
                           controller: _counterCtrl,
                           keyboardType: TextInputType.number,
                           decoration:
-                              InputDecoration(hintText: AppLocalizations.of(context)!.counterDefaultHint),
+                              InputDecoration(hintText: l10n.counterDefaultHint),
                           validator: (v) {
                             if (v == null || v.trim().isEmpty) return null;
-                            return int.tryParse(v.trim()) == null ? AppLocalizations.of(context)!.counterDefaultHint : null;
+                            return int.tryParse(v.trim()) == null ? l10n.counterDefaultHint : null;
                           }),
                               const SizedBox(height: 4),
                       Text(
-                        AppLocalizations.of(context)!.counterHint,
+                        l10n.counterHint,
                         style: const TextStyle(fontSize: 12, color: Colors.grey),
                       ),
                       const SizedBox(height: 20),
                     ] else ...[
-            Text(AppLocalizations.of(context)!.secretLabel,
+            Text(l10n.secretLabel,
               style: const TextStyle(
                 fontWeight: FontWeight.w600, fontSize: 20)),
                       _buildSecretField(),
                       const SizedBox(height: 4),
                       Text(
-                        AppLocalizations.of(context)!.secretLockedHint,
+                        l10n.secretLockedHint,
                         style: const TextStyle(fontSize: 12, color: Colors.grey),
                       ),
                       const SizedBox(height: 16),
@@ -570,7 +569,7 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
             child: Padding(
             padding: const EdgeInsets.symmetric(
               horizontal: 20.0, vertical: 12.0),
-            child: Text(widget.existingEntry != null ? AppLocalizations.of(context)!.update : AppLocalizations.of(context)!.create)),
+            child: Text(widget.existingEntry != null ? l10n.update : l10n.create)),
                   ),
                   const SizedBox(width: 12),
           OutlinedButton(
@@ -578,13 +577,13 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
             child: Padding(
               padding: const EdgeInsets.symmetric(
                 horizontal: 16.0, vertical: 12.0),
-              child: Text(AppLocalizations.of(context)!.cancel)),
+              child: Text(l10n.cancel)),
           ),
                 ],
               ),
               const SizedBox(height: 12),
         Center(
-          child: Text(AppLocalizations.of(context)!.userAtHost(widget.userEmail, widget.serverHost),
+          child: Text(l10n.userAtHost(widget.userEmail, widget.serverHost),
             style: const TextStyle(color: Colors.grey))),
             ],
           ),

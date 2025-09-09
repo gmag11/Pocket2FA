@@ -67,6 +67,7 @@ class BottomBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool hasServers = servers.isNotEmpty;
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       color: Colors.white,
@@ -86,7 +87,7 @@ class BottomBar extends StatelessWidget {
                     foregroundColor: Colors.white,
                     minimumSize: const Size(0, 36),
                   ),
-                  child: Text(AppLocalizations.of(context)!.delete, style: const TextStyle(color: Colors.white)),
+                  child: Text(l10n.delete, style: const TextStyle(color: Colors.white)),
                 ),
                 const SizedBox(width: 12),
                 OutlinedButton(
@@ -95,7 +96,7 @@ class BottomBar extends StatelessWidget {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                     minimumSize: const Size(0, 36),
                   ),
-                  child: Text(AppLocalizations.of(context)!.done),
+                  child: Text(l10n.done),
                 ),
               ] else ...[
                 // Modo Normal: Mostrar botones New y Manage
@@ -120,7 +121,7 @@ class BottomBar extends StatelessWidget {
                     backgroundColor: hasServers ? const Color(0xFF4F63E6) : Colors.grey,
                     foregroundColor: Colors.white,
                   ),
-                  label: Text(AppLocalizations.of(context)!.newLabel, style: const TextStyle(color: Colors.white)),
+                  label: Text(l10n.newLabel, style: const TextStyle(color: Colors.white)),
                 ),
                 const SizedBox(width: 12),
                 OutlinedButton(
@@ -130,7 +131,7 @@ class BottomBar extends StatelessWidget {
                     foregroundColor: hasServers ? null : Colors.grey,
                     minimumSize: const Size(0, 36),
                   ),
-                  child: Text(AppLocalizations.of(context)!.manage),
+                  child: Text(l10n.manage),
                 ),
               ],
             ],
@@ -145,9 +146,9 @@ class BottomBar extends StatelessWidget {
                 children: [
                     // Reachability indicator: icon + tooltip + semantics for accessibility
                     Tooltip(
-                      message: serverReachable ? AppLocalizations.of(context)!.online : AppLocalizations.of(context)!.offline,
+                      message: serverReachable ? l10n.online : l10n.offline,
                       child: Semantics(
-                        label: serverReachable ? AppLocalizations.of(context)!.serverReachable : AppLocalizations.of(context)!.serverUnreachable,
+                        label: serverReachable ? l10n.serverReachable : l10n.serverUnreachable,
                         child: Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 6.0),
                           child: Icon(
@@ -166,14 +167,14 @@ class BottomBar extends StatelessWidget {
                           // Compute display text from the selected server/account safely
                           String displayText;
                           if (servers.isEmpty) {
-                            displayText = AppLocalizations.of(context)!.noServer;
+                            displayText = l10n.noServer;
                           } else {
                             final srv = selectedServerId != null
                                 ? servers.firstWhere((s) => s.id == selectedServerId, orElse: () => servers.first)
                                 : servers.first;
                             // Show only the server/user email. Do not display the selected
                             // account name in this top/bottom summary to avoid confusion.
-                            final acct = (srv.userEmail.isNotEmpty) ? srv.userEmail : AppLocalizations.of(context)!.noEmail;
+                            final acct = (srv.userEmail.isNotEmpty) ? srv.userEmail : l10n.noEmail;
                             displayText = '$acct - ${Uri.parse(srv.url).host}';
                           }
                           return Text(displayText, style: const TextStyle(color: Colors.grey));
@@ -186,7 +187,7 @@ class BottomBar extends StatelessWidget {
                       final nav = Navigator.of(context);
                       final messenger = ScaffoldMessenger.of(context);
                       // Capture localized strings before asynchronous gaps
-                      final storageNotAvailableMsg = AppLocalizations.of(context)?.storageNotAvailable ?? 'Storage not available';
+                      final storageNotAvailableMsg = l10n.storageNotAvailable;
                       showModalBottomSheet<String>(
                           context: context,
                           backgroundColor: Colors.white,

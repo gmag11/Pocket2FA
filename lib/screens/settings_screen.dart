@@ -12,8 +12,9 @@ class SettingsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(title: Text(AppLocalizations.of(context)!.settingsTitle)),
+      appBar: AppBar(title: Text(l10n.settingsTitle)),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: AnimatedBuilder(
@@ -35,7 +36,7 @@ class SettingsScreen extends StatelessWidget {
                     const SizedBox(width: 8),
                     Flexible(
                       fit: FlexFit.loose,
-                      child: Text(AppLocalizations.of(context)!.codeFormatting, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: enabled ? null : Colors.grey.shade600)),
+                      child: Text(l10n.codeFormatting, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: enabled ? null : Colors.grey.shade600)),
                     ),
                   ],
                 ),
@@ -45,9 +46,9 @@ class SettingsScreen extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      _formatButton(context, settings.format == CodeFormat.spaced3, AppLocalizations.of(context)!.byTrio, '123 456', enabled ? () => settings.setFormat(CodeFormat.spaced3) : () {}),
+                      _formatButton(context, settings.format == CodeFormat.spaced3, l10n.byTrio, '123 456', enabled ? () => settings.setFormat(CodeFormat.spaced3) : () {}),
                       const SizedBox(width: 4),
-                      _formatButton(context, settings.format == CodeFormat.spaced2, AppLocalizations.of(context)!.byPair, '12 34 56', enabled ? () => settings.setFormat(CodeFormat.spaced2) : () {}),
+                      _formatButton(context, settings.format == CodeFormat.spaced2, l10n.byPair, '12 34 56', enabled ? () => settings.setFormat(CodeFormat.spaced2) : () {}),
                     ],
                   ),
                 ),
@@ -66,9 +67,10 @@ class SettingsScreen extends StatelessWidget {
                           onChanged: supported
                               ? (v) async {
                                   // capture localized messages before awaiting
-                                  final enabledMsg = AppLocalizations.of(ctx)!.biometricEnabled;
-                                  final disabledMsg = AppLocalizations.of(ctx)!.biometricDisabled;
-                                  final operationFailedMsg = AppLocalizations.of(ctx)!.operationFailed;
+                                  final l = AppLocalizations.of(ctx)!;
+                                  final enabledMsg = l.biometricEnabled;
+                                  final disabledMsg = l.biometricDisabled;
+                                  final operationFailedMsg = l.operationFailed;
                                   final ok = await settings.setBiometricEnabled(v);
                                   messenger.showSnackBar(SnackBar(
                                     content: Text(ok ? (v ? enabledMsg : disabledMsg) : operationFailedMsg),
@@ -78,7 +80,8 @@ class SettingsScreen extends StatelessWidget {
                           activeThumbColor: _baseAccent,
                         );
                         if (!supported) {
-                          return Tooltip(message: AppLocalizations.of(ctx)!.biometricsNotAvailable, child: switchWidget);
+                          final l2 = AppLocalizations.of(ctx)!;
+                          return Tooltip(message: l2.biometricsNotAvailable, child: switchWidget);
                         }
                         return switchWidget;
                       }),
@@ -86,7 +89,7 @@ class SettingsScreen extends StatelessWidget {
                       Flexible(
                         fit: FlexFit.loose,
                         child: Text(
-                          AppLocalizations.of(context)!.biometricProtection,
+                          l10n.biometricProtection,
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -109,8 +112,8 @@ class SettingsScreen extends StatelessWidget {
                     const SizedBox(width: 8),
                     Flexible(
                       fit: FlexFit.loose,
-                      child: Text(
-                        AppLocalizations.of(context)!.hideOtpsOnHome,
+                        child: Text(
+                        l10n.hideOtpsOnHome,
                         style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: null),
                       ),
                     ),
@@ -120,7 +123,7 @@ class SettingsScreen extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.only(left: 56.0),
                   child: Text(
-                    AppLocalizations.of(context)!.longPressReveal,
+                    l10n.longPressReveal,
                     style: TextStyle(fontSize: 12, color: Colors.grey),
                   ),
                 ),

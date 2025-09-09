@@ -14,8 +14,8 @@ class AccountTile extends StatelessWidget {
   final VoidCallback? onEdit; // Nuevo callback para edición
 
   const AccountTile({
-    super.key, 
-    required this.item, 
+    super.key,
+    required this.item,
     this.settings,
     this.isManageMode = false,
     this.isSelected = false,
@@ -29,8 +29,8 @@ class AccountTile extends StatelessWidget {
     Widget child;
     if (isHotp) {
       child = AccountTileHOTP(
-        key: key, 
-        item: item, 
+        key: key,
+        item: item,
         settings: settings,
         isManageMode: isManageMode,
         isSelected: isSelected,
@@ -39,8 +39,8 @@ class AccountTile extends StatelessWidget {
       );
     } else {
       child = AccountTileTOTP(
-        key: key, 
-        item: item, 
+        key: key,
+        item: item,
         settings: settings,
         isManageMode: isManageMode,
         isSelected: isSelected,
@@ -65,8 +65,8 @@ class AccountTile extends StatelessWidget {
               alignment: Alignment.bottomCenter,
               child: Padding(
                 padding: const EdgeInsets.only(bottom: 20.0),
-        child: Tooltip(
-          message: AppLocalizations.of(context)!.pendingUpload,
+                child: Tooltip(
+                  message: AppLocalizations.of(context)!.pendingUpload,
                   child: Container(
                     width: 28,
                     height: 28,
@@ -74,12 +74,16 @@ class AccountTile extends StatelessWidget {
                       color: Colors.red.shade700,
                       shape: BoxShape.circle,
                       boxShadow: [
-                        BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(0,2)),
+                        BoxShadow(
+                            color: Colors.black26,
+                            blurRadius: 4,
+                            offset: Offset(0, 2)),
                       ],
                       border: Border.all(color: Colors.white, width: 1.5),
                     ),
                     child: Center(
-                      child: Icon(Icons.cloud_off, size: 16, color: Colors.white),
+                      child:
+                          Icon(Icons.cloud_off, size: 16, color: Colors.white),
                     ),
                   ),
                 ),

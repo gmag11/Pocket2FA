@@ -85,9 +85,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       MaterialPageRoute(
         builder: (context) {
           final selectedServer = _serverManager.getSelectedServer();
-            return AdvancedFormScreen(
-              userEmail: selectedServer?.userEmail ?? l10n.unknown,
-              serverHost: selectedServer?.url ?? l10n.unknown,
+          return AdvancedFormScreen(
+            userEmail: selectedServer?.userEmail ?? l10n.unknown,
+            serverHost: selectedServer?.url ?? l10n.unknown,
             groups: selectedServer?.groups,
             existingEntry: account, // Pasar la entrada existente para edición
           );
@@ -102,7 +102,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       // Mostrar mensaje de confirmación
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(l10n.accountUpdated)),
+          SnackBar(content: Text(l10n.accountUpdated)),
         );
       }
     }
@@ -118,9 +118,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         await _syncManager.performThrottledSync();
       } catch (e) {
         if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(l10n.cannotSync)),
-            );
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(l10n.cannotSync)),
+          );
         }
       }
     }
@@ -166,8 +166,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       final isActive =
                           srv.id == _serverManager.selectedServerId;
                       return ListTile(
-                        title: Text(l10n
-                            .serverWithHost(srv.name, Uri.parse(srv.url).host)),
+                        title: Text(l10n.serverWithHost(
+                            srv.name, Uri.parse(srv.url).host)),
                         subtitle: Text(srv.url),
                         trailing: isActive
                             ? const Icon(Icons.check, color: Colors.green)
@@ -241,8 +241,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   onPressed: () async {
                     final messenger = ScaffoldMessenger.of(context);
                     // capture localized message before await to avoid context-after-await lint
-                    final authFailedMsg =
-                        l10n.authenticationFailed;
+                    final authFailedMsg = l10n.authenticationFailed;
                     final ok = await storage.attemptUnlock();
                     if (ok) {
                       await _serverManager.loadServers();
@@ -361,7 +360,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Widget _buildGroupSelector(List<String> groups) {
     return _manageMode.isManageMode && _manageMode.selectedAccountIds.isNotEmpty
         ? Text(
-              l10n.selectedCount(_manageMode.selectedAccountIds.length),
+            l10n.selectedCount(_manageMode.selectedAccountIds.length),
             style: TextStyle(color: Colors.grey.shade700),
           )
         : PopupMenuButton<String>(
@@ -373,11 +372,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               });
             },
             itemBuilder: (context) => groups
-        .map((g) => PopupMenuItem(
-          value: g,
-          child: Text(g == 'All'
-            ? l10n.groupAll(_serverManager.currentItems.length)
-            : '$g (${_serverManager.currentItems.where((a) => a.group.trim() == g).length})')))
+                .map((g) => PopupMenuItem(
+                    value: g,
+                    child: Text(g == 'All'
+                        ? l10n.groupAll(_serverManager.currentItems.length)
+                        : '$g (${_serverManager.currentItems.where((a) => a.group.trim() == g).length})')))
                 .toList(),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -449,10 +448,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           // After returning from AccountsScreen, reload servers from storage
           await _serverManager.loadServers();
         } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                  content: Text(l10n.storageNotAvailable)),
-            );
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(l10n.storageNotAvailable)),
+          );
         }
       },
       onNewAccount: _serverManager.addNewAccount,
@@ -473,8 +471,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 children: [
                   const CircularProgressIndicator(),
                   const SizedBox(height: 12),
-                    Text(l10n.syncing,
-                      style: const TextStyle(fontSize: 16)),
+                  Text(l10n.syncing, style: const TextStyle(fontSize: 16)),
                 ],
               ),
             ),

@@ -7,7 +7,8 @@ import 'dart:developer' as developer;
 class ServerDetailScreen extends StatefulWidget {
   final ServerConnection server;
   final ValueChanged<ServerConnection> onChanged;
-  const ServerDetailScreen({required this.server, required this.onChanged, super.key});
+  const ServerDetailScreen(
+      {required this.server, required this.onChanged, super.key});
 
   @override
   State<ServerDetailScreen> createState() => _ServerDetailScreenState();
@@ -34,39 +35,49 @@ class _ServerDetailScreenState extends State<ServerDetailScreen> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            TextField(controller: svc, decoration: InputDecoration(labelText: l10n.serviceLabel)),
-            TextField(controller: acct, decoration: InputDecoration(labelText: l10n.accountLabel)),
-            TextField(controller: seed, decoration: InputDecoration(labelText: l10n.seedLabel)),
+            TextField(
+                controller: svc,
+                decoration: InputDecoration(labelText: l10n.serviceLabel)),
+            TextField(
+                controller: acct,
+                decoration: InputDecoration(labelText: l10n.accountLabel)),
+            TextField(
+                controller: seed,
+                decoration: InputDecoration(labelText: l10n.seedLabel)),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(c).pop(false), child: Text(l10n.cancel)),
-          ElevatedButton(onPressed: () => Navigator.of(c).pop(true), child: Text(l10n.add)),
+          TextButton(
+              onPressed: () => Navigator.of(c).pop(false),
+              child: Text(l10n.cancel)),
+          ElevatedButton(
+              onPressed: () => Navigator.of(c).pop(true),
+              child: Text(l10n.add)),
         ],
       ),
     );
 
     if (res == true) {
       final item = AccountEntry(
-        id: DateTime.now().millisecondsSinceEpoch,
-        service: svc.text,
-        account: acct.text,
-        seed: seed.text,
-        group: '',
-        synchronized: false
-      );
+          id: DateTime.now().millisecondsSinceEpoch,
+          service: svc.text,
+          account: acct.text,
+          seed: seed.text,
+          group: '',
+          synchronized: false);
       try {
-        developer.log('AccountsScreen: local manual add service=${item.service} account=${item.account} id=${item.id}', name: 'AccountsScreen');
+        developer.log(
+            'AccountsScreen: local manual add service=${item.service} account=${item.account} id=${item.id}',
+            name: 'AccountsScreen');
       } catch (_) {}
       setState(() {
         _server = ServerConnection(
-          id: _server.id,
-          name: _server.name,
-          url: _server.url,
-          apiKey: _server.apiKey,
-          accounts: [..._server.accounts, item],
-          userEmail: _server.userEmail
-        );
+            id: _server.id,
+            name: _server.name,
+            url: _server.url,
+            apiKey: _server.apiKey,
+            accounts: [..._server.accounts, item],
+            userEmail: _server.userEmail);
       });
       widget.onChanged(_server);
     }
@@ -76,20 +87,19 @@ class _ServerDetailScreenState extends State<ServerDetailScreen> {
     final l = List.of(_server.accounts);
     l.removeAt(idx);
     setState(() => _server = ServerConnection(
-      id: _server.id,
-      name: _server.name,
-      url: _server.url,
-      apiKey: _server.apiKey,
-      accounts: l,
-      userEmail: _server.userEmail
-    ));
+        id: _server.id,
+        name: _server.name,
+        url: _server.url,
+        apiKey: _server.apiKey,
+        accounts: l,
+        userEmail: _server.userEmail));
     widget.onChanged(_server);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-  appBar: AppBar(title: Text('${l10n.serverLabel}: ${_server.name}')),
+      appBar: AppBar(title: Text('${l10n.serverLabel}: ${_server.name}')),
       body: ListView.builder(
         itemCount: _server.accounts.length,
         itemBuilder: (context, index) {
@@ -97,11 +107,14 @@ class _ServerDetailScreenState extends State<ServerDetailScreen> {
           return ListTile(
             title: Text(a.service),
             subtitle: Text(a.account),
-            trailing: IconButton(icon: const Icon(Icons.delete), onPressed: () => _removeAccount(index)),
+            trailing: IconButton(
+                icon: const Icon(Icons.delete),
+                onPressed: () => _removeAccount(index)),
           );
         },
       ),
-      floatingActionButton: FloatingActionButton(onPressed: _addAccount, child: const Icon(Icons.add)),
+      floatingActionButton: FloatingActionButton(
+          onPressed: _addAccount, child: const Icon(Icons.add)),
     );
   }
 }

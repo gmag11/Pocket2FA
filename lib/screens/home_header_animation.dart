@@ -18,22 +18,15 @@ class HomeHeaderAnimation {
 
     // Slower animation so it's clear the header hides upwards and unfolds downwards
     _headerController = AnimationController(
-      vsync: vsync, 
-      duration: const Duration(milliseconds: 450)
-    );
-    
-    _headerSlide = Tween<Offset>(
-      begin: const Offset(0, -0.28), 
-      end: Offset.zero
-    ).animate(CurvedAnimation(
-      parent: _headerController, 
-      curve: Curves.easeInOut
-    ));
-    
-    _headerSizeFactor = CurvedAnimation(
-      parent: _headerController, 
-      curve: Curves.easeInOut
-    );
+        vsync: vsync, duration: const Duration(milliseconds: 450));
+
+    _headerSlide =
+        Tween<Offset>(begin: const Offset(0, -0.28), end: Offset.zero).animate(
+            CurvedAnimation(
+                parent: _headerController, curve: Curves.easeInOut));
+
+    _headerSizeFactor =
+        CurvedAnimation(parent: _headerController, curve: Curves.easeInOut);
 
     // Start visible
     _headerController.value = 1.0;
@@ -56,26 +49,26 @@ class HomeHeaderAnimation {
 
     if (!allowHide) {
       // If there's enough vertical space, always show the header
-      if (_headerController.status != AnimationStatus.forward && 
+      if (_headerController.status != AnimationStatus.forward &&
           _headerController.value < 1.0) {
         _headerController.forward();
       }
     } else {
       if (offset <= 0) {
         // show at top
-        if (_headerController.status != AnimationStatus.forward && 
+        if (_headerController.status != AnimationStatus.forward &&
             _headerController.value < 1.0) {
           _headerController.forward();
         }
       } else if (delta > threshold) {
         // scrolling up -> hide (animate upwards)
-        if (_headerController.status != AnimationStatus.reverse && 
+        if (_headerController.status != AnimationStatus.reverse &&
             _headerController.value > 0.0) {
           _headerController.reverse();
         }
       } else if (delta < -threshold) {
         // scrolling down -> show (unfold downward)
-        if (_headerController.status != AnimationStatus.forward && 
+        if (_headerController.status != AnimationStatus.forward &&
             _headerController.value < 1.0) {
           _headerController.forward();
         }

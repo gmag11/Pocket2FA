@@ -30,7 +30,8 @@ class Pocket2FA extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      onGenerateTitle: (context) => AppLocalizations.of(context)?.appTitle ?? 'Pocket2FA',
+      onGenerateTitle: (context) =>
+          AppLocalizations.of(context)?.appTitle ?? 'Pocket2FA',
       localizationsDelegates: const [
         AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,
@@ -42,7 +43,7 @@ class Pocket2FA extends StatelessWidget {
         primarySwatch: Colors.indigo,
         scaffoldBackgroundColor: Colors.white,
       ),
-  home: HomePage(settings: settings),
+      home: HomePage(settings: settings),
     );
   }
 }

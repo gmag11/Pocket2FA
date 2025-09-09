@@ -4,13 +4,14 @@ import '../services/settings_service.dart';
 /// Utilities and helpers for AccountTile
 class AccountTileUtils {
   /// Formats a code according to settings
-  static String formatCode(String code, SettingsService? settings, {bool forceVisible = false}) {
-  // If the tile shows an 'offline' indicator, return it as-is so it
-  // is not grouped/spaced like numeric OTPs (fixes "off lin e").
+  static String formatCode(String code, SettingsService? settings,
+      {bool forceVisible = false}) {
+    // If the tile shows an 'offline' indicator, return it as-is so it
+    // is not grouped/spaced like numeric OTPs (fixes "off lin e").
     if (code.toLowerCase() == 'offline') return code;
 
     final digits = code.replaceAll(RegExp(r'\s+'), '');
-  // If formatting is disabled, always return compact digits
+    // If formatting is disabled, always return compact digits
     if (settings != null && settings.enabled == false) return digits;
 
     final fmt = settings?.format ?? CodeFormat.compact;

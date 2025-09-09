@@ -15,16 +15,18 @@ class AccountTileUi {
     Widget fallbackAvatar() => CircleAvatar(
           radius: radius,
           backgroundColor: Color.fromRGBO(
-            (color.r * 255.0).round() & 0xff,
-            (color.g * 255.0).round() & 0xff,
-            (color.b * 255.0).round() & 0xff, 0.2),
+              (color.r * 255.0).round() & 0xff,
+              (color.g * 255.0).round() & 0xff,
+              (color.b * 255.0).round() & 0xff,
+              0.2),
           child: Text(
             item.service.characters.first,
             style: TextStyle(
               color: Color.fromRGBO(
-                (color.r * 255.0).round() & 0xff,
-                (color.g * 255.0).round() & 0xff,
-                (color.b * 255.0).round() & 0xff, 0.8),
+                  (color.r * 255.0).round() & 0xff,
+                  (color.g * 255.0).round() & 0xff,
+                  (color.b * 255.0).round() & 0xff,
+                  0.8),
               fontWeight: FontWeight.bold,
               fontSize: 12,
             ),
@@ -105,7 +107,9 @@ class AccountTileUi {
             child: ElevatedButton(
               onPressed: onPressed,
               style: ElevatedButton.styleFrom(minimumSize: const Size(0, 36)),
-                  child: Builder(builder: (context) => Text(AppLocalizations.of(context)!.generate)),
+              child: Builder(
+                  builder: (context) =>
+                      Text(AppLocalizations.of(context)!.generate)),
             ),
           ),
         ),
@@ -141,7 +145,8 @@ class AccountTileUi {
                             return InkWell(
                               onTap: onCopy,
                               child: Text(
-                                AccountTileUtils.formatCode(hotpCode ?? '', settings),
+                                AccountTileUtils.formatCode(
+                                    hotpCode ?? '', settings),
                                 style: const TextStyle(
                                     fontSize: 24, fontWeight: FontWeight.w700),
                               ),
@@ -161,12 +166,15 @@ class AccountTileUi {
                 if (hotpCounter != null)
                   Align(
                     alignment: Alignment.centerLeft,
-            child: Padding(
-            padding: const EdgeInsets.only(top: 2.0),
-            child: Builder(builder: (context) => Text(AppLocalizations.of(context)!.hotpCounter(hotpCounter),
-              style: TextStyle(
-                fontSize: 12, color: Colors.grey.shade500))),
-          ),
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 2.0),
+                      child: Builder(
+                          builder: (context) => Text(
+                              AppLocalizations.of(context)!
+                                  .hotpCounter(hotpCounter),
+                              style: TextStyle(
+                                  fontSize: 12, color: Colors.grey.shade500))),
+                    ),
                   ),
               ],
             ),
@@ -204,7 +212,9 @@ class AccountTileUi {
             if (j < fullActive) {
               dotColor = baseColor;
             } else if (j == fullActive) {
-              dotColor = Color.lerp(const Color(0xFFBDBDBD), baseColor, partial) ?? baseColor;
+              dotColor =
+                  Color.lerp(const Color(0xFFBDBDBD), baseColor, partial) ??
+                      baseColor;
             } else {
               dotColor = const Color(0xFFBDBDBD);
             }

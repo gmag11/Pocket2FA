@@ -130,12 +130,10 @@ Future<ServerConnection?> showServerAddEditDialog({
             children: [
               TextField(
                   controller: nameCtrl,
-                  decoration: InputDecoration(
-                      labelText: l10n.nameLabel)),
+                  decoration: InputDecoration(labelText: l10n.nameLabel)),
               TextField(
                   controller: urlCtrl,
-                  decoration: InputDecoration(
-                      labelText: l10n.urlLabel)),
+                  decoration: InputDecoration(labelText: l10n.urlLabel)),
               apiFieldLocal(),
               if (errorText != null) ...[
                 const SizedBox(height: 8),
@@ -158,9 +156,7 @@ Future<ServerConnection?> showServerAddEditDialog({
                       width: 20,
                       height: 20,
                       child: CircularProgressIndicator(strokeWidth: 2))
-                  : Text(isEdit
-                      ? l10n.save
-                      : l10n.add),
+                  : Text(isEdit ? l10n.save : l10n.add),
             ),
           ],
         );

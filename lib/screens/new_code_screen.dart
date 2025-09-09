@@ -11,7 +11,11 @@ class NewCodeScreen extends StatelessWidget {
   final String serverHost;
   final List<GroupEntry>? groups; // forwarded from HomePage
 
-  const NewCodeScreen({super.key, required this.userEmail, required this.serverHost, this.groups});
+  const NewCodeScreen(
+      {super.key,
+      required this.userEmail,
+      required this.serverHost,
+      this.groups});
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +28,8 @@ class NewCodeScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const SizedBox(height: 32),
-            Text(l10n.chooseHowToCreate, style: Theme.of(context).textTheme.bodyLarge),
+            Text(l10n.chooseHowToCreate,
+                style: Theme.of(context).textTheme.bodyLarge),
             const SizedBox(height: 16),
             // Prominent primary action: Scan QR
             SizedBox(
@@ -44,16 +49,21 @@ class NewCodeScreen extends StatelessWidget {
                     navigator.pop(result);
                   }
                 },
-                icon: const Icon(Icons.qr_code_scanner, size: 28, color: Colors.white),
-                label: Text(l10n.scanQRCode, style: const TextStyle(fontSize: 16, color: Colors.white)),
+                icon: const Icon(Icons.qr_code_scanner,
+                    size: 28, color: Colors.white),
+                label: Text(l10n.scanQRCode,
+                    style: const TextStyle(fontSize: 16, color: Colors.white)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF4F63E6),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30)),
                 ),
               ),
             ),
             const SizedBox(height: 64),
-            Center(child: Text(l10n.alternateMethods, style: const TextStyle(color: Colors.grey))),
+            Center(
+                child: Text(l10n.alternateMethods,
+                    style: const TextStyle(color: Colors.grey))),
             const SizedBox(height: 12),
             SizedBox(
               height: 50,
@@ -72,9 +82,11 @@ class NewCodeScreen extends StatelessWidget {
                   }
                 },
                 icon: const Icon(Icons.image),
-                label: Text(l10n.selectImageButton, style: const TextStyle(fontSize: 16)),
+                label: Text(l10n.selectImageButton,
+                    style: const TextStyle(fontSize: 16)),
                 style: ElevatedButton.styleFrom(
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30)),
                 ),
               ),
             ),
@@ -82,14 +94,19 @@ class NewCodeScreen extends StatelessWidget {
             ElevatedButton.icon(
               onPressed: () async {
                 final navigator = Navigator.of(context);
-                final result = await navigator.push(MaterialPageRoute(builder: (c) => AdvancedFormScreen(userEmail: userEmail, serverHost: serverHost, groups: groups)));
+                final result = await navigator.push(MaterialPageRoute(
+                    builder: (c) => AdvancedFormScreen(
+                        userEmail: userEmail,
+                        serverHost: serverHost,
+                        groups: groups)));
                 if (result is AccountEntry) {
                   // Forward created entry back to HomePage using saved NavigatorState
                   navigator.pop(result);
                 }
               },
               icon: const Icon(Icons.edit),
-              label: Text(l10n.useAdvancedForm, style: const TextStyle(fontSize: 16)),
+              label: Text(l10n.useAdvancedForm,
+                  style: const TextStyle(fontSize: 16)),
             ),
             const SizedBox(height: 12),
             // Space before the cancel button to separate it from the alternate methods
@@ -109,7 +126,8 @@ class NewCodeScreen extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(l10n.userAtHost(userEmail, serverHost), style: const TextStyle(color: Colors.grey)),
+                    Text(l10n.userAtHost(userEmail, serverHost),
+                        style: const TextStyle(color: Colors.grey)),
                   ],
                 ),
               ),

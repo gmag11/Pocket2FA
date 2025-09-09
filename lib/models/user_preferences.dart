@@ -106,44 +106,48 @@ class UserPreferences {
       };
 
   factory UserPreferences.fromMap(Map<dynamic, dynamic> m) {
-  bool b(dynamic v, [bool def = false]) => v is bool ? v : (v == null ? def : (v.toString().toLowerCase() == 'true'));
-  int i(dynamic v, [int def = 0]) => v is int ? v : (v == null ? def : int.tryParse(v.toString()) ?? def);
-  String s(dynamic v, [String def = '']) => v is String ? v : (v == null ? def : v.toString());
+    bool b(dynamic v, [bool def = false]) => v is bool
+        ? v
+        : (v == null ? def : (v.toString().toLowerCase() == 'true'));
+    int i(dynamic v, [int def = 0]) =>
+        v is int ? v : (v == null ? def : int.tryParse(v.toString()) ?? def);
+    String s(dynamic v, [String def = '']) =>
+        v is String ? v : (v == null ? def : v.toString());
 
     return UserPreferences(
-  showOtpAsDot: b(m['showOtpAsDot']),
-  showNextOtp: b(m['showNextOtp']),
-  revealDottedOtp: b(m['revealDottedOTP']),
-  closeOtpOnCopy: b(m['closeOtpOnCopy']),
-  copyOtpOnDisplay: b(m['copyOtpOnDisplay']),
-  clearSearchOnCopy: b(m['clearSearchOnCopy']),
-  useBasicQrcodeReader: b(m['useBasicQrcodeReader']),
-  displayMode: s(m['displayMode'], 'list'),
-  showAccountsIcons: b(m['showAccountsIcons'], true),
-  iconCollection: s(m['iconCollection'], ''),
-  iconVariant: s(m['iconVariant'], 'regular'),
-  iconVariantStrictFetch: b(m['iconVariantStrictFetch']),
-  kickUserAfter: i(m['kickUserAfter']),
-  activeGroup: i(m['activeGroup']),
-  rememberActiveGroup: b(m['rememberActiveGroup'], true),
-  viewDefaultGroupOnCopy: b(m['viewDefaultGroupOnCopy']),
-  defaultGroup: i(m['defaultGroup']),
-  defaultCaptureMode: s(m['defaultCaptureMode'], 'livescan'),
-  useDirectCapture: b(m['useDirectCapture'], true),
-  useWebauthnOnly: b(m['useWebauthnOnly']),
-  getOfficialIcons: b(m['getOfficialIcons'], true),
-  theme: s(m['theme'], 'light'),
-  formatPassword: b(m['formatPassword'], true),
-  formatPasswordBy: i(m['formatPasswordBy'], 3),
-  lang: s(m['lang'], 'browser'),
-  getOtpOnRequest: b(m['getOtpOnRequest']),
-  notifyOnNewAuthDevice: b(m['notifyOnNewAuthDevice'], true),
-  notifyOnFailedLogin: b(m['notifyOnFailedLogin'], true),
-  timezone: s(m['timezone'], 'UTC'),
-  sortCaseSensitive: b(m['sortCaseSensitive']),
-  autoCloseTimeout: i(m['autoCloseTimeout'], 0),
-  autoSaveQrcodedAccount: b(m['AutoSaveQrcodedAccount']),
-  showEmailInFooter: b(m['showEmailInFooter'], true),
+      showOtpAsDot: b(m['showOtpAsDot']),
+      showNextOtp: b(m['showNextOtp']),
+      revealDottedOtp: b(m['revealDottedOTP']),
+      closeOtpOnCopy: b(m['closeOtpOnCopy']),
+      copyOtpOnDisplay: b(m['copyOtpOnDisplay']),
+      clearSearchOnCopy: b(m['clearSearchOnCopy']),
+      useBasicQrcodeReader: b(m['useBasicQrcodeReader']),
+      displayMode: s(m['displayMode'], 'list'),
+      showAccountsIcons: b(m['showAccountsIcons'], true),
+      iconCollection: s(m['iconCollection'], ''),
+      iconVariant: s(m['iconVariant'], 'regular'),
+      iconVariantStrictFetch: b(m['iconVariantStrictFetch']),
+      kickUserAfter: i(m['kickUserAfter']),
+      activeGroup: i(m['activeGroup']),
+      rememberActiveGroup: b(m['rememberActiveGroup'], true),
+      viewDefaultGroupOnCopy: b(m['viewDefaultGroupOnCopy']),
+      defaultGroup: i(m['defaultGroup']),
+      defaultCaptureMode: s(m['defaultCaptureMode'], 'livescan'),
+      useDirectCapture: b(m['useDirectCapture'], true),
+      useWebauthnOnly: b(m['useWebauthnOnly']),
+      getOfficialIcons: b(m['getOfficialIcons'], true),
+      theme: s(m['theme'], 'light'),
+      formatPassword: b(m['formatPassword'], true),
+      formatPasswordBy: i(m['formatPasswordBy'], 3),
+      lang: s(m['lang'], 'browser'),
+      getOtpOnRequest: b(m['getOtpOnRequest']),
+      notifyOnNewAuthDevice: b(m['notifyOnNewAuthDevice'], true),
+      notifyOnFailedLogin: b(m['notifyOnFailedLogin'], true),
+      timezone: s(m['timezone'], 'UTC'),
+      sortCaseSensitive: b(m['sortCaseSensitive']),
+      autoCloseTimeout: i(m['autoCloseTimeout'], 0),
+      autoSaveQrcodedAccount: b(m['AutoSaveQrcodedAccount']),
+      showEmailInFooter: b(m['showEmailInFooter'], true),
     );
   }
 }

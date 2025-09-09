@@ -24,12 +24,13 @@ class IconCacheService {
 
   /// Returns the persistent bytes for [fileName] belonging to [server]. If
   /// the file is not present locally it will be downloaded and stored.
-  Future<Uint8List> getIconBytes(ServerConnection server, String fileName, {CancelToken? cancelToken}) async {
+  Future<Uint8List> getIconBytes(ServerConnection server, String fileName,
+      {CancelToken? cancelToken}) async {
     final dir = await getApplicationSupportDirectory();
     final safeServer = server.id.replaceAll(RegExp(r'[^a-zA-Z0-9_-]'), '_');
     final safeName = fileName.replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_');
     final filePath = '${dir.path}/icons';
-  final file = File('$filePath/${safeServer}__$safeName');
+    final file = File('$filePath/${safeServer}__$safeName');
 
     try {
       if (await file.exists()) {
@@ -43,7 +44,8 @@ class IconCacheService {
       await Directory(filePath).create(recursive: true);
     } catch (_) {}
 
-    final bytes = await _downloadIcon(server, fileName, cancelToken: cancelToken);
+    final bytes =
+        await _downloadIcon(server, fileName, cancelToken: cancelToken);
 
     try {
       await file.writeAsBytes(bytes, flush: true);
@@ -67,7 +69,7 @@ class IconCacheService {
     final dir = await getApplicationSupportDirectory();
     final safeServer = server.id.replaceAll(RegExp(r'[^a-zA-Z0-9_-]'), '_');
     final safeName = fileName.replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_');
-  final file = File('${dir.path}/icons/${safeServer}__$safeName');
+    final file = File('${dir.path}/icons/${safeServer}__$safeName');
     try {
       if (await file.exists()) await file.delete();
     } catch (_) {}
@@ -81,7 +83,8 @@ class IconCacheService {
     } catch (_) {}
   }
 
-  Future<Uint8List> _downloadIcon(ServerConnection server, String fileName, {CancelToken? cancelToken}) async {
+  Future<Uint8List> _downloadIcon(ServerConnection server, String fileName,
+      {CancelToken? cancelToken}) async {
     final trimmed = _trimTrailingSlash(server.url);
     final encoded = Uri.encodeComponent(fileName);
     final url = '$trimmed/storage/icons/$encoded';
@@ -92,7 +95,8 @@ class IconCacheService {
       responseType: ResponseType.bytes,
       headers: {
         'Accept': 'application/octet-stream',
-        if (server.apiKey.isNotEmpty) 'Authorization': 'Bearer ${server.apiKey}',
+        if (server.apiKey.isNotEmpty)
+          'Authorization': 'Bearer ${server.apiKey}',
       },
     );
 
@@ -102,6 +106,7 @@ class IconCacheService {
       return Uint8List.fromList(List<int>.from(resp.data!));
     }
 
-    throw StateError('Unexpected response downloading icon: ${resp.statusCode}');
+    throw StateError(
+        'Unexpected response downloading icon: ${resp.statusCode}');
   }
 }

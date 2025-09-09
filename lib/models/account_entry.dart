@@ -61,31 +61,54 @@ class AccountEntry {
 
   factory AccountEntry.fromMap(Map<dynamic, dynamic> m) => AccountEntry(
         id: m.containsKey('id') && m['id'] != null
-            ? (m['id'] is int ? m['id'] as int : int.tryParse(m['id'].toString()) ?? 0)
+            ? (m['id'] is int
+                ? m['id'] as int
+                : int.tryParse(m['id'].toString()) ?? 0)
             : 0,
         service: m['service']?.toString() ?? '',
         account: m['account']?.toString() ?? '',
         // accept both 'secret' (API) and 'seed' (legacy/local)
         seed: m['secret']?.toString() ?? m['seed']?.toString() ?? '',
         group: m['group']?.toString() ?? '',
-        groupId: m.containsKey('group_id') && m['group_id'] != null ? (m['group_id'] is int ? m['group_id'] as int : int.tryParse(m['group_id'].toString())) : null,
+        groupId: m.containsKey('group_id') && m['group_id'] != null
+            ? (m['group_id'] is int
+                ? m['group_id'] as int
+                : int.tryParse(m['group_id'].toString()))
+            : null,
         otpType: m['otp_type']?.toString(),
         icon: m['icon']?.toString(),
-        digits: m.containsKey('digits') && m['digits'] != null ? (m['digits'] is int ? m['digits'] as int : int.tryParse(m['digits'].toString())) : null,
+        digits: m.containsKey('digits') && m['digits'] != null
+            ? (m['digits'] is int
+                ? m['digits'] as int
+                : int.tryParse(m['digits'].toString()))
+            : null,
         algorithm: m['algorithm']?.toString(),
-        period: m.containsKey('period') && m['period'] != null ? (m['period'] is int ? m['period'] as int : int.tryParse(m['period'].toString())) : null,
-        counter: m.containsKey('counter') && m['counter'] != null ? (m['counter'] is int ? m['counter'] as int : int.tryParse(m['counter'].toString())) : null,
+        period: m.containsKey('period') && m['period'] != null
+            ? (m['period'] is int
+                ? m['period'] as int
+                : int.tryParse(m['period'].toString()))
+            : null,
+        counter: m.containsKey('counter') && m['counter'] != null
+            ? (m['counter'] is int
+                ? m['counter'] as int
+                : int.tryParse(m['counter'].toString()))
+            : null,
         localIcon: m['local_icon']?.toString(),
-  // If the server provided the entry, consider it synchronized. If the
-  // map explicitly contains a 'synchronized' value, respect it.
-  synchronized: m.containsKey('synchronized') ? (m['synchronized'] == true || m['synchronized']?.toString() == 'true') : true,
-  deleted: m.containsKey('deleted') ? (m['deleted'] == true || m['deleted']?.toString() == 'true') : false,
+        // If the server provided the entry, consider it synchronized. If the
+        // map explicitly contains a 'synchronized' value, respect it.
+        synchronized: m.containsKey('synchronized')
+            ? (m['synchronized'] == true ||
+                m['synchronized']?.toString() == 'true')
+            : true,
+        deleted: m.containsKey('deleted')
+            ? (m['deleted'] == true || m['deleted']?.toString() == 'true')
+            : false,
       );
 
   // Legacy conversion removed: UI should use AccountEntry directly and generate OTPs dynamically.
 
   AccountEntry copyWith({
-  int? id,
+    int? id,
     String? service,
     String? account,
     String? seed,

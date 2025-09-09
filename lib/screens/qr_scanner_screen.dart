@@ -41,82 +41,92 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
 
   // Parse otpauth URL and build AccountEntry using the service
   Future<AccountEntry?> _parseAndCreateEntry(String qrContent) async {
-    developer.log('QrScannerScreen: Processing QR content', name: 'QrScannerScreen');
-    
+    developer.log('QrScannerScreen: Processing QR content',
+        name: 'QrScannerScreen');
+
     // Parse QR content to create entry
-    var entry = await EntryCreationService.parseOtpAuthUrl(
-      qrContent, 
-      context,
-      sourceTag: 'QrScannerScreen'
-    );
-    
+    var entry = await EntryCreationService.parseOtpAuthUrl(qrContent, context,
+        sourceTag: 'QrScannerScreen');
+
     if (entry == null) {
-      developer.log('QrScannerScreen: Failed to parse QR content', name: 'QrScannerScreen');
+      developer.log('QrScannerScreen: Failed to parse QR content',
+          name: 'QrScannerScreen');
       return null;
     }
-    
-    developer.log('QrScannerScreen: Entry created from QR: ${entry.service}/${entry.account}', name: 'QrScannerScreen');
-    
+
+    developer.log(
+        'QrScannerScreen: Entry created from QR: ${entry.service}/${entry.account}',
+        name: 'QrScannerScreen');
+
     // Attempt immediate upload if server host present
     if (widget.serverHost.isNotEmpty && mounted) {
       try {
-        developer.log('QrScannerScreen: Attempting server upload', name: 'QrScannerScreen');
+        developer.log('QrScannerScreen: Attempting server upload',
+            name: 'QrScannerScreen');
         final serverEntry = await EntryCreationService.createEntryOnServer(
-          entry,
-          serverHost: widget.serverHost,
-          groups: widget.groups,
-          context: context,
-          sourceTag: 'QrScannerScreen'
-        );
-        
+            entry,
+            serverHost: widget.serverHost,
+            groups: widget.groups,
+            context: context,
+            sourceTag: 'QrScannerScreen');
+
         if (serverEntry != null && serverEntry.synchronized) {
-          developer.log('QrScannerScreen: Server upload successful, returning entry', name: 'QrScannerScreen');
+          developer.log(
+              'QrScannerScreen: Server upload successful, returning entry',
+              name: 'QrScannerScreen');
           return serverEntry;
         } else {
-          developer.log('QrScannerScreen: Server upload returned null or unsynchronized entry', name: 'QrScannerScreen');
+          developer.log(
+              'QrScannerScreen: Server upload returned null or unsynchronized entry',
+              name: 'QrScannerScreen');
         }
       } catch (e) {
-        developer.log('QrScannerScreen: Error during server upload: $e', name: 'QrScannerScreen');
+        developer.log('QrScannerScreen: Error during server upload: $e',
+            name: 'QrScannerScreen');
       }
     } else {
-      developer.log('QrScannerScreen: Skipping server upload (no server or not mounted)', name: 'QrScannerScreen');
+      developer.log(
+          'QrScannerScreen: Skipping server upload (no server or not mounted)',
+          name: 'QrScannerScreen');
     }
-    
+
     // Retornar la entrada local
     return entry;
   }
 
   void _onQrDetected(BarcodeCapture capture) async {
     if (_isProcessing || capture.barcodes.isEmpty) return;
-    
+
     setState(() {
       _isProcessing = true;
     });
-  // Capture localized strings and messenger before async gaps
-  final messenger = ScaffoldMessenger.of(context);
-  final qrErrorMsg = l10n.qrScannerError;
-    
+    // Capture localized strings and messenger before async gaps
+    final messenger = ScaffoldMessenger.of(context);
+    final qrErrorMsg = l10n.qrScannerError;
+
     try {
       // Pausa el detector para evitar múltiples detecciones
       await _controller?.stop();
-      
+
       final barcode = capture.barcodes.first;
       if (barcode.rawValue != null) {
-        developer.log('QrScannerScreen: QR detected, processing...', name: 'QrScannerScreen');
+        developer.log('QrScannerScreen: QR detected, processing...',
+            name: 'QrScannerScreen');
         final entry = await _parseAndCreateEntry(barcode.rawValue!);
-        
+
         // Si la entrada no es nula, regresamos a la pantalla anterior con la entrada
         if (entry != null && mounted) {
-          developer.log('QrScannerScreen: Returning with entry', name: 'QrScannerScreen');
+          developer.log('QrScannerScreen: Returning with entry',
+              name: 'QrScannerScreen');
           Navigator.of(context).pop(entry);
         }
       }
     } catch (e) {
-      developer.log('QrScannerScreen: Error in QR detection: $e', name: 'QrScannerScreen');
+      developer.log('QrScannerScreen: Error in QR detection: $e',
+          name: 'QrScannerScreen');
       if (mounted) {
-        messenger.showSnackBar(
-          SnackBar(content: Text('$qrErrorMsg: $e'), backgroundColor: Colors.red)
-        );
+        messenger.showSnackBar(SnackBar(
+            content: Text('$qrErrorMsg: $e'), backgroundColor: Colors.red));
       }
     } finally {
       // Aseguramos que _isProcessing se restablezca incluso si hay error
@@ -166,7 +176,9 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
             child: Center(
               child: Column(
                 children: [
-                  Text(l10n.positionQr, style: const TextStyle(color: Colors.white, fontSize: 16)),
+                  Text(l10n.positionQr,
+                      style:
+                          const TextStyle(color: Colors.white, fontSize: 16)),
                   const SizedBox(height: 8),
                   ElevatedButton(
                     onPressed: () => Navigator.of(context).pop(),

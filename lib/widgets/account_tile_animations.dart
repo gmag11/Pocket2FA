@@ -27,7 +27,7 @@ class AccountTileAnimations {
     if (progress < 0) progress = 0;
     if (progress > 1) progress = 0;
 
-  // Recreate controller to reflect possible period changes
+    // Recreate controller to reflect possible period changes
     try {
       _animController?.dispose();
     } catch (_) {}

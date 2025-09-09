@@ -178,16 +178,16 @@
     "@secretHint": {
         "description": "Help text for the secret input field."
     },
-         "groupAll": "All ({count})",
-         "@groupAll": {
-             "description": "Label for the 'All' group with item count",
-             "placeholders": {
-                 "count": {
-                     "type": "int",
-                     "example": "12"
-                 }
-             }
-         },
+    "groupAll": "All ({count})",
+    "@groupAll": {
+        "description": "Label for the 'All' group with item count",
+        "placeholders": {
+            "count": {
+                "type": "int",
+                "example": "12"
+            }
+        }
+    },
     "optionsLabel": "Options",
     "@optionsLabel": {
         "description": "Label for advanced options section."
@@ -504,17 +504,22 @@
     "pendingUpload": "Not synchronized (pending upload)",
     "@pendingUpload": {
         "description": "Tooltip explaining that the account has not been uploaded to the server yet."
-    }
-    ,
+    },
     "userAtHost": "{user} - {host}",
     "@userAtHost": {
         "description": "Short line showing user email and server host.",
-        "placeholders": { "user": {}, "host": {} }
+        "placeholders": {
+            "user": {},
+            "host": {}
+        }
     },
     "serverWithHost": "{name} ({host})",
     "@serverWithHost": {
         "description": "Server display combining server name and host.",
-        "placeholders": { "name": {}, "host": {} }
+        "placeholders": {
+            "name": {},
+            "host": {}
+        }
     },
     "unknown": "Unknown",
     "@unknown": {

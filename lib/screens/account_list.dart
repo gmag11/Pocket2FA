@@ -14,7 +14,8 @@ class AccountList extends StatefulWidget {
   final bool isManageMode;
   final Set<int> selectedAccountIds;
   final ValueChanged<int> onToggleAccountSelection;
-  final ValueChanged<AccountEntry>? onEditAccount; // Nuevo callback para edición
+  final ValueChanged<AccountEntry>?
+      onEditAccount; // Nuevo callback para edición
 
   const AccountList({
     required this.selectedGroup,
@@ -40,7 +41,7 @@ class _AccountListState extends State<AccountList> {
     final l10n = AppLocalizations.of(context)!;
     // Filter out deleted items to prevent crashes
     final filteredItems = widget.items.where((item) => !item.deleted).toList();
-    
+
     // Helper refresh wrapper that uses provided onRefresh when available.
     Future<void> handleRefresh() async {
       if (widget.onRefresh != null) {
@@ -72,9 +73,7 @@ class _AccountListState extends State<AccountList> {
             const SizedBox(height: 120),
             Center(
               child: Text(
-                noServers
-                    ? l10n.noServersConfigured
-                    : l10n.noAccounts,
+                noServers ? l10n.noServersConfigured : l10n.noAccounts,
                 style: const TextStyle(color: Colors.grey, fontSize: 16),
                 textAlign: TextAlign.center,
               ),
@@ -104,9 +103,11 @@ class _AccountListState extends State<AccountList> {
         child: ListView(
           controller: widget.scrollController,
           physics: const AlwaysScrollableScrollPhysics(),
-            children: [
+          children: [
             const SizedBox(height: 120),
-            Center(child: Text(l10n.noResults, style: const TextStyle(color: Colors.grey))),
+            Center(
+                child: Text(l10n.noResults,
+                    style: const TextStyle(color: Colors.grey))),
           ],
         ),
       );
@@ -129,20 +130,26 @@ class _AccountListState extends State<AccountList> {
           controller: widget.scrollController,
           physics: const AlwaysScrollableScrollPhysics(),
           itemCount: filtered.length,
-          separatorBuilder: (context, index) => Divider(indent: 20, endIndent: 20,),
+          separatorBuilder: (context, index) => Divider(
+            indent: 20,
+            endIndent: 20,
+          ),
           itemBuilder: (context, index) {
             try {
               final item = filtered[index];
               return AccountTile(
-                item: item, 
+                item: item,
                 settings: widget.settings,
                 isManageMode: widget.isManageMode,
                 isSelected: widget.selectedAccountIds.contains(item.id),
-                onToggleSelection: () => widget.onToggleAccountSelection(item.id),
-                onEdit: widget.onEditAccount != null ? () => widget.onEditAccount!(item) : null,
+                onToggleSelection: () =>
+                    widget.onToggleAccountSelection(item.id),
+                onEdit: widget.onEditAccount != null
+                    ? () => widget.onEditAccount!(item)
+                    : null,
               );
             } catch (e) {
-                return ListTile(
+              return ListTile(
                 leading: const Icon(Icons.error, color: Colors.red),
                 title: Text(l10n.errorDisplayingAccount),
                 subtitle: Text(e.toString()),
@@ -176,17 +183,20 @@ class _AccountListState extends State<AccountList> {
                 border: Border(bottom: BorderSide(color: Color(0xFFE0E0E0))),
               ),
               child: AccountTile(
-                key: ValueKey(item.id), 
-                item: item, 
+                key: ValueKey(item.id),
+                item: item,
                 settings: widget.settings,
                 isManageMode: widget.isManageMode,
                 isSelected: widget.selectedAccountIds.contains(item.id),
-                onToggleSelection: () => widget.onToggleAccountSelection(item.id),
-                onEdit: widget.onEditAccount != null ? () => widget.onEditAccount!(item) : null,
+                onToggleSelection: () =>
+                    widget.onToggleAccountSelection(item.id),
+                onEdit: widget.onEditAccount != null
+                    ? () => widget.onEditAccount!(item)
+                    : null,
               ),
             );
           } catch (e) {
-              return Container(
+            return Container(
               decoration: const BoxDecoration(
                 border: Border(bottom: BorderSide(color: Color(0xFFE0E0E0))),
               ),

@@ -181,7 +181,12 @@
     "groupAll": "Todos ({count})",
     "@groupAll": {
         "description": "Etiqueta para el grupo 'Todos' con el recuento de elementos",
-        "placeholders": { "count": { "type": "int", "example": "12" } }
+        "placeholders": {
+            "count": {
+                "type": "int",
+                "example": "12"
+            }
+        }
     },
     "optionsLabel": "Opciones",
     "@optionsLabel": {
@@ -499,17 +504,22 @@
     "pendingUpload": "No sincronizado (pendiente de subida)",
     "@pendingUpload": {
         "description": "Tooltip que explica que la cuenta no se ha subido al servidor aún."
-    }
-    ,
+    },
     "userAtHost": "{user} - {host}",
     "@userAtHost": {
         "description": "Línea corta mostrando el correo del usuario y el host del servidor.",
-        "placeholders": { "user": {}, "host": {} }
+        "placeholders": {
+            "user": {},
+            "host": {}
+        }
     },
     "serverWithHost": "{name} ({host})",
     "@serverWithHost": {
         "description": "Visualización del servidor combinando nombre y host.",
-        "placeholders": { "name": {}, "host": {} }
+        "placeholders": {
+            "name": {},
+            "host": {}
+        }
     },
     "unknown": "Desconocido",
     "@unknown": {

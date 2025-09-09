@@ -18,8 +18,8 @@ class AccountTileTOTP extends StatefulWidget {
   final VoidCallback? onEdit;
 
   const AccountTileTOTP({
-    required this.item, 
-    this.settings, 
+    required this.item,
+    this.settings,
     this.isManageMode = false,
     this.isSelected = false,
     this.onToggleSelection,
@@ -84,9 +84,9 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
 
   @override
   void dispose() {
-  _revealTimerCurrent?.cancel();
-  _revealTimerNext?.cancel();
-  _otpService.dispose();
+    _revealTimerCurrent?.cancel();
+    _revealTimerNext?.cancel();
+    _otpService.dispose();
     _animations.dispose();
     super.dispose();
   }
@@ -98,16 +98,17 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
     // Capture values that use BuildContext before any await to avoid
     // use_build_context_synchronously lint warnings.
     final horizontalMargin = MediaQuery.of(context).size.width * 0.12;
-  final messenger = ScaffoldMessenger.of(context);
-  final l10n = AppLocalizations.of(context)!;
-  final noCodeMsg = l10n.noCodeToCopy;
-  final copiedMsg = l10n.copied;
-  final errorCopyMsg = l10n.errorCopyingToClipboard;
+    final messenger = ScaffoldMessenger.of(context);
+    final l10n = AppLocalizations.of(context)!;
+    final noCodeMsg = l10n.noCodeToCopy;
+    final copiedMsg = l10n.copied;
+    final errorCopyMsg = l10n.errorCopyingToClipboard;
 
     if (trimmed.isEmpty || trimmed.toLowerCase() == 'offline') {
       messenger.showSnackBar(SnackBar(
         content: Center(
-            child: Text(noCodeMsg, style: const TextStyle(color: Colors.white))),
+            child:
+                Text(noCodeMsg, style: const TextStyle(color: Colors.white))),
         behavior: SnackBarBehavior.floating,
         margin: EdgeInsets.fromLTRB(horizontalMargin, 0, horizontalMargin, 96),
         padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 10.0),
@@ -124,7 +125,8 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
       if (!mounted) return;
       messenger.showSnackBar(SnackBar(
         content: Center(
-            child: Text(copiedMsg, style: const TextStyle(color: Colors.white))),
+            child:
+                Text(copiedMsg, style: const TextStyle(color: Colors.white))),
         behavior: SnackBarBehavior.floating,
         margin: EdgeInsets.fromLTRB(horizontalMargin, 0, horizontalMargin, 96),
         padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 10.0),
@@ -137,7 +139,8 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
       if (!mounted) return;
       messenger.showSnackBar(SnackBar(
         content: Center(
-            child: Text(errorCopyMsg, style: const TextStyle(color: Colors.white))),
+            child: Text(errorCopyMsg,
+                style: const TextStyle(color: Colors.white))),
         behavior: SnackBarBehavior.floating,
         margin: EdgeInsets.fromLTRB(horizontalMargin, 0, horizontalMargin, 96),
         padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 10.0),
@@ -160,7 +163,7 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
     // Helper to wrap a widget with a visible border when debugging is enabled
     Widget borderWrap(Widget child, {EdgeInsets? margin, EdgeInsets? padding}) {
       // if (!showDebugBorders) {
-        return child;
+      return child;
       // } else {
       //   return Container(
       //     margin: margin,
@@ -182,7 +185,7 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                              // Top row: Avatar + Service name + OTP code
+                // Top row: Avatar + Service name + OTP code
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
@@ -195,8 +198,10 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
                             scale: 0.8, // Hacer el checkbox más pequeño
                             child: Checkbox(
                               value: widget.isSelected,
-                              onChanged: (_) => widget.onToggleSelection?.call(),
-                              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              onChanged: (_) =>
+                                  widget.onToggleSelection?.call(),
+                              materialTapTargetSize:
+                                  MaterialTapTargetSize.shrinkWrap,
                             ),
                           ),
                         ),
@@ -212,12 +217,13 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
                       borderWrap(
                         Padding(
                           padding: const EdgeInsets.only(left: 12.0),
-                          child: AccountTileUi.buildServiceAvatar(widget.item, color),
+                          child: AccountTileUi.buildServiceAvatar(
+                              widget.item, color),
                         ),
                         padding: const EdgeInsets.all(2),
                       ),
                     const SizedBox(width: 8),
-                    
+
                     // Service name (flexible width, allow ellipsis)
                     Expanded(
                       child: borderWrap(
@@ -237,10 +243,12 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
                       Padding(
                         padding: const EdgeInsets.only(right: 8.0),
                         child: IconButton(
-                          icon: const Icon(Icons.edit, color: Colors.blue, size: 18),
+                          icon: const Icon(Icons.edit,
+                              color: Colors.blue, size: 18),
                           onPressed: widget.onEdit,
                           padding: const EdgeInsets.all(4),
-                          constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                          constraints:
+                              const BoxConstraints(minWidth: 32, minHeight: 32),
                         ),
                       )
                     else
@@ -259,21 +267,35 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
                                           color: Colors.transparent,
                                           child: InkWell(
                                             borderRadius: BorderRadius.zero,
-                                            onTap: () => _copyToClipboard(_otpService.currentCode),
+                                            onTap: () => _copyToClipboard(
+                                                _otpService.currentCode),
                                             onLongPress: () {
                                               if (settings?.hideOtps == true) {
-                                                setState(() { _revealCurrent = true; });
+                                                setState(() {
+                                                  _revealCurrent = true;
+                                                });
                                                 _revealTimerCurrent?.cancel();
-                                                _revealTimerCurrent = Timer(const Duration(seconds: 10), () {
-                                                  if (mounted) setState(() { _revealCurrent = false; });
+                                                _revealTimerCurrent = Timer(
+                                                    const Duration(seconds: 10),
+                                                    () {
+                                                  if (mounted)
+                                                    setState(() {
+                                                      _revealCurrent = false;
+                                                    });
                                                 });
                                               }
                                             },
                                             child: Padding(
-                                              padding: const EdgeInsets.symmetric(vertical: 0.0, horizontal: 2.0),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      vertical: 0.0,
+                                                      horizontal: 2.0),
                                               child: Text(
                                                 AccountTileUtils.formatCode(
-                                                    _otpService.currentCode, settings, forceVisible: _revealCurrent),
+                                                    _otpService.currentCode,
+                                                    settings,
+                                                    forceVisible:
+                                                        _revealCurrent),
                                                 style: const TextStyle(
                                                   fontSize: 24,
                                                   fontWeight: FontWeight.w700,
@@ -287,8 +309,8 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
                                       },
                                     )
                                   : InkWell(
-                                      onTap: () =>
-                                          _copyToClipboard(_otpService.currentCode),
+                                      onTap: () => _copyToClipboard(
+                                          _otpService.currentCode),
                                       child: Text(
                                         AccountTileUtils.formatCode(
                                             _otpService.currentCode, null),
@@ -309,8 +331,7 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
                 ),
 
                 // En modo normal: espaciado completo, en modo manage: reducido
-                if (!widget.isManageMode) 
-                  const SizedBox(height: 6),
+                if (!widget.isManageMode) const SizedBox(height: 6),
 
                 // Bottom row: Account user + Next OTP + Progress dots (solo account en modo manage)
                 Row(
@@ -322,7 +343,8 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
                         Padding(
                           // add left padding so username is not flush with the tile edge
                           // En modo manage, agregar más padding para alinear con el checkbox
-                          padding: EdgeInsets.only(left: widget.isManageMode ? 56.0 : 12.0),
+                          padding: EdgeInsets.only(
+                              left: widget.isManageMode ? 56.0 : 12.0),
                           child: Text(
                             widget.item.account,
                             style: TextStyle(
@@ -356,22 +378,33 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
                                     color: Colors.transparent,
                                     child: InkWell(
                                       borderRadius: BorderRadius.zero,
-                                      onTap: () => _copyToClipboard(_otpService.nextCode),
+                                      onTap: () => _copyToClipboard(
+                                          _otpService.nextCode),
                                       onLongPress: () {
                                         if (settings?.hideOtps == true) {
-                                          setState(() { _revealNext = true; });
+                                          setState(() {
+                                            _revealNext = true;
+                                          });
                                           _revealTimerNext?.cancel();
-                                          _revealTimerNext = Timer(const Duration(seconds: 10), () {
-                                            if (mounted) setState(() { _revealNext = false; });
+                                          _revealTimerNext = Timer(
+                                              const Duration(seconds: 10), () {
+                                            if (mounted)
+                                              setState(() {
+                                                _revealNext = false;
+                                              });
                                           });
                                         }
                                       },
                                       child: Padding(
-                                        padding: const EdgeInsets.symmetric(vertical: 0.0, horizontal: 2.0),
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 0.0, horizontal: 2.0),
                                         child: Text(
                                           AccountTileUtils.formatCode(
-                                              _otpService.nextCode, settings, forceVisible: _revealNext),
-                                          style: TextStyle(fontSize: 14, color: Colors.black),
+                                              _otpService.nextCode, settings,
+                                              forceVisible: _revealNext),
+                                          style: TextStyle(
+                                              fontSize: 14,
+                                              color: Colors.black),
                                           maxLines: 1,
                                           overflow: TextOverflow.visible,
                                         ),

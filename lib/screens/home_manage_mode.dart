@@ -8,7 +8,7 @@ import 'home_server_manager.dart';
 
 class HomeManageMode extends ChangeNotifier {
   final HomeServerManager serverManager;
-  
+
   bool _isManageMode = false;
   final Set<int> _selectedAccountIds = <int>{};
 
@@ -56,26 +56,25 @@ class HomeManageMode extends ChangeNotifier {
         ],
       ),
     );
-    
+
     if (confirmed != true) return false;
 
     final servers = serverManager.servers;
     final selectedServerId = serverManager.selectedServerId;
-    
+
     // Find selected server index
     final serverIdx = servers.indexWhere((s) => s.id == selectedServerId);
     if (serverIdx == -1) {
       serverManager.updateServerReachability(false);
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.noServerSelected))
-        );
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(l10n.noServerSelected)));
       }
       return false;
     }
-    
+
     final server = servers[serverIdx];
-    
+
     // Mark selected as deleted=true, synchronized=false; create updated accounts list
     final updatedAccounts = <AccountEntry>[];
     final toDeleteIds = <int>{};
@@ -88,7 +87,7 @@ class HomeManageMode extends ChangeNotifier {
         updatedAccounts.add(acc);
       }
     }
-    
+
     // Create new ServerConnection with updated accounts (immutable)
     final updatedServer = ServerConnection(
       id: server.id,
@@ -105,36 +104,35 @@ class HomeManageMode extends ChangeNotifier {
       preferences: server.preferences,
       isAdmin: server.isAdmin,
     );
-    
+
     // Update in-memory servers list
     final updatedServers = List<ServerConnection>.from(servers);
     updatedServers[serverIdx] = updatedServer;
     serverManager.updateServersInMemory(updatedServers);
-    
+
     _selectedAccountIds.clear();
     notifyListeners();
-    
+
     // Persist updated servers to storage
     await serverManager.persistServersToStorage();
-    
+
     // Attempt API delete once (silently)
     if (toDeleteIds.isNotEmpty) {
       await _attemptApiDelete(toDeleteIds, serverIdx, updatedServer);
     }
-    
+
     // Check context is still mounted before showing snackbar
     if (!context.mounted) return true;
-    
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(l10n.accountsDeleted))
-    );
-    
+
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(l10n.accountsDeleted)));
+
     return true;
   }
 
   Future<void> _attemptApiDelete(
-    Set<int> toDeleteIds, 
-    int serverIdx, 
+    Set<int> toDeleteIds,
+    int serverIdx,
     ServerConnection updatedServer,
   ) async {
     if (!ApiService.instance.isReady) {
@@ -147,12 +145,12 @@ class HomeManageMode extends ChangeNotifier {
       await ApiService.instance.deleteAccounts(toDeleteIds.toList());
       // Success: restore connectivity indicator and remove from local storage
       serverManager.updateServerReachability(true);
-      
+
       // Success: remove only the accounts we requested to delete from local storage and memory
       final finalAccounts = updatedServer.accounts
           .where((a) => !toDeleteIds.contains(a.id))
           .toList();
-          
+
       final finalServer = ServerConnection(
         id: updatedServer.id,
         name: updatedServer.name,
@@ -168,17 +166,19 @@ class HomeManageMode extends ChangeNotifier {
         preferences: updatedServer.preferences,
         isAdmin: updatedServer.isAdmin,
       );
-      
+
       final servers = serverManager.servers;
       final finalServers = List<ServerConnection>.from(servers);
       finalServers[serverIdx] = finalServer;
       serverManager.updateServersInMemory(finalServers);
-      
+
       // Persist final removal
       await serverManager.persistServersToStorage();
     } catch (e) {
       // Silent fail: log only, keep marked deleted for sync retry
-      developer.log('HomeManageMode: API delete failed (will retry in sync): $e', name: 'HomeManageMode');
+      developer.log(
+          'HomeManageMode: API delete failed (will retry in sync): $e',
+          name: 'HomeManageMode');
       // Set reachability to false to indicate connectivity issue
       serverManager.updateServerReachability(false);
     }

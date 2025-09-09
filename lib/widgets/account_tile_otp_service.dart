@@ -44,8 +44,8 @@ class AccountTileOtpService {
 
   /// Refreshes OTP codes and schedules the next refresh
   Future<void> refreshCodes() async {
-  // Compute current and next codes, then schedule next refresh at the
-  // period boundary using AccountEntry.period (seconds).
+    // Compute current and next codes, then schedule next refresh at the
+    // period boundary using AccountEntry.period (seconds).
     final acct = account;
     final type = (acct.otpType ?? 'totp').toLowerCase();
 
@@ -54,14 +54,14 @@ class AccountTileOtpService {
     _timer = null;
 
     if (type == 'steamtotp') {
-  // Generate Steam TOTP locally (no network). Use the same generateOtp
-  // helper that handles 'steamtotp' via OtpService.
+      // Generate Steam TOTP locally (no network). Use the same generateOtp
+      // helper that handles 'steamtotp' via OtpService.
       final c = OtpService.generateOtp(acct,
           timeOffsetSeconds: 0, storage: settings?.storage);
       final period = acct.period ?? 30;
       final n = OtpService.generateOtp(acct,
           timeOffsetSeconds: period, storage: settings?.storage);
-      
+
       currentCode = c;
       nextCode = n;
       refreshUi();
@@ -87,20 +87,20 @@ class AccountTileOtpService {
       return;
     }
 
-  // current (non-STEAM)
+    // current (non-STEAM)
     final c = OtpService.generateOtp(acct,
         timeOffsetSeconds: 0, storage: settings?.storage);
     // next period: use period or default 30
     final period = acct.period ?? 30;
     final n = OtpService.generateOtp(acct,
         timeOffsetSeconds: period, storage: settings?.storage);
-    
+
     currentCode = c;
     nextCode = n;
     refreshUi();
 
-  // Schedule next refresh at the period boundary. Use milliseconds to avoid
-  // drift. Add a small epsilon to ensure the code has actually advanced.
+    // Schedule next refresh at the period boundary. Use milliseconds to avoid
+    // drift. Add a small epsilon to ensure the code has actually advanced.
     try {
       final periodSec =
           (acct.period != null && acct.period! > 0) ? acct.period! : 30;
@@ -131,7 +131,7 @@ class AccountTileOtpService {
           : (resp['counter'] != null
               ? int.tryParse(resp['counter'].toString())
               : null);
-      
+
       _hotpCode = pwd;
       _hotpCounter = counter;
       refreshUi();
@@ -143,7 +143,7 @@ class AccountTileOtpService {
         refreshUi();
       });
     } catch (_) {
-  // On error, show 'offline' in the HOTP display area (transient)
+      // On error, show 'offline' in the HOTP display area (transient)
       _hotpCode = 'offline';
       _hotpCounter = null;
       refreshUi();

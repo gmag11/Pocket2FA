@@ -7,7 +7,7 @@ import '../services/api_service.dart';
 
 class HomeServerManager extends ChangeNotifier {
   final SettingsService settings;
-  
+
   List<ServerConnection> _servers = [];
   String? _selectedServerId;
   int? _selectedAccountIndex;
@@ -46,7 +46,7 @@ class HomeServerManager extends ChangeNotifier {
     // storage returned an empty list that means the user intentionally
     // removed all servers and we should respect that.
     bool storageProvided = false;
-    
+
     if (storage != null) {
       try {
         if (storage.isUnlocked) {
@@ -55,7 +55,8 @@ class HomeServerManager extends ChangeNotifier {
           if (raw != null) {
             storageProvided = true;
             servers = (raw as List<dynamic>)
-                .map((e) => ServerConnection.fromMap(Map<dynamic, dynamic>.from(e)))
+                .map((e) =>
+                    ServerConnection.fromMap(Map<dynamic, dynamic>.from(e)))
                 .toList();
           } else {
             // raw == null -> storage had no key for 'servers'
@@ -67,9 +68,11 @@ class HomeServerManager extends ChangeNotifier {
             try {
               final m = Map<dynamic, dynamic>.from(selRaw);
               restoredServerId = m['serverId'] as String?;
-              restoredAccountIndex = m['accountIndex'] is int 
-                  ? m['accountIndex'] as int 
-                  : (m['accountIndex'] == null ? null : int.tryParse(m['accountIndex'].toString()));
+              restoredAccountIndex = m['accountIndex'] is int
+                  ? m['accountIndex'] as int
+                  : (m['accountIndex'] == null
+                      ? null
+                      : int.tryParse(m['accountIndex'].toString()));
             } catch (_) {
               restoredServerId = null;
               restoredAccountIndex = null;
@@ -98,8 +101,9 @@ class HomeServerManager extends ChangeNotifier {
         if (idx != -1) {
           final srv = _servers[idx];
           _selectedServerId = srv.id;
-          _selectedAccountIndex = (restoredAccountIndex != null && srv.accounts.length > restoredAccountIndex) 
-              ? restoredAccountIndex 
+          _selectedAccountIndex = (restoredAccountIndex != null &&
+                  srv.accounts.length > restoredAccountIndex)
+              ? restoredAccountIndex
               : (srv.accounts.isNotEmpty ? 0 : null);
           _currentItems = srv.accounts.where((a) => !a.deleted).toList();
         } else {
@@ -127,7 +131,7 @@ class HomeServerManager extends ChangeNotifier {
         ApiService.instance.setServer(srv);
       } catch (_) {}
     }
-    
+
     notifyListeners();
   }
 
@@ -137,7 +141,7 @@ class HomeServerManager extends ChangeNotifier {
     }
 
     final server = _servers.firstWhere((s) => s.id == serverId);
-    
+
     _selectedServerId = serverId;
     _selectedAccountIndex = accountIndex;
     _currentItems = server.accounts.where((a) => !a.deleted).toList();
@@ -147,10 +151,8 @@ class HomeServerManager extends ChangeNotifier {
     if (storage != null) {
       try {
         if (storage.isUnlocked) {
-          await storage.box.put('selected', {
-            'serverId': serverId, 
-            'accountIndex': accountIndex
-          });
+          await storage.box.put(
+              'selected', {'serverId': serverId, 'accountIndex': accountIndex});
         }
       } on StateError catch (_) {
         // ignore persistence when locked
@@ -161,16 +163,17 @@ class HomeServerManager extends ChangeNotifier {
     try {
       ApiService.instance.setServer(server);
     } catch (e) {
-      developer.log('HomeServerManager: Error configuring API: $e', name: 'HomeServerManager');
+      developer.log('HomeServerManager: Error configuring API: $e',
+          name: 'HomeServerManager');
     }
-    
+
     notifyListeners();
     return true;
   }
 
   Future<void> initialConnectivityCheck() async {
     if (_selectedServerId == null || _servers.isEmpty) return;
-    
+
     final storage = settings.storage;
     // If storage is not yet available (race during startup), retry a few times
     if (storage == null) {
@@ -185,17 +188,21 @@ class HomeServerManager extends ChangeNotifier {
     }
 
     try {
-      final srv = _servers.firstWhere((s) => s.id == _selectedServerId, orElse: () => _servers.first);
+      final srv = _servers.firstWhere((s) => s.id == _selectedServerId,
+          orElse: () => _servers.first);
       // Use ApiService.validateServer which performs GET /user on a short timeout
       await ApiService.instance.validateServer(srv);
       // If response ok, mark reachable
       _serverReachable = true;
       notifyListeners();
-      developer.log('HomeServerManager: initial connectivity check passed for ${srv.id}', name: 'HomeServerManager');
+      developer.log(
+          'HomeServerManager: initial connectivity check passed for ${srv.id}',
+          name: 'HomeServerManager');
     } catch (e) {
       _serverReachable = false;
       notifyListeners();
-      developer.log('HomeServerManager: initial connectivity check failed: $e', name: 'HomeServerManager');
+      developer.log('HomeServerManager: initial connectivity check failed: $e',
+          name: 'HomeServerManager');
     }
   }
 
@@ -205,7 +212,8 @@ class HomeServerManager extends ChangeNotifier {
       final idx = _servers.indexWhere((s) => s.id == _selectedServerId);
       if (idx != -1) {
         final updatedServer = _servers[idx];
-        _currentItems = updatedServer.accounts.where((a) => !a.deleted).toList();
+        _currentItems =
+            updatedServer.accounts.where((a) => !a.deleted).toList();
       }
     }
     notifyListeners();
@@ -216,12 +224,14 @@ class HomeServerManager extends ChangeNotifier {
     if (storage != null) {
       try {
         if (storage.isUnlocked) {
-          await storage.box.put('servers', _servers.map((s) => s.toMap()).toList());
+          await storage.box
+              .put('servers', _servers.map((s) => s.toMap()).toList());
         }
       } on StateError catch (_) {
         // ignore when storage is locked
       } catch (e) {
-        developer.log('HomeServerManager: failed to persist servers: $e', name: 'HomeServerManager');
+        developer.log('HomeServerManager: failed to persist servers: $e',
+            name: 'HomeServerManager');
       }
     }
   }
@@ -234,7 +244,7 @@ class HomeServerManager extends ChangeNotifier {
         srv.accounts.add(account);
         _currentItems = srv.accounts.where((a) => !a.deleted).toList();
         notifyListeners();
-        
+
         // Best-effort persist to storage in background
         persistServersToStorage();
       }
@@ -263,17 +273,20 @@ class HomeServerManager extends ChangeNotifier {
       final idx = _servers.indexWhere((s) => s.id == _selectedServerId);
       if (idx != -1) {
         final srv = _servers[idx];
-        final accountIdx = srv.accounts.indexWhere((a) => a.id == updatedAccount.id);
+        final accountIdx =
+            srv.accounts.indexWhere((a) => a.id == updatedAccount.id);
         if (accountIdx != -1) {
           // Preserve the synchronized flag provided by caller (AdvancedForm may already have attempted server update)
           srv.accounts[accountIdx] = updatedAccount;
           _currentItems = srv.accounts.where((a) => !a.deleted).toList();
           notifyListeners();
-          
+
           // Persistir cambios
           await persistServersToStorage();
-          
-          developer.log('HomeServerManager: updated account id=${updatedAccount.id} service=${updatedAccount.service} (marked unsynchronized)', name: 'HomeServerManager');
+
+          developer.log(
+              'HomeServerManager: updated account id=${updatedAccount.id} service=${updatedAccount.service} (marked unsynchronized)',
+              name: 'HomeServerManager');
         }
       }
     }
@@ -286,10 +299,12 @@ class HomeServerManager extends ChangeNotifier {
       if (g.isEmpty) continue; // do not include ungrouped entries in selector
       counts[g] = (counts[g] ?? 0) + 1;
     }
-    developer.log('HomeServerManager: computed group counts=${counts.toString()} from ${_currentItems.length} items', name: 'HomeServerManager');
-  // Return group keys (unlocalized). The UI will localize formatting.
-  final groups = ['All'];
-  groups.addAll(counts.keys);
+    developer.log(
+        'HomeServerManager: computed group counts=${counts.toString()} from ${_currentItems.length} items',
+        name: 'HomeServerManager');
+    // Return group keys (unlocalized). The UI will localize formatting.
+    final groups = ['All'];
+    groups.addAll(counts.keys);
     return groups;
   }
 

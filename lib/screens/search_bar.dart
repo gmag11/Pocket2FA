@@ -6,7 +6,8 @@ class HomeSearchBar extends StatelessWidget {
   final FocusNode? focusNode;
   final ValueChanged<String>? onChanged;
 
-  const HomeSearchBar({this.controller, this.focusNode, this.onChanged, super.key});
+  const HomeSearchBar(
+      {this.controller, this.focusNode, this.onChanged, super.key});
 
   @override
   Widget build(BuildContext context) {

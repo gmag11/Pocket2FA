@@ -118,8 +118,7 @@ class _AccountTileHOTPState extends State<AccountTileHOTP> {
     } catch (_) {
       if (!mounted) return;
       final horizontalMargin = MediaQuery.of(context).size.width * 0.12;
-      final errorCopyMsg =
-          l10n.errorCopyingToClipboard;
+      final errorCopyMsg = l10n.errorCopyingToClipboard;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Center(
             child: Text(errorCopyMsg,
@@ -391,8 +390,7 @@ class _AccountTileHOTPState extends State<AccountTileHOTP> {
                         Align(
                           alignment: Alignment.center,
                           child: Text(
-                            l10n
-                                .hotpCounter(_otpService.hotpCounter ?? 0),
+                            l10n.hotpCounter(_otpService.hotpCounter ?? 0),
                             style: TextStyle(
                                 fontSize: 14, color: Colors.grey.shade500),
                             maxLines: 1,

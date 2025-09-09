@@ -65,7 +65,8 @@ class _AccountsScreenState extends State<AccountsScreen> {
     final title = l10n.addServerTitle;
     // Capture messages before awaiting async operations to avoid using BuildContext across async gaps
     final serverSavedMsg = l10n.serverSaved;
-    final result = await showServerAddEditDialog(context: context, title: title);
+    final result =
+        await showServerAddEditDialog(context: context, title: title);
     if (result != null) {
       setState(() => _servers.add(result));
       await _saveServers();
@@ -76,7 +77,8 @@ class _AccountsScreenState extends State<AccountsScreen> {
   Future<void> _editServer(ServerConnection server, int index) async {
     final title = l10n.editServerTitle;
     final serverUpdatedMsg = l10n.serverUpdated;
-    final result = await showServerAddEditDialog(context: context, title: title, initial: server);
+    final result = await showServerAddEditDialog(
+        context: context, title: title, initial: server);
     if (result != null) {
       setState(() => _servers[index] = result);
       await _saveServers();
@@ -100,7 +102,8 @@ class _AccountsScreenState extends State<AccountsScreen> {
           color: Colors.transparent,
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(color: _baseAccent, borderRadius: BorderRadius.circular(8)),
+            decoration: BoxDecoration(
+                color: _baseAccent, borderRadius: BorderRadius.circular(8)),
             child: Text(text, style: const TextStyle(color: Colors.white)),
           ),
         ),
@@ -108,7 +111,9 @@ class _AccountsScreenState extends State<AccountsScreen> {
     });
 
     overlay.insert(entry);
-    Future.delayed(const Duration(seconds: 2), () { entry.remove(); });
+    Future.delayed(const Duration(seconds: 2), () {
+      entry.remove();
+    });
   }
 
   @override
@@ -123,7 +128,9 @@ class _AccountsScreenState extends State<AccountsScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(l10n.localDataProtected, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                Text(l10n.localDataProtected,
+                    style: const TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
                 Text(l10n.authenticateToUnlock, textAlign: TextAlign.center),
                 const SizedBox(height: 16),
@@ -138,7 +145,8 @@ class _AccountsScreenState extends State<AccountsScreen> {
                       if (!mounted) return;
                       setState(() {});
                     } else {
-                      messenger.showSnackBar(SnackBar(content: Text(authenticationFailedMsg)));
+                      messenger.showSnackBar(
+                          SnackBar(content: Text(authenticationFailedMsg)));
                     }
                   },
                   icon: const Icon(Icons.fingerprint),
@@ -163,8 +171,12 @@ class _AccountsScreenState extends State<AccountsScreen> {
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                IconButton(icon: const Icon(Icons.edit), onPressed: () => _editServer(s, index)),
-                IconButton(icon: const Icon(Icons.delete), onPressed: () => _deleteServer(s)),
+                IconButton(
+                    icon: const Icon(Icons.edit),
+                    onPressed: () => _editServer(s, index)),
+                IconButton(
+                    icon: const Icon(Icons.delete),
+                    onPressed: () => _deleteServer(s)),
               ],
             ),
             onTap: () {

@@ -26,20 +26,20 @@ class SettingsService extends ChangeNotifier {
 
   Future<void> _load() async {
     if (storage != null) {
-  // Query support for biometrics once and cache the result for the UI
-  _biometricsSupported = await storage!.supportsBiometrics();
-  final box = storage!.box;
-  final v = box.get(_key, defaultValue: 'spaced3') as String;
+      // Query support for biometrics once and cache the result for the UI
+      _biometricsSupported = await storage!.supportsBiometrics();
+      final box = storage!.box;
+      final v = box.get(_key, defaultValue: 'spaced3') as String;
       _format = _fromString(v);
       _enabled = box.get(_enabledKey, defaultValue: true) as bool;
-  _biometricEnabled = box.get(_biometricKey, defaultValue: false) as bool;
-  _hideOtps = box.get(_hideOtpsKey, defaultValue: false) as bool;
+      _biometricEnabled = box.get(_biometricKey, defaultValue: false) as bool;
+      _hideOtps = box.get(_hideOtpsKey, defaultValue: false) as bool;
       notifyListeners();
       return;
     }
 
     final prefs = await SharedPreferences.getInstance();
-  final v = prefs.getString(_key) ?? 'spaced3';
+    final v = prefs.getString(_key) ?? 'spaced3';
     _format = _fromString(v);
     _enabled = prefs.getBool(_enabledKey) ?? true;
     _hideOtps = prefs.getBool(_hideOtpsKey) ?? false;

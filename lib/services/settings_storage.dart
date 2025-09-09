@@ -17,7 +17,8 @@ class SettingsStorage {
 
   static const _biometricFlagKey = 'biometric_protection_flag';
 
-  FlutterSecureStorage get _secure => FlutterSecureStorage(aOptions: _getAndroidOptions());
+  FlutterSecureStorage get _secure =>
+      FlutterSecureStorage(aOptions: _getAndroidOptions());
 
   final LocalAuthentication _localAuth = LocalAuthentication();
 
@@ -25,7 +26,8 @@ class SettingsStorage {
   /// Returns true if either biometrics or device credentials are available.
   Future<bool> supportsBiometrics() async {
     try {
-      return await _localAuth.canCheckBiometrics || await _localAuth.isDeviceSupported();
+      return await _localAuth.canCheckBiometrics ||
+          await _localAuth.isDeviceSupported();
     } catch (e) {
       debugPrint('supportsBiometrics check failed: $e');
       return false;
@@ -41,7 +43,8 @@ class SettingsStorage {
     // later call attemptUnlock() to prompt again.
     final biometricFlag = await _secure.read(key: _biometricFlagKey);
     if (biometricFlag == '1') {
-      final can = await _localAuth.canCheckBiometrics || await _localAuth.isDeviceSupported();
+      final can = await _localAuth.canCheckBiometrics ||
+          await _localAuth.isDeviceSupported();
       if (!can) {
         // No biometrics available — fall back to leaving locked.
         _unlocked = false;
@@ -71,7 +74,8 @@ class SettingsStorage {
     }
 
     // Open the encrypted box (will be created if missing)
-    await Hive.openBox(_hiveBox, encryptionCipher: HiveAesCipher(encryptionKey));
+    await Hive.openBox(_hiveBox,
+        encryptionCipher: HiveAesCipher(encryptionKey));
     _unlocked = true;
   }
 
@@ -83,7 +87,8 @@ class SettingsStorage {
     final biometricFlag = await _secure.read(key: _biometricFlagKey);
     if (biometricFlag != '1') return true; // not protected
 
-    final can = await _localAuth.canCheckBiometrics || await _localAuth.isDeviceSupported();
+    final can = await _localAuth.canCheckBiometrics ||
+        await _localAuth.isDeviceSupported();
     if (!can) return false;
 
     final ok = await _localAuth.authenticate(
@@ -97,7 +102,8 @@ class SettingsStorage {
     if (encoded == null) return false;
     final encryptionKey = Uint8List.fromList(base64Decode(encoded));
     if (!Hive.isBoxOpen(_hiveBox)) {
-      await Hive.openBox(_hiveBox, encryptionCipher: HiveAesCipher(encryptionKey));
+      await Hive.openBox(_hiveBox,
+          encryptionCipher: HiveAesCipher(encryptionKey));
     }
     _unlocked = true;
     return true;
@@ -112,7 +118,8 @@ class SettingsStorage {
   /// found" that happens when code tries to access the box while it's closed.
   Box<dynamic> get box {
     if (!Hive.isBoxOpen(_hiveBox)) {
-      throw StateError('Local storage is locked; call attemptUnlock() to authenticate before accessing the box.');
+      throw StateError(
+          'Local storage is locked; call attemptUnlock() to authenticate before accessing the box.');
     }
     return Hive.box(_hiveBox);
   }
@@ -120,9 +127,9 @@ class SettingsStorage {
   /// Read the stored hive key, optionally requiring biometric auth (Android).
   Future<Uint8List?> readKey({bool requireAuth = false}) async {
     try {
-  // If the app has biometric protection enabled we prompt the user via
-  // local_auth first; otherwise just read from secure storage normally.
-  final secure = FlutterSecureStorage(aOptions: _getAndroidOptions());
+      // If the app has biometric protection enabled we prompt the user via
+      // local_auth first; otherwise just read from secure storage normally.
+      final secure = FlutterSecureStorage(aOptions: _getAndroidOptions());
       final encoded = await secure.read(key: _keyName);
       if (encoded == null) return null;
       return Uint8List.fromList(base64Decode(encoded));
@@ -137,10 +144,12 @@ class SettingsStorage {
   Future<bool> enableBiometricProtection() async {
     try {
       // Authenticate via local_auth first to get a UX prompt
-      final can = await _localAuth.canCheckBiometrics || await _localAuth.isDeviceSupported();
+      final can = await _localAuth.canCheckBiometrics ||
+          await _localAuth.isDeviceSupported();
       if (!can) return false;
       final ok = await _localAuth.authenticate(
-        localizedReason: 'Authenticate to enable biometric protection for local data',
+        localizedReason:
+            'Authenticate to enable biometric protection for local data',
       );
       if (!ok) return false;
 
@@ -149,10 +158,10 @@ class SettingsStorage {
       if (encoded == null) return false;
 
       // Re-write with auth-required options
-  // When enabling biometric protection we mark a flag and rely on
-  // local_auth for the prompt; write back the same encoded value.
-  await _secure.write(key: _keyName, value: encoded);
-  await _secure.write(key: _biometricFlagKey, value: '1');
+      // When enabling biometric protection we mark a flag and rely on
+      // local_auth for the prompt; write back the same encoded value.
+      await _secure.write(key: _keyName, value: encoded);
+      await _secure.write(key: _biometricFlagKey, value: '1');
       return true;
     } catch (e) {
       debugPrint('enableBiometricProtection failed: $e');
@@ -164,22 +173,24 @@ class SettingsStorage {
   Future<bool> disableBiometricProtection() async {
     try {
       // Ask user to authenticate first to ensure they consent
-      final can = await _localAuth.canCheckBiometrics || await _localAuth.isDeviceSupported();
+      final can = await _localAuth.canCheckBiometrics ||
+          await _localAuth.isDeviceSupported();
       if (!can) return false;
       final ok = await _localAuth.authenticate(
-        localizedReason: 'Authenticate to disable biometric protection for local data',
+        localizedReason:
+            'Authenticate to disable biometric protection for local data',
       );
       if (!ok) return false;
 
       // Read key via auth-protected read (it will prompt)
-  // Read the key (we use local_auth to prompt above). Then write back
-  // the key value without the biometric flag to disable protected reads.
-  final encoded = await _secure.read(key: _keyName);
+      // Read the key (we use local_auth to prompt above). Then write back
+      // the key value without the biometric flag to disable protected reads.
+      final encoded = await _secure.read(key: _keyName);
       if (encoded == null) return false;
 
       // Re-write without auth
-  await _secure.write(key: _keyName, value: encoded);
-  await _secure.delete(key: _biometricFlagKey);
+      await _secure.write(key: _keyName, value: encoded);
+      await _secure.delete(key: _biometricFlagKey);
       return true;
     } catch (e) {
       debugPrint('disableBiometricProtection failed: $e');

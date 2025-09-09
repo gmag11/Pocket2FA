@@ -6,7 +6,7 @@ import 'home_server_manager.dart';
 
 class HomeSyncManager extends ChangeNotifier {
   final HomeServerManager serverManager;
-  
+
   bool _isSyncing = false;
   bool _suppressNextSyncSnack = false;
   bool _suppressFullScreenSyncIndicator = false;
@@ -44,43 +44,45 @@ class HomeSyncManager extends ChangeNotifier {
     final storage = serverManager.settings.storage;
     final servers = serverManager.servers;
     final selectedServerId = serverManager.selectedServerId;
-    
+
     if (selectedServerId == null || storage == null || servers.isEmpty) return;
-    
-    final srv = servers.firstWhere(
-      (s) => s.id == selectedServerId, 
-      orElse: () => servers.first
-    );
-    
+
+    final srv = servers.firstWhere((s) => s.id == selectedServerId,
+        orElse: () => servers.first);
+
     try {
       if (!_suppressFullScreenSyncIndicator) {
         setSyncing(true);
       }
-      
-      final result = await SyncService.instance.forceSync(srv, storage, markAsForced: true);
-      
+
+      final result = await SyncService.instance
+          .forceSync(srv, storage, markAsForced: true);
+
       // Force sync attempted network operations; success means server reachable
       serverManager.updateServerReachability(true);
-      
+
       // After forcing sync, reload servers but suppress the automatic sync snackbar
       _suppressNextSyncSnack = true;
-      
+
       // Prevent the subsequent loadServers() call from triggering a second network
       // syncIfNeeded immediately after a forced sync. This avoids double network
       // requests when the UI reloads servers right after forcing a sync.
       _skipSyncOnLoad = true;
-      
+
       await serverManager.loadServers();
-      
+
       if (result['network_failed'] == true) {
         serverManager.updateServerReachability(false);
-        developer.log('HomeSyncManager: cannot sync (network failure) for server ${srv.id}', name: 'HomeSyncManager');
+        developer.log(
+            'HomeSyncManager: cannot sync (network failure) for server ${srv.id}',
+            name: 'HomeSyncManager');
         _suppressNextSyncSnack = false;
       } else {
         if (!_suppressNextSyncSnack) {
           // Only log when an actual network sync ran (not when skipped)
           if (result['skipped'] != true) {
-            developer.log('HomeSyncManager: sync finished for server ${srv.id}', name: 'HomeSyncManager');
+            developer.log('HomeSyncManager: sync finished for server ${srv.id}',
+                name: 'HomeSyncManager');
           }
         } else {
           _suppressNextSyncSnack = false;
@@ -88,7 +90,8 @@ class HomeSyncManager extends ChangeNotifier {
       }
     } catch (e) {
       serverManager.updateServerReachability(false);
-      developer.log('HomeSyncManager: forceSync failed: $e', name: 'HomeSyncManager');
+      developer.log('HomeSyncManager: forceSync failed: $e',
+          name: 'HomeSyncManager');
     } finally {
       setSyncing(false);
     }
@@ -98,46 +101,52 @@ class HomeSyncManager extends ChangeNotifier {
     final storage = serverManager.settings.storage;
     final servers = serverManager.servers;
     final selectedServerId = serverManager.selectedServerId;
-    
+
     if (selectedServerId == null || storage == null || servers.isEmpty) return;
-    
-    final srv = servers.firstWhere(
-      (s) => s.id == selectedServerId, 
-      orElse: () => servers.first
-    );
-    
+
+    final srv = servers.firstWhere((s) => s.id == selectedServerId,
+        orElse: () => servers.first);
+
     try {
       // Do not show the fullscreen sync overlay when a pull-to-refresh
       // is active; the RefreshIndicator already shows a spinner.
       if (!_suppressFullScreenSyncIndicator) {
         setSyncing(true);
       }
-      
+
       Map<String, dynamic> result;
       if (_skipSyncOnLoad) {
         // consume the flag and skip the automatic throttled sync because
         // a forceSync just ran and already refreshed server state.
         _skipSyncOnLoad = false;
-        developer.log('HomeSyncManager: skipping syncIfNeeded because a recent forced sync ran', name: 'HomeSyncManager');
-        result = {'skipped': true, 'success': true, 'downloaded': 0, 'failed': 0};
+        developer.log(
+            'HomeSyncManager: skipping syncIfNeeded because a recent forced sync ran',
+            name: 'HomeSyncManager');
+        result = {
+          'skipped': true,
+          'success': true,
+          'downloaded': 0,
+          'failed': 0
+        };
       } else {
         result = await SyncService.instance.syncIfNeeded(srv, storage);
       }
-      
+
       // If syncIfNeeded actually performed a network sync, it will not set
       // 'skipped' to true. Only update reachability state when a network
       // attempt occurred and succeeded.
       if (result['skipped'] != true) {
         serverManager.updateServerReachability(true);
       }
-      
+
       // Reload servers from storage to pick up any updates (icons/local paths)
       try {
         if (storage.isUnlocked) {
           final raw2 = storage.box.get('servers');
           if (raw2 != null) {
             final servers2 = (raw2 as List<dynamic>)
-                .map((e) => ServerConnection.fromMap(Map<dynamic, dynamic>.from(e)))
+                .map((e) =>
+                    ServerConnection.fromMap(Map<dynamic, dynamic>.from(e)))
                 .toList();
             serverManager.updateServersInMemory(servers2);
           }
@@ -145,16 +154,19 @@ class HomeSyncManager extends ChangeNotifier {
       } on StateError catch (_) {
         // storage locked while refreshing; ignore and keep current display
       }
-      
+
       if (result['network_failed'] == true) {
         serverManager.updateServerReachability(false);
-        developer.log('HomeSyncManager: cannot sync (network failure) for server ${srv.id}', name: 'HomeSyncManager');
+        developer.log(
+            'HomeSyncManager: cannot sync (network failure) for server ${srv.id}',
+            name: 'HomeSyncManager');
         _suppressNextSyncSnack = false;
       } else {
         if (!_suppressNextSyncSnack) {
           // Only log when an actual network sync ran
           if (result['skipped'] != true) {
-            developer.log('HomeSyncManager: sync finished for server ${srv.id}', name: 'HomeSyncManager');
+            developer.log('HomeSyncManager: sync finished for server ${srv.id}',
+                name: 'HomeSyncManager');
           }
         } else {
           // consume the suppression flag once
@@ -183,7 +195,7 @@ class HomeSyncManager extends ChangeNotifier {
     // small spinner in the sync button.
     setSuppressFullScreenSyncIndicator(true);
     setSyncing(true);
-    
+
     try {
       await onRefreshFromPull();
     } finally {

@@ -32,7 +32,9 @@ class OtpService {
       // Reproduce that behavior: decode with _decodeSecret and then base64-encode.
       final secretBytes = _decodeSecret(acct.seed);
       final sharedSecretBase64 = base64.encode(secretBytes);
-      return generateSteamTotp(sharedSecretBase64, forUnixTime: (DateTime.now().toUtc().millisecondsSinceEpoch ~/ 1000) + timeOffsetSeconds);
+      return generateSteamTotp(sharedSecretBase64,
+          forUnixTime: (DateTime.now().toUtc().millisecondsSinceEpoch ~/ 1000) +
+              timeOffsetSeconds);
     }
 
     return "";
@@ -110,11 +112,11 @@ class OtpService {
     return 'HOTP';
   }
 
-
   // Implement Steam TOTP generation (5-character codes using Steam charset).
   // Reimplementation of the user's Steam TOTP generator example.
   // Usage: generateSteamTotp(sharedSecretBase64, forUnixTime: unixSeconds)
-  static String generateSteamTotp(String sharedSecretBase64, {int? forUnixTime}) {
+  static String generateSteamTotp(String sharedSecretBase64,
+      {int? forUnixTime}) {
     if (sharedSecretBase64.isEmpty) return '';
 
     try {
@@ -122,7 +124,8 @@ class OtpService {
       final secret = base64.decode(sharedSecretBase64);
 
       // 2) Compute time counter (step = 30s). Use forUnixTime if provided.
-      final unixTime = forUnixTime ?? (DateTime.now().toUtc().millisecondsSinceEpoch ~/ 1000);
+      final unixTime = forUnixTime ??
+          (DateTime.now().toUtc().millisecondsSinceEpoch ~/ 1000);
       final timeStep = 30;
       final counter = unixTime ~/ timeStep;
 

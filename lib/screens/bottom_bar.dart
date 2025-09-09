@@ -12,7 +12,9 @@ import 'new_code_screen.dart';
 
 Future<void> launchExternal(Uri uri, ScaffoldMessengerState messenger) async {
   // Capture localized text before any await to avoid using BuildContext across async gaps
-  final couldNotOpen = AppLocalizations.of(messenger.context)?.couldNotOpenUrl ?? 'Could not open URL';
+  final couldNotOpen =
+      AppLocalizations.of(messenger.context)?.couldNotOpenUrl ??
+          'Could not open URL';
   try {
     if (await canLaunchUrl(uri)) {
       final ok = await launchUrl(uri, mode: LaunchMode.platformDefault);
@@ -80,20 +82,26 @@ class BottomBar extends StatelessWidget {
               if (isManageMode) ...[
                 // Modo Manage: Mostrar botones Delete y Done
                 ElevatedButton(
-                  onPressed: selectedAccountIds.isNotEmpty ? onDeleteSelected : null,
+                  onPressed:
+                      selectedAccountIds.isNotEmpty ? onDeleteSelected : null,
                   style: ElevatedButton.styleFrom(
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                    backgroundColor: selectedAccountIds.isNotEmpty ? Colors.red : Colors.grey,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20)),
+                    backgroundColor: selectedAccountIds.isNotEmpty
+                        ? Colors.red
+                        : Colors.grey,
                     foregroundColor: Colors.white,
                     minimumSize: const Size(0, 36),
                   ),
-                  child: Text(l10n.delete, style: const TextStyle(color: Colors.white)),
+                  child: Text(l10n.delete,
+                      style: const TextStyle(color: Colors.white)),
                 ),
                 const SizedBox(width: 12),
                 OutlinedButton(
                   onPressed: onToggleManageMode,
                   style: OutlinedButton.styleFrom(
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20)),
                     minimumSize: const Size(0, 36),
                   ),
                   child: Text(l10n.done),
@@ -105,11 +113,20 @@ class BottomBar extends StatelessWidget {
                       ? () async {
                           // Open the new code screen and wait for a created AccountEntry
                           final srv = selectedServerId != null
-                              ? servers.firstWhere((s) => s.id == selectedServerId, orElse: () => servers.first)
+                              ? servers.firstWhere(
+                                  (s) => s.id == selectedServerId,
+                                  orElse: () => servers.first)
                               : servers.first;
-                          final acct = (srv.userEmail.isNotEmpty) ? srv.userEmail : 'no email';
+                          final acct = (srv.userEmail.isNotEmpty)
+                              ? srv.userEmail
+                              : 'no email';
                           final host = Uri.parse(srv.url).host;
-                          final result = await Navigator.of(context).push(MaterialPageRoute(builder: (c) => NewCodeScreen(userEmail: acct, serverHost: host, groups: srv.groups)));
+                          final result = await Navigator.of(context).push(
+                              MaterialPageRoute(
+                                  builder: (c) => NewCodeScreen(
+                                      userEmail: acct,
+                                      serverHost: host,
+                                      groups: srv.groups)));
                           if (result is AccountEntry && onNewAccount != null) {
                             onNewAccount!(result);
                           }
@@ -117,17 +134,21 @@ class BottomBar extends StatelessWidget {
                       : null,
                   icon: const Icon(Icons.qr_code, color: Colors.white),
                   style: ElevatedButton.styleFrom(
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                    backgroundColor: hasServers ? const Color(0xFF4F63E6) : Colors.grey,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20)),
+                    backgroundColor:
+                        hasServers ? const Color(0xFF4F63E6) : Colors.grey,
                     foregroundColor: Colors.white,
                   ),
-                  label: Text(l10n.newLabel, style: const TextStyle(color: Colors.white)),
+                  label: Text(l10n.newLabel,
+                      style: const TextStyle(color: Colors.white)),
                 ),
                 const SizedBox(width: 12),
                 OutlinedButton(
                   onPressed: hasServers ? onToggleManageMode : null,
                   style: OutlinedButton.styleFrom(
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20)),
                     foregroundColor: hasServers ? null : Colors.grey,
                     minimumSize: const Size(0, 36),
                   ),
@@ -144,43 +165,51 @@ class BottomBar extends StatelessWidget {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                    // Reachability indicator: icon + tooltip + semantics for accessibility
-                    Tooltip(
-                      message: serverReachable ? l10n.online : l10n.offline,
-                      child: Semantics(
-                        label: serverReachable ? l10n.serverReachable : l10n.serverUnreachable,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 6.0),
-                          child: Icon(
-                            serverReachable ? Icons.cloud : Icons.cloud_off,
-                            size: 14,
-                            color: serverReachable ? Colors.green : Colors.red,
-                          ),
+                  // Reachability indicator: icon + tooltip + semantics for accessibility
+                  Tooltip(
+                    message: serverReachable ? l10n.online : l10n.offline,
+                    child: Semantics(
+                      label: serverReachable
+                          ? l10n.serverReachable
+                          : l10n.serverUnreachable,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 6.0),
+                        child: Icon(
+                          serverReachable ? Icons.cloud : Icons.cloud_off,
+                          size: 14,
+                          color: serverReachable ? Colors.green : Colors.red,
                         ),
                       ),
                     ),
-                    GestureDetector(
-                      onTap: onOpenSelector,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
-                        child: Builder(builder: (ctx) {
-                          // Compute display text from the selected server/account safely
-                          String displayText;
-                          if (servers.isEmpty) {
-                            displayText = l10n.noServer;
-                          } else {
-                            final srv = selectedServerId != null
-                                ? servers.firstWhere((s) => s.id == selectedServerId, orElse: () => servers.first)
-                                : servers.first;
-                            // Show only the server/user email. Do not display the selected
-                            // account name in this top/bottom summary to avoid confusion.
-                            final acct = (srv.userEmail.isNotEmpty) ? srv.userEmail : l10n.noEmail;
-                            displayText = '$acct - ${Uri.parse(srv.url).host}';
-                          }
-                          return Text(displayText, style: const TextStyle(color: Colors.grey));
-                        }),
-                      ),
+                  ),
+                  GestureDetector(
+                    onTap: onOpenSelector,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8.0, vertical: 6.0),
+                      child: Builder(builder: (ctx) {
+                        // Compute display text from the selected server/account safely
+                        String displayText;
+                        if (servers.isEmpty) {
+                          displayText = l10n.noServer;
+                        } else {
+                          final srv = selectedServerId != null
+                              ? servers.firstWhere(
+                                  (s) => s.id == selectedServerId,
+                                  orElse: () => servers.first)
+                              : servers.first;
+                          // Show only the server/user email. Do not display the selected
+                          // account name in this top/bottom summary to avoid confusion.
+                          final acct = (srv.userEmail.isNotEmpty)
+                              ? srv.userEmail
+                              : l10n.noEmail;
+                          displayText = '$acct - ${Uri.parse(srv.url).host}';
+                        }
+                        return Text(displayText,
+                            style: const TextStyle(color: Colors.grey));
+                      }),
                     ),
+                  ),
                   InkWell(
                     onTap: () {
                       final s = settings;
@@ -189,63 +218,77 @@ class BottomBar extends StatelessWidget {
                       // Capture localized strings before asynchronous gaps
                       final storageNotAvailableMsg = l10n.storageNotAvailable;
                       showModalBottomSheet<String>(
-                          context: context,
-                          backgroundColor: Colors.white,
-                          shape: const RoundedRectangleBorder(
-                            borderRadius: BorderRadius.vertical(top: Radius.circular(12.0)),
-                          ),
-                          builder: (ctx) {
-                            return SafeArea(
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  ListTile(
-                                    title: Text(AppLocalizations.of(ctx)!.settingsLabel, textAlign: TextAlign.center),
-                                    onTap: () => Navigator.of(ctx).pop('settings'),
+                        context: context,
+                        backgroundColor: Colors.white,
+                        shape: const RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius.vertical(top: Radius.circular(12.0)),
+                        ),
+                        builder: (ctx) {
+                          return SafeArea(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                ListTile(
+                                  title: Text(
+                                      AppLocalizations.of(ctx)!.settingsLabel,
+                                      textAlign: TextAlign.center),
+                                  onTap: () =>
+                                      Navigator.of(ctx).pop('settings'),
+                                ),
+                                ListTile(
+                                  title: Text(
+                                      AppLocalizations.of(ctx)!.accountsLabel,
+                                      textAlign: TextAlign.center),
+                                  onTap: () =>
+                                      Navigator.of(ctx).pop('accounts'),
+                                ),
+                                const SizedBox(height: 12),
+                                const Divider(height: 1),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16.0, vertical: 8.0),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      IconButton(
+                                        icon: const Icon(Icons.close,
+                                            color: Colors.grey),
+                                        onPressed: () => Navigator.of(ctx)
+                                            .pop(), // close without selecting
+                                      ),
+                                    ],
                                   ),
-                                  ListTile(
-                                    title: Text(AppLocalizations.of(ctx)!.accountsLabel, textAlign: TextAlign.center),
-                                    onTap: () => Navigator.of(ctx).pop('accounts'),
-                                  ),
-                                  const SizedBox(height: 12),
-                                  const Divider(height: 1),
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.end,
-                                      children: [
-                                        IconButton(
-                                          icon: const Icon(Icons.close, color: Colors.grey),
-                                          onPressed: () => Navigator.of(ctx).pop(), // close without selecting
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                                ).then((value) {
-                          if (value != null) {
-                            if (value == 'settings') {
-                              // open full settings screen using captured Navigator
-                              nav.push(MaterialPageRoute(builder: (c) => SettingsScreen(settings: s)));
-                            } else if (value == 'accounts') {
-                              // delegate to the owner (HomePage) to open accounts so it can reload afterwards
-                              if (onOpenAccounts != null) {
-                                onOpenAccounts!();
-                                } else {
-                                  // fallback behaviour: try to open directly if storage is available
-                                  if (s.storage != null) {
-                                    nav.push(MaterialPageRoute(builder: (c) => AccountsScreen(storage: s.storage!)));
-                                  } else {
-                                    messenger.showSnackBar(SnackBar(content: Text(storageNotAvailableMsg)));
-                                  }
-                                }
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ).then((value) {
+                        if (value != null) {
+                          if (value == 'settings') {
+                            // open full settings screen using captured Navigator
+                            nav.push(MaterialPageRoute(
+                                builder: (c) => SettingsScreen(settings: s)));
+                          } else if (value == 'accounts') {
+                            // delegate to the owner (HomePage) to open accounts so it can reload afterwards
+                            if (onOpenAccounts != null) {
+                              onOpenAccounts!();
+                            } else {
+                              // fallback behaviour: try to open directly if storage is available
+                              if (s.storage != null) {
+                                nav.push(MaterialPageRoute(
+                                    builder: (c) =>
+                                        AccountsScreen(storage: s.storage!)));
+                              } else {
+                                messenger.showSnackBar(SnackBar(
+                                    content: Text(storageNotAvailableMsg)));
+                              }
                             }
                           }
-                        });
-                      },
+                        }
+                      });
+                    },
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: const [

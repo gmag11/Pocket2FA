@@ -155,6 +155,65 @@ class SettingsScreen extends StatelessWidget {
                     style: TextStyle(fontSize: 12, color: Colors.grey),
                   ),
                 ),
+                const SizedBox(height: 12),
+                // Sync on Home open
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Switch(
+                      value: settings.syncOnOpen,
+                      onChanged: (v) => settings.setSyncOnOpen(v),
+                      activeThumbColor: _baseAccent,
+                    ),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      fit: FlexFit.loose,
+                      child: Text(
+                        l10n.syncOnHomeOpen,
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                // Automatic sync toggle and interval
+                Row(
+                  children: [
+                    Switch(
+                      value: settings.autoSyncEnabled,
+                      onChanged: (v) => settings.setAutoSyncEnabled(v),
+                      activeThumbColor: _baseAccent,
+                    ),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      fit: FlexFit.loose,
+                      child: Text(
+                        l10n.autoSync,
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ],
+                ),
+                if (settings.autoSyncEnabled) ...[
+                  const SizedBox(height: 6),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 56.0),
+                    child: Row(
+                      children: [
+                        Text(l10n.autoSyncIntervalMinutes(settings.autoSyncIntervalMinutes).replaceAll('{0}', settings.autoSyncIntervalMinutes.toString())),
+                        const SizedBox(width: 12),
+                        IconButton(
+                          icon: const Icon(Icons.remove_circle_outline),
+                          onPressed: () => settings.setAutoSyncIntervalMinutes(settings.autoSyncIntervalMinutes - 1),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.add_circle_outline),
+                          onPressed: () => settings.setAutoSyncIntervalMinutes(settings.autoSyncIntervalMinutes + 1),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ],
             );
           },

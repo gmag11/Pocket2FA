@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../l10n/app_localizations.dart';
+import 'dart:async';
 import '../services/settings_service.dart';
 import '../models/account_entry.dart';
 import '../widgets/about_dialog.dart';
@@ -32,6 +33,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   late final HomeSyncManager _syncManager;
   late final HomeManageMode _manageMode;
   late final HomeHeaderAnimation _headerAnimation;
+  Timer? _autoSyncTimer;
 
   // Convenience getter for localized strings
   AppLocalizations get l10n => AppLocalizations.of(context)!;
@@ -55,9 +57,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     _serverManager.addListener(_onServerManagerChanged);
     _syncManager.addListener(_onSyncManagerChanged);
     _manageMode.addListener(_onManageModeChanged);
+  widget.settings.addListener(_onSettingsChanged);
 
-    // Load servers and perform initial connectivity check
-    _loadServersAndInitialize();
+  // Load servers and perform initial connectivity check
+  _loadServersAndInitialize();
   }
 
   void _onServerManagerChanged() {
@@ -78,7 +81,46 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   void _onManageModeChanged() {
     if (mounted) {
       setState(() {});
+      // When entering/exiting manage mode, (re)configure auto-sync
+      _setupAutoSync();
     }
+  }
+
+  void _onSettingsChanged() {
+    // Settings changed (auto-sync toggle/interval or sync-on-open). Reconfigure auto-sync.
+    if (mounted) {
+      setState(() {});
+      _setupAutoSync();
+    }
+  }
+
+  void _setupAutoSync() {
+    // Cancel any existing timer
+    _autoSyncTimer?.cancel();
+
+    // Do not start auto-sync if disabled, if there are no servers, or when in manage mode
+    if (!widget.settings.autoSyncEnabled || _serverManager.servers.isEmpty || _manageMode.isManageMode) {
+      _autoSyncTimer = null;
+      return;
+    }
+
+    final mins = widget.settings.autoSyncIntervalMinutes;
+    // Guard against invalid values
+    final interval = Duration(minutes: mins > 0 ? mins : 30);
+
+    // Start periodic timer
+    _autoSyncTimer = Timer.periodic(interval, (_) async {
+      try {
+        // Respect manage mode at execution time as well
+        if (_manageMode.isManageMode) return;
+        if (_serverManager.servers.isNotEmpty) {
+          await _syncManager.performThrottledSync();
+        }
+      } catch (e) {
+        // Swallow errors to avoid noisy background failures; update reachability
+        _serverManager.updateServerReachability(false);
+      }
+    });
   }
 
   Future<void> _editAccount(AccountEntry account) async {
@@ -113,8 +155,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     await _serverManager.loadServers();
     await _serverManager.initialConnectivityCheck();
 
-    // Attempt throttled sync if we have servers
-    if (_serverManager.servers.isNotEmpty) {
+    // Attempt throttled sync on open only when enabled in settings
+    if (_serverManager.servers.isNotEmpty && widget.settings.syncOnOpen) {
       try {
         await _syncManager.performThrottledSync();
       } catch (e) {
@@ -125,6 +167,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         }
       }
     }
+
+    // Configure auto-sync timer if enabled
+    _setupAutoSync();
   }
 
   Future<void> _openServerAccountSelector() async {
@@ -213,6 +258,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     _serverManager.removeListener(_onServerManagerChanged);
     _syncManager.removeListener(_onSyncManagerChanged);
     _manageMode.removeListener(_onManageModeChanged);
+  widget.settings.removeListener(_onSettingsChanged);
+  _autoSyncTimer?.cancel();
     super.dispose();
   }
 
@@ -349,14 +396,16 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               )
             : Row(
                 mainAxisSize: MainAxisSize.min,
-                children: [
+        children: [
                   Semantics(
                     label: l10n.synchronize,
                     button: true,
                     child: IconButton(
                       tooltip: l10n.synchronize,
                       icon: const Icon(Icons.sync),
-                      onPressed: _syncManager.manualSyncPressed,
+            onPressed: _manageMode.isManageMode
+              ? null
+              : _syncManager.manualSyncPressed,
                     ),
                   ),
                   // Popup menu with About entry

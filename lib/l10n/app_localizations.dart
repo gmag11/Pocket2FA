@@ -871,6 +871,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Close'**
   String get aboutClose;
+
+  /// Sync when opening the Home screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync when opening Home screen'**
+  String get syncOnHomeOpen;
+
+  /// Label for automatic synchronization setting.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic synchronization'**
+  String get autoSync;
+
+  /// Label showing number of minutes for auto-sync interval.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes} minutes'**
+  String autoSyncIntervalMinutes(int minutes);
 }
 
 class _AppLocalizationsDelegate

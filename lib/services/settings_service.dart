@@ -9,6 +9,9 @@ class SettingsService extends ChangeNotifier {
   static const _enabledKey = 'otp_format_enabled';
   static const _biometricKey = 'biometric_protection_enabled';
   static const _hideOtpsKey = 'hide_otps_enabled';
+  static const _syncOnOpenKey = 'sync_on_home_open';
+  static const _autoSyncEnabledKey = 'auto_sync_enabled';
+  static const _autoSyncIntervalKey = 'auto_sync_interval_minutes';
 
   CodeFormat _format = CodeFormat.spaced3;
   CodeFormat get format => _format;
@@ -34,6 +37,9 @@ class SettingsService extends ChangeNotifier {
       _enabled = box.get(_enabledKey, defaultValue: true) as bool;
       _biometricEnabled = box.get(_biometricKey, defaultValue: false) as bool;
       _hideOtps = box.get(_hideOtpsKey, defaultValue: false) as bool;
+  _syncOnOpen = box.get(_syncOnOpenKey, defaultValue: true) as bool;
+  _autoSyncEnabled = box.get(_autoSyncEnabledKey, defaultValue: false) as bool;
+  _autoSyncIntervalMinutes = box.get(_autoSyncIntervalKey, defaultValue: 30) as int;
       notifyListeners();
       return;
     }
@@ -43,6 +49,9 @@ class SettingsService extends ChangeNotifier {
     _format = _fromString(v);
     _enabled = prefs.getBool(_enabledKey) ?? true;
     _hideOtps = prefs.getBool(_hideOtpsKey) ?? false;
+  _syncOnOpen = prefs.getBool(_syncOnOpenKey) ?? true;
+  _autoSyncEnabled = prefs.getBool(_autoSyncEnabledKey) ?? false;
+  _autoSyncIntervalMinutes = prefs.getInt(_autoSyncIntervalKey) ?? 30;
     notifyListeners();
   }
 
@@ -85,6 +94,60 @@ class SettingsService extends ChangeNotifier {
 
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_hideOtpsKey, on);
+    notifyListeners();
+  }
+
+  // New: Sync-on-open setting (default: true)
+  bool _syncOnOpen = true;
+  bool get syncOnOpen => _syncOnOpen;
+
+  Future<void> setSyncOnOpen(bool on) async {
+    _syncOnOpen = on;
+    if (storage != null) {
+      final box = storage!.box;
+      await box.put(_syncOnOpenKey, on);
+      notifyListeners();
+      return;
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_syncOnOpenKey, on);
+    notifyListeners();
+  }
+
+  // New: Automatic sync toggle and interval (minutes)
+  bool _autoSyncEnabled = false;
+  bool get autoSyncEnabled => _autoSyncEnabled;
+
+  int _autoSyncIntervalMinutes = 30;
+  int get autoSyncIntervalMinutes => _autoSyncIntervalMinutes;
+
+  Future<void> setAutoSyncEnabled(bool on) async {
+    _autoSyncEnabled = on;
+    if (storage != null) {
+      final box = storage!.box;
+      await box.put(_autoSyncEnabledKey, on);
+      notifyListeners();
+      return;
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_autoSyncEnabledKey, on);
+    notifyListeners();
+  }
+
+  Future<void> setAutoSyncIntervalMinutes(int mins) async {
+    if (mins <= 0) return;
+    _autoSyncIntervalMinutes = mins;
+    if (storage != null) {
+      final box = storage!.box;
+      await box.put(_autoSyncIntervalKey, mins);
+      notifyListeners();
+      return;
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_autoSyncIntervalKey, mins);
     notifyListeners();
   }
 

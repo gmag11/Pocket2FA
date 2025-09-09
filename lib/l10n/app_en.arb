@@ -549,4 +549,18 @@
     "@aboutClose": {
         "description": "Label for closing the About dialog."
     }
+    ,
+    "syncOnHomeOpen": "Sync when opening Home screen",
+    "@syncOnHomeOpen": {
+        "description": "Sync when opening the Home screen."
+    },
+    "autoSync": "Automatic synchronization",
+    "@autoSync": {
+        "description": "Label for automatic synchronization setting."
+    },
+    "autoSyncIntervalMinutes": "{minutes} minutes",
+    "@autoSyncIntervalMinutes": {
+        "description": "Label showing number of minutes for auto-sync interval.",
+        "placeholders": { "minutes": { "type": "int", "example": "30" } }
+    }
 }

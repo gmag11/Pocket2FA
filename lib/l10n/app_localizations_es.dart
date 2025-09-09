@@ -430,4 +430,15 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get aboutClose => 'Cerrar';
+
+  @override
+  String get syncOnHomeOpen => 'Sincronizar al abrir la pantalla Inicio';
+
+  @override
+  String get autoSync => 'Sincronización automática';
+
+  @override
+  String autoSyncIntervalMinutes(int minutes) {
+    return '$minutes minutos';
+  }
 }

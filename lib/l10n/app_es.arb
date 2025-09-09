@@ -549,4 +549,18 @@
     "@aboutClose": {
         "description": "Etiqueta para cerrar el diálogo Acerca de."
     }
+        ,
+        "syncOnHomeOpen": "Sincronizar al abrir la pantalla Inicio",
+        "@syncOnHomeOpen": {
+            "description": "Sincronizar al abrir la pantalla Inicio."
+        },
+        "autoSync": "Sincronización automática",
+        "@autoSync": {
+            "description": "Etiqueta para la sincronización automática."
+        },
+        "autoSyncIntervalMinutes": "{minutes} minutos",
+        "@autoSyncIntervalMinutes": {
+            "description": "Etiqueta que muestra el intervalo de sincronización automática en minutos.",
+            "placeholders": { "minutes": { "type": "int", "example": "30" } }
+        }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:flutter/services.dart';
+import '../l10n/app_localizations.dart';
 import '../models/account_entry.dart';
 import '../services/settings_service.dart';
 import 'account_tile_otp_service.dart';
@@ -78,10 +79,11 @@ class _AccountTileHOTPState extends State<AccountTileHOTP> {
   void _copyToClipboard(String code) async {
     if (!mounted) return;
     final trimmed = code.trim();
-    if (trimmed.isEmpty || trimmed.toLowerCase() == 'offline') {
+      if (trimmed.isEmpty || trimmed.toLowerCase() == 'offline') {
       final horizontalMargin = MediaQuery.of(context).size.width * 0.12;
+      final noCodeMsg = AppLocalizations.of(context)?.noCodeToCopy ?? 'No code to copy';
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: const Center(child: Text('No code to copy', style: TextStyle(color: Colors.white))),
+        content: Center(child: Text(noCodeMsg, style: const TextStyle(color: Colors.white))),
         behavior: SnackBarBehavior.floating,
         margin: EdgeInsets.fromLTRB(horizontalMargin, 0, horizontalMargin, 96),
         padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 10.0),
@@ -96,8 +98,9 @@ class _AccountTileHOTPState extends State<AccountTileHOTP> {
       await Clipboard.setData(ClipboardData(text: digits));
       if (!mounted) return;
       final horizontalMargin = MediaQuery.of(context).size.width * 0.12;
+      final copiedMsg = AppLocalizations.of(context)?.copied ?? 'Copied to clipboard';
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: const Center(child: Text('Copied to clipboard', style: TextStyle(color: Colors.white))),
+        content: Center(child: Text(copiedMsg, style: const TextStyle(color: Colors.white))),
         behavior: SnackBarBehavior.floating,
         margin: EdgeInsets.fromLTRB(horizontalMargin, 0, horizontalMargin, 96),
         padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 10.0),
@@ -108,8 +111,9 @@ class _AccountTileHOTPState extends State<AccountTileHOTP> {
     } catch (_) {
       if (!mounted) return;
       final horizontalMargin = MediaQuery.of(context).size.width * 0.12;
+      final errorCopyMsg = AppLocalizations.of(context)?.errorCopyingToClipboard ?? 'Error copying to clipboard';
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: const Center(child: Text('Error copying to clipboard', style: TextStyle(color: Colors.white))),
+        content: Center(child: Text(errorCopyMsg, style: const TextStyle(color: Colors.white))),
         behavior: SnackBarBehavior.floating,
         margin: EdgeInsets.fromLTRB(horizontalMargin, 0, horizontalMargin, 96),
         padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 10.0),
@@ -281,13 +285,13 @@ class _AccountTileHOTPState extends State<AccountTileHOTP> {
                   return Container(
                     padding: const EdgeInsets.only(right: 12.0),
                     child: Center(
-                      child: ConstrainedBox(
+                        child: ConstrainedBox(
                         constraints: const BoxConstraints(maxWidth: 180),
                         child: ElevatedButton(
                           onPressed: _otpService.requestHotp,
                           style: ElevatedButton.styleFrom(
                               minimumSize: const Size(0, 36)),
-                          child: const Text('Generate'),
+                          child: Text(AppLocalizations.of(context)!.generate),
                         ),
                       ),
                     ),
@@ -360,13 +364,13 @@ class _AccountTileHOTPState extends State<AccountTileHOTP> {
                       if (_otpService.hotpCounter != null)
                         Align(
                           alignment: Alignment.center,
-                          child: Text(
-                            'counter ${_otpService.hotpCounter}',
-                            style: TextStyle(
-                                fontSize: 14, color: Colors.grey.shade500),
-                            maxLines: 1,
-                            overflow: TextOverflow.visible,
-                          ),
+              child: Text(
+                AppLocalizations.of(context)!.hotpCounter(_otpService.hotpCounter ?? 0),
+                style: TextStyle(
+                  fontSize: 14, color: Colors.grey.shade500),
+                maxLines: 1,
+                overflow: TextOverflow.visible,
+                ),
                         ),
                     ],
                   ),

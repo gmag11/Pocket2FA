@@ -3,6 +3,7 @@ import '../models/account_entry.dart';
 import '../models/group_entry.dart';
 import '../services/api_service.dart';
 import 'dart:developer' as developer;
+import '../l10n/app_localizations.dart';
 
 class EntryCreationService {
   // Parse otpauth URL and build AccountEntry
@@ -111,8 +112,9 @@ class EntryCreationService {
     } catch (e) {
       developer.log('$sourceTag: Parsing failed: $e', name: sourceTag);
       if (context != null && context.mounted) {
+        final msg = AppLocalizations.of(context)?.errorParsingQr(e.toString()) ?? 'Error parsing QR: $e';
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error parsing QR: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text(msg), backgroundColor: Colors.red),
         );
       }
       return null;

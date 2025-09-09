@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 import '../widgets/account_tile.dart';
 import '../services/settings_service.dart';
 import '../models/account_entry.dart';
@@ -71,8 +72,8 @@ class _AccountListState extends State<AccountList> {
             Center(
               child: Text(
                 noServers
-                    ? 'No servers configured. Configure a server in settings to get started.'
-                    : 'No accounts registered',
+                    ? AppLocalizations.of(context)!.noServersConfigured
+                    : AppLocalizations.of(context)!.noAccounts,
                 style: const TextStyle(color: Colors.grey, fontSize: 16),
                 textAlign: TextAlign.center,
               ),
@@ -102,9 +103,9 @@ class _AccountListState extends State<AccountList> {
         child: ListView(
           controller: widget.scrollController,
           physics: const AlwaysScrollableScrollPhysics(),
-          children: const [
-            SizedBox(height: 120),
-            Center(child: Text('No results', style: TextStyle(color: Colors.grey))),
+            children: [
+            const SizedBox(height: 120),
+            Center(child: Text(AppLocalizations.of(context)!.noResults, style: const TextStyle(color: Colors.grey))),
           ],
         ),
       );
@@ -140,9 +141,9 @@ class _AccountListState extends State<AccountList> {
                 onEdit: widget.onEditAccount != null ? () => widget.onEditAccount!(item) : null,
               );
             } catch (e) {
-              return ListTile(
+                return ListTile(
                 leading: const Icon(Icons.error, color: Colors.red),
-                title: const Text('Error al mostrar cuenta'),
+                title: Text(AppLocalizations.of(context)!.errorDisplayingAccount),
                 subtitle: Text(e.toString()),
                 isThreeLine: true,
                 dense: true,
@@ -184,13 +185,13 @@ class _AccountListState extends State<AccountList> {
               ),
             );
           } catch (e) {
-            return Container(
+              return Container(
               decoration: const BoxDecoration(
                 border: Border(bottom: BorderSide(color: Color(0xFFE0E0E0))),
               ),
               child: ListTile(
                 leading: const Icon(Icons.error, color: Colors.red),
-                title: const Text('Error al mostrar cuenta'),
+                title: Text(AppLocalizations.of(context)!.errorDisplayingAccount),
                 subtitle: Text(e.toString()),
                 isThreeLine: true,
                 dense: true,

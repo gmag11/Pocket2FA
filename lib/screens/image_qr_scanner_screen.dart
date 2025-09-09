@@ -5,6 +5,7 @@ import '../models/group_entry.dart';
 import '../models/account_entry.dart';
 import '../services/entry_creation_service.dart';
 import 'dart:developer' as developer;
+import '../l10n/app_localizations.dart';
 
 class ImageQrScannerScreen extends StatefulWidget {
   final String userEmail;
@@ -59,17 +60,19 @@ class _ImageQrScannerScreenState extends State<ImageQrScannerScreen> {
         }
       } else {
         developer.log('ImageQrScannerScreen: No QR code found in image', name: 'ImageQrScannerScreen');
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('No QR code found in image'), backgroundColor: Colors.orange)
-          );
-        }
+          if (mounted) {
+            final noQrMsg = AppLocalizations.of(context)?.noQrInImage ?? 'No QR code found in image';
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(noQrMsg), backgroundColor: Colors.orange)
+            );
+          }
       }
     } catch (e) {
       developer.log('ImageQrScannerScreen: Scan image failed: $e', name: 'ImageQrScannerScreen');
       if (mounted) {
+        final err = AppLocalizations.of(context)?.errorScanningImage(e.toString()) ?? 'Error scanning image: $e';
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error scanning image: $e'), backgroundColor: Colors.red)
+          SnackBar(content: Text(err), backgroundColor: Colors.red)
         );
       }
     } finally {
@@ -128,7 +131,7 @@ class _ImageQrScannerScreenState extends State<ImageQrScannerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Select QR Image')),
+      appBar: AppBar(title: Text(AppLocalizations.of(context)!.selectQrImageTitle)),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -136,7 +139,7 @@ class _ImageQrScannerScreenState extends State<ImageQrScannerScreen> {
           children: [
             const Icon(Icons.image, size: 100, color: Colors.grey),
             const SizedBox(height: 16),
-            const Text('Select an image from gallery containing a QR code', style: TextStyle(fontSize: 18)),
+            Text(AppLocalizations.of(context)!.selectImageFromGallery, style: const TextStyle(fontSize: 18)),
             const SizedBox(height: 32),
             SizedBox(
               width: double.infinity,
@@ -144,9 +147,9 @@ class _ImageQrScannerScreenState extends State<ImageQrScannerScreen> {
               child: ElevatedButton.icon(
                 onPressed: _isPicking || _isProcessing ? null : _pickAndScanImage,
                 icon: const Icon(Icons.photo_library, color: Colors.white),
-                label: const Text(
-                  'Select Image',
-                  style: TextStyle(color: Colors.white),
+                label: Text(
+                  AppLocalizations.of(context)!.selectImageButton,
+                  style: const TextStyle(color: Colors.white),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF4F63E6),
@@ -158,13 +161,13 @@ class _ImageQrScannerScreenState extends State<ImageQrScannerScreen> {
               const SizedBox(height: 16),
               const CircularProgressIndicator(),
               const SizedBox(height: 8),
-              const Text('Scanning QR from image...'),
+              Text(AppLocalizations.of(context)!.scanningFromImage),
             ],
             const SizedBox(height: 32),
             ElevatedButton.icon(
               onPressed: () => Navigator.of(context).pop(),
               icon: const Icon(Icons.arrow_back),
-              label: const Text('Back'),
+              label: Text(AppLocalizations.of(context)!.back),
             ),
           ],
         ),

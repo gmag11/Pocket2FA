@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 
 class HomeSearchBar extends StatelessWidget {
   final TextEditingController? controller;
@@ -31,7 +32,7 @@ class HomeSearchBar extends StatelessWidget {
                   onChanged: onChanged,
                   textAlignVertical: TextAlignVertical.center,
                   decoration: InputDecoration(
-                    hintText: 'Search',
+                    hintText: AppLocalizations.of(context)!.search,
                     border: InputBorder.none,
                     isDense: true,
                     suffixIcon: hasText

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:developer' as developer;
+import '../l10n/app_localizations.dart';
 import 'package:dio/dio.dart';
 import '../models/account_entry.dart';
 import '../models/group_entry.dart';
@@ -97,9 +98,9 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
             style: OutlinedButton.styleFrom(
                 backgroundColor:
                     _otpType == 'TOTP' ? const Color(0xFF4F63E6) : null),
-            child: Text('TOTP',
-                style:
-                    TextStyle(color: _otpType == 'TOTP' ? Colors.white : (isEditMode ? Colors.grey : null))),
+      child: Text(AppLocalizations.of(context)!.totpLabel,
+        style:
+          TextStyle(color: _otpType == 'TOTP' ? Colors.white : (isEditMode ? Colors.grey : null))),
           ),
         ),
         const SizedBox(width: 8),
@@ -109,9 +110,9 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
             style: OutlinedButton.styleFrom(
                 backgroundColor:
                     _otpType == 'HOTP' ? const Color(0xFF4F63E6) : null),
-            child: Text('HOTP',
-                style:
-                    TextStyle(color: _otpType == 'HOTP' ? Colors.white : (isEditMode ? Colors.grey : null))),
+      child: Text(AppLocalizations.of(context)!.hotpLabel,
+        style:
+          TextStyle(color: _otpType == 'HOTP' ? Colors.white : (isEditMode ? Colors.grey : null))),
           ),
         ),
         const SizedBox(width: 8),
@@ -121,9 +122,9 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
             style: OutlinedButton.styleFrom(
                 backgroundColor:
                     _otpType == 'STEAM' ? const Color(0xFF4F63E6) : null),
-            child: Text('STEAM',
-                style: TextStyle(
-                    color: _otpType == 'STEAM' ? Colors.white : (isEditMode ? Colors.grey : null))),
+      child: Text(AppLocalizations.of(context)!.steamLabel,
+        style: TextStyle(
+          color: _otpType == 'STEAM' ? Colors.white : (isEditMode ? Colors.grey : null))),
           ),
         ),
       ],
@@ -142,7 +143,7 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
       enableInteractiveSelection: canEdit,
       obscureText: isEditMode && !_secretUnlocked, // Ocultar texto cuando está bloqueado
       decoration: InputDecoration(
-        hintText: canEdit ? '' : 'Secret is locked - tap the lock to edit',
+        hintText: canEdit ? '' : AppLocalizations.of(context)!.secretLockedHint,
         filled: !canEdit,
         fillColor: !canEdit ? Colors.grey[100] : null,
         border: OutlineInputBorder(
@@ -172,13 +173,13 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
       ),
       validator: (v) {
         final s = v?.trim() ?? '';
-        if (s.isEmpty) return 'Secret is required';
+        if (s.isEmpty) return AppLocalizations.of(context)!.secretRequired;
         // Normalize by removing spaces but do NOT change case; Base32 must be uppercase
         final cleaned = s.replaceAll(' ', '');
         // Base32: letters A-Z and digits 2-7, optionally padded with '=' characters at the end
         final base32Regex = RegExp(r'^[A-Z2-7]+=*$');
         if (!base32Regex.hasMatch(cleaned)) {
-          return 'Secret must be Base32 (uppercase letters A-Z and digits 2-7)';
+          return AppLocalizations.of(context)!.secretBase32Error;
         }
         return null;
       },
@@ -225,7 +226,7 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.existingEntry != null ? 'Edit account' : 'New account')),
+      appBar: AppBar(title: Text(widget.existingEntry != null ? AppLocalizations.of(context)!.update : AppLocalizations.of(context)!.create)),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
@@ -237,33 +238,33 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const Text('Service',
-                        style: TextStyle(
-                            fontWeight: FontWeight.w600, fontSize: 20)),
+          Text(AppLocalizations.of(context)!.serviceLabel,
+            style: const TextStyle(
+              fontWeight: FontWeight.w600, fontSize: 20)),
                     TextFormField(
                       controller: _serviceCtrl,
-                      decoration: const InputDecoration(
-                          hintText: 'Google, Twitter, Apple'),
-                      validator: (v) => (v == null || v.trim().isEmpty) ? 'Service is required' : null,
+            decoration: InputDecoration(
+              hintText: AppLocalizations.of(context)!.serviceLabel),
+            validator: (v) => (v == null || v.trim().isEmpty) ? AppLocalizations.of(context)!.serviceRequired : null,
                     ),
                     const SizedBox(height: 20),
-                    const Text('Account',
-                        style: TextStyle(
-                            fontWeight: FontWeight.w600, fontSize: 20)),
+          Text(AppLocalizations.of(context)!.accountLabel,
+            style: const TextStyle(
+              fontWeight: FontWeight.w600, fontSize: 20)),
                     TextFormField(
                       controller: _accountCtrl,
-                      decoration: const InputDecoration(hintText: 'John DOE'),
-                      validator: (v) => (v == null || v.trim().isEmpty) ? 'Account is required' : null,
+            decoration: InputDecoration(hintText: AppLocalizations.of(context)!.accountLabel),
+            validator: (v) => (v == null || v.trim().isEmpty) ? AppLocalizations.of(context)!.accountRequired : null,
                     ),
                     const SizedBox(height: 20),
-                    const Text('Group',
-                        style: TextStyle(
-                            fontWeight: FontWeight.w600, fontSize: 20)),
+          Text(AppLocalizations.of(context)!.groupLabel,
+            style: const TextStyle(
+              fontWeight: FontWeight.w600, fontSize: 20)),
                     const SizedBox(height: 8),
                     DropdownButtonFormField<String>(
                       initialValue: _selectedGroup,
                       items: [
-                        const DropdownMenuItem(value: '- No group -', child: Text('- No group -')),
+                        DropdownMenuItem(value: '- No group -', child: Text(AppLocalizations.of(context)!.noGroupOption)),
                         if (widget.groups != null && widget.groups!.isNotEmpty) ...widget.groups!
                             .where((g) => !g.name.toLowerCase().startsWith('all'))
                             .map((g) => DropdownMenuItem(value: g.name, child: Text(g.name)))
@@ -273,18 +274,18 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
                       },
                     ),
                     const SizedBox(height: 4),
-                    const Text(
-                      'The group to which the account is to be assigned',
-                      style: TextStyle(fontSize: 12, color: Colors.grey),
+                    Text(
+                      AppLocalizations.of(context)!.optionsHint,
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),
                     ),
                     const SizedBox(height: 20),
-                    const Text('Choose the type of OTP to create',
-                        style: TextStyle(
+                    Text(AppLocalizations.of(context)!.chooseOtpType,
+                        style: const TextStyle(
                             fontWeight: FontWeight.w600, fontSize: 20)),
                     const SizedBox(height: 4),
-                    const Text(
-                      'Time-based OTP or HMAC-based OTP or Steam OTP',
-                      style: TextStyle(fontSize: 12, color: Colors.grey),
+                    Text(
+                      AppLocalizations.of(context)!.optionsHint,
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),
                     ),
                     const SizedBox(height: 4),
                     _buildOtpTypeButtons(),
@@ -293,131 +294,131 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
 
                     // Secret and options depend on OTP type
                     if (_otpType == 'TOTP') ...[
-                      const Text('Secret',
-                          style: TextStyle(
+                      Text(AppLocalizations.of(context)!.secretLabel,
+                          style: const TextStyle(
                               fontWeight: FontWeight.w600, fontSize: 20)),
                       _buildSecretField(),
                       const SizedBox(height: 4),
-                      const Text(
-                        'The key used to generate your security codes',
-                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                      Text(
+                        AppLocalizations.of(context)!.optionsHint,
+                        style: const TextStyle(fontSize: 12, color: Colors.grey),
                       ),
                       const SizedBox(height: 16),
-                      const Text('Options',
-                          style: TextStyle(
-                              fontWeight: FontWeight.w600, fontSize: 20)),
+            Text(AppLocalizations.of(context)!.optionsLabel,
+              style: const TextStyle(
+                fontWeight: FontWeight.w600, fontSize: 20)),
                       const SizedBox(height: 4),
-                      const Text(
-                          'You can leave the following options blank if you don\'t know how to set them.\nThe most commonly used values will be applied.',
-                          style: TextStyle(fontSize: 12, color: Colors.grey)),
+            Text(
+              AppLocalizations.of(context)!.optionsHint,
+              style: const TextStyle(fontSize: 12, color: Colors.grey)),
                       const SizedBox(height: 12),
-                      const Text('Digits',
-                          style: TextStyle(
-                              fontWeight: FontWeight.w600, fontSize: 16)),
+            Text(AppLocalizations.of(context)!.digitsLabel,
+              style: const TextStyle(
+                fontWeight: FontWeight.w600, fontSize: 16)),
                       const SizedBox(height: 4),
-                      const Text(
-                        'The number of digits of the generated security codes',
-                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                      Text(
+                        AppLocalizations.of(context)!.digitsHint,
+                        style: const TextStyle(fontSize: 12, color: Colors.grey),
                       ),
                       const SizedBox(height: 4),
                       _buildDigitsSelector(),
                       const SizedBox(height: 12),
-                      const Text('Algorithm',
-                          style: TextStyle(
-                              fontWeight: FontWeight.w600, fontSize: 16)),
+            Text(AppLocalizations.of(context)!.algorithmLabel,
+              style: const TextStyle(
+                fontWeight: FontWeight.w600, fontSize: 16)),
                       const SizedBox(height: 4),
-                      const Text(
-                        'The algorithm used to secure your security codes',
-                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                      Text(
+                        AppLocalizations.of(context)!.algorithmHint,
+                        style: const TextStyle(fontSize: 12, color: Colors.grey),
                       ),
                       const SizedBox(height: 4),
                       _buildAlgorithmButtons(),
                       const SizedBox(height: 12),
-                      const Text('Period',
-                          style: TextStyle(
-                              fontWeight: FontWeight.w600, fontSize: 16)),
+            Text(AppLocalizations.of(context)!.periodLabel,
+              style: const TextStyle(
+                fontWeight: FontWeight.w600, fontSize: 16)),
                       const SizedBox(height: 8),
                       TextFormField(
                           controller: _periodCtrl,
                           keyboardType: TextInputType.number,
                           decoration:
-                              const InputDecoration(hintText: 'Default is 30'),
+                              InputDecoration(hintText: AppLocalizations.of(context)!.periodDefaultHint),
                           validator: (v) {
                             if (v == null || v.trim().isEmpty) return null;
-                            return int.tryParse(v.trim()) == null ? 'Period must be a number' : null;
+                            return int.tryParse(v.trim()) == null ? AppLocalizations.of(context)!.periodDefaultHint : null;
                           }),
                       const SizedBox(height: 4),
-                      const Text(
-                        'The period of validity of the generated security codes in second',
-                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                      Text(
+                        AppLocalizations.of(context)!.periodHint,
+                        style: const TextStyle(fontSize: 12, color: Colors.grey),
                       ),
                       const SizedBox(height: 16),
                     ] else if (_otpType == 'HOTP') ...[
-                      const Text('Secret',
-                          style: TextStyle(
-                              fontWeight: FontWeight.w600, fontSize: 20)),
+            Text(AppLocalizations.of(context)!.secretLabel,
+              style: const TextStyle(
+                fontWeight: FontWeight.w600, fontSize: 20)),
                       _buildSecretField(),
                       const SizedBox(height: 4),
-                      const Text(
-                        'The key used to generate your security codes',
-                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                      Text(
+                        AppLocalizations.of(context)!.secretLockedHint,
+                        style: const TextStyle(fontSize: 12, color: Colors.grey),
                       ),
                       const SizedBox(height: 16),
-                      const Text('Options',
-                          style: TextStyle(
-                              fontWeight: FontWeight.w600, fontSize: 20)),
+            Text(AppLocalizations.of(context)!.optionsLabel,
+              style: const TextStyle(
+                fontWeight: FontWeight.w600, fontSize: 20)),
                       const SizedBox(height: 4),
-                      const Text(
-                          'You can leave the following options blank if you don\'t know how to set them.\nThe most commonly used values will be applied.',
-                          style: TextStyle(fontSize: 12, color: Colors.grey)),
+            Text(
+              AppLocalizations.of(context)!.optionsHint,
+              style: const TextStyle(fontSize: 12, color: Colors.grey)),
                       const SizedBox(height: 12),
-                      const Text('Digits',
-                          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
+            Text(AppLocalizations.of(context)!.digitsLabel,
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
                       const SizedBox(height: 4),
-                      const Text(
-                        'The number of digits of the generated security codes',
-                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                      Text(
+                        AppLocalizations.of(context)!.digitsHint,
+                        style: const TextStyle(fontSize: 12, color: Colors.grey),
                       ),
                       const SizedBox(height: 4),
                       _buildDigitsSelector(),
                       const SizedBox(height: 12),
-                      const Text('Algorithm',
-                          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
+            Text(AppLocalizations.of(context)!.algorithmLabel,
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
                      const SizedBox(height: 4),
-                      const Text(
-                        'The algorithm used to secure your security codes',
-                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                      Text(
+                        AppLocalizations.of(context)!.algorithmHint,
+                        style: const TextStyle(fontSize: 12, color: Colors.grey),
                       ),
                       const SizedBox(height: 4),
                       _buildAlgorithmButtons(),
                       const SizedBox(height: 12),
-                      const Text('Counter',
-                          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
+            Text(AppLocalizations.of(context)!.counterLabel,
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
                       const SizedBox(height: 8),
                       TextFormField(
                           controller: _counterCtrl,
                           keyboardType: TextInputType.number,
                           decoration:
-                              const InputDecoration(hintText: 'Default is 0'),
+                              InputDecoration(hintText: AppLocalizations.of(context)!.counterDefaultHint),
                           validator: (v) {
                             if (v == null || v.trim().isEmpty) return null;
-                            return int.tryParse(v.trim()) == null ? 'Counter must be a number' : null;
+                            return int.tryParse(v.trim()) == null ? AppLocalizations.of(context)!.counterDefaultHint : null;
                           }),
                               const SizedBox(height: 4),
-                      const Text(
-                        'The initial counter value',
-                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                      Text(
+                        AppLocalizations.of(context)!.counterHint,
+                        style: const TextStyle(fontSize: 12, color: Colors.grey),
                       ),
                       const SizedBox(height: 20),
                     ] else ...[
-                      const Text('Secret',
-                          style: TextStyle(
-                              fontWeight: FontWeight.w600, fontSize: 20)),
+            Text(AppLocalizations.of(context)!.secretLabel,
+              style: const TextStyle(
+                fontWeight: FontWeight.w600, fontSize: 20)),
                       _buildSecretField(),
                       const SizedBox(height: 4),
-                      const Text(
-                        'The key used to generate your security codes',
-                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                      Text(
+                        AppLocalizations.of(context)!.secretLockedHint,
+                        style: const TextStyle(fontSize: 12, color: Colors.grey),
                       ),
                       const SizedBox(height: 16),
                     ],
@@ -566,18 +567,18 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
                       backgroundColor: const Color(0xFF4F63E6),
                       foregroundColor: Colors.white,
                     ),
-                    child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 20.0, vertical: 12.0),
-                        child: Text(widget.existingEntry != null ? 'Update' : 'Create')),
+            child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 20.0, vertical: 12.0),
+            child: Text(widget.existingEntry != null ? AppLocalizations.of(context)!.update : AppLocalizations.of(context)!.create)),
                   ),
                   const SizedBox(width: 12),
           OutlinedButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Padding(
-              padding: EdgeInsets.symmetric(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
                 horizontal: 16.0, vertical: 12.0),
-              child: Text('Cancel')),
+              child: Text(AppLocalizations.of(context)!.cancel)),
           ),
                 ],
               ),

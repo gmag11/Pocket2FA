@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 import '../services/settings_service.dart';
 import '../models/account_entry.dart';
 import 'accounts_screen.dart';
@@ -90,16 +91,16 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       ),
     );
 
-    if (result != null) {
+  if (result != null) {
       // La entrada fue editada, actualizarla en el servidor manager
       await _serverManager.updateAccount(result);
       
       // Mostrar mensaje de confirmación
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Account updated successfully')),
-        );
-      }
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(AppLocalizations.of(context)!.accountUpdated)),
+          );
+        }
     }
   }
 
@@ -114,7 +115,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Cannot sync: offline or server unreachable'))
+            SnackBar(content: Text(AppLocalizations.of(context)!.cannotSync)),
           );
         }
       }
@@ -148,7 +149,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                   child: Align(
                     alignment: Alignment.centerLeft,
-                    child: Text('Servers', style: Theme.of(context).textTheme.titleMedium)
+                    child: Text(AppLocalizations.of(context)!.serversTitle, style: Theme.of(context).textTheme.titleMedium),
                   ),
                 ),
                 const Divider(height: 1),
@@ -216,28 +217,30 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 24.0),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
                   child: Text(
-                    'Biometric authentication failed or was cancelled. Please retry to unlock your local data.',
+                    AppLocalizations.of(context)!.biometricAuthFailed,
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 16, color: Colors.red),
+                    style: const TextStyle(fontSize: 16, color: Colors.red),
                   ),
                 ),
                 const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: () async {
                     final messenger = ScaffoldMessenger.of(context);
+                    // capture localized message before await to avoid context-after-await lint
+                    final authFailedMsg = AppLocalizations.of(context)!.authenticationFailed;
                     final ok = await storage.attemptUnlock();
                     if (ok) {
                       await _serverManager.loadServers();
                     } else {
                       messenger.showSnackBar(
-                        const SnackBar(content: Text('Authentication failed'))
+                        SnackBar(content: Text(authFailedMsg))
                       );
                     }
                   },
-                  child: const Text('Retry'),
+                  child: Text(AppLocalizations.of(context)!.retry),
                 ),
               ],
             ),
@@ -332,21 +335,21 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 height: 48,
                 child: Icon(Icons.sync, color: Colors.grey),
               )
-            : Semantics(
-                label: 'Synchronize',
-                button: true,
-                child: IconButton(
-                  tooltip: 'Synchronize',
-                  icon: const Icon(Icons.sync),
-                  onPressed: _syncManager.manualSyncPressed,
-                ),
-              );
+                : Semantics(
+                    label: AppLocalizations.of(context)!.synchronize,
+                    button: true,
+                    child: IconButton(
+                      tooltip: AppLocalizations.of(context)!.synchronize,
+                      icon: const Icon(Icons.sync),
+                      onPressed: _syncManager.manualSyncPressed,
+                    ),
+                  );
   }
 
   Widget _buildGroupSelector(List<String> groups) {
     return _manageMode.isManageMode && _manageMode.selectedAccountIds.isNotEmpty
         ? Text(
-            '${_manageMode.selectedAccountIds.length} selected',
+            AppLocalizations.of(context)!.selectedCount(_manageMode.selectedAccountIds.length),
             style: TextStyle(color: Colors.grey.shade700),
           )
         : PopupMenuButton<String>(
@@ -425,7 +428,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           await _serverManager.loadServers();
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Storage not available'))
+            SnackBar(content: Text(AppLocalizations.of(context)!.storageNotAvailable)),
           );
         }
       },
@@ -444,10 +447,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
-                children: const [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 12),
-                  Text('Syncing...', style: TextStyle(fontSize: 16)),
+                children: [
+                  const CircularProgressIndicator(),
+                  const SizedBox(height: 12),
+                  Text(AppLocalizations.of(context)!.syncing, style: const TextStyle(fontSize: 16)),
                 ],
               ),
             ),

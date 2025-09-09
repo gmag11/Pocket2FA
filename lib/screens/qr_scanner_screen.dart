@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import '../l10n/app_localizations.dart';
 import '../models/group_entry.dart';
 import '../models/account_entry.dart';
 import '../services/entry_creation_service.dart';
@@ -90,6 +91,9 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
     setState(() {
       _isProcessing = true;
     });
+  // Capture localized strings and messenger before async gaps
+  final messenger = ScaffoldMessenger.of(context);
+  final qrErrorMsg = AppLocalizations.of(context)?.qrScannerError ?? 'Error';
     
     try {
       // Pausa el detector para evitar múltiples detecciones
@@ -109,8 +113,8 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
     } catch (e) {
       developer.log('QrScannerScreen: Error in QR detection: $e', name: 'QrScannerScreen');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red)
+        messenger.showSnackBar(
+          SnackBar(content: Text('$qrErrorMsg: $e'), backgroundColor: Colors.red)
         );
       }
     } finally {
@@ -127,7 +131,7 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Scan QR Code'),
+        title: Text(AppLocalizations.of(context)!.scanQRCode),
         actions: [
           IconButton(
             icon: const Icon(Icons.flash_on),
@@ -161,11 +165,11 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
             child: Center(
               child: Column(
                 children: [
-                  const Text('Position the QR code in the frame', style: TextStyle(color: Colors.white, fontSize: 16)),
+                  Text(AppLocalizations.of(context)!.positionQr, style: const TextStyle(color: Colors.white, fontSize: 16)),
                   const SizedBox(height: 8),
                   ElevatedButton(
                     onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('Cancel'),
+                    child: Text(AppLocalizations.of(context)!.cancel),
                   ),
                 ],
               ),

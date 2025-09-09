@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/server_connection.dart';
 import '../services/settings_storage.dart';
+import '../l10n/app_localizations.dart';
 import 'server_detail_screen.dart';
 import 'server_add_edit_dialog.dart';
 
@@ -60,20 +61,25 @@ class _AccountsScreenState extends State<AccountsScreen> {
   }
 
   Future<void> _addServer() async {
-    final result = await showServerAddEditDialog(context: context, title: 'Add server');
+    final title = AppLocalizations.of(context)!.addServerTitle;
+    // Capture messages before awaiting async operations to avoid using BuildContext across async gaps
+    final serverSavedMsg = AppLocalizations.of(context)!.serverSaved;
+    final result = await showServerAddEditDialog(context: context, title: title);
     if (result != null) {
       setState(() => _servers.add(result));
       await _saveServers();
-      _showGreenToast('Server connection saved and validated');
+      _showGreenToast(serverSavedMsg);
     }
   }
 
   Future<void> _editServer(ServerConnection server, int index) async {
-    final result = await showServerAddEditDialog(context: context, title: 'Edit server', initial: server);
+    final title = AppLocalizations.of(context)!.editServerTitle;
+    final serverUpdatedMsg = AppLocalizations.of(context)!.serverUpdated;
+    final result = await showServerAddEditDialog(context: context, title: title, initial: server);
     if (result != null) {
       setState(() => _servers[index] = result);
       await _saveServers();
-      _showGreenToast('Server updated and validated');
+      _showGreenToast(serverUpdatedMsg);
     }
   }
 
@@ -109,20 +115,21 @@ class _AccountsScreenState extends State<AccountsScreen> {
     // If storage is locked, show an unlock screen instead of the list.
     if (!widget.storage.isUnlocked) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Accounts / Servers')),
+        appBar: AppBar(title: Text(AppLocalizations.of(context)!.accountsTitle)),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24.0),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text('Local data is protected', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                Text(AppLocalizations.of(context)!.localDataProtected, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
-                const Text('Authenticate with biometrics to unlock your local data.' , textAlign: TextAlign.center),
+                Text(AppLocalizations.of(context)!.authenticateToUnlock, textAlign: TextAlign.center),
                 const SizedBox(height: 16),
                 ElevatedButton.icon(
                   onPressed: () async {
                     final messenger = ScaffoldMessenger.of(context);
+                    final authenticationFailedMsg = AppLocalizations.of(context)!.authenticationFailed;
                     final ok = await widget.storage.attemptUnlock();
                     if (ok) {
                       // Reload servers and update UI
@@ -130,11 +137,11 @@ class _AccountsScreenState extends State<AccountsScreen> {
                       if (!mounted) return;
                       setState(() {});
                     } else {
-                      messenger.showSnackBar(const SnackBar(content: Text('Authentication failed')));
+                      messenger.showSnackBar(SnackBar(content: Text(authenticationFailedMsg)));
                     }
                   },
                   icon: const Icon(Icons.fingerprint),
-                  label: const Text('Unlock'),
+                  label: Text(AppLocalizations.of(context)!.unlock),
                 ),
               ],
             ),
@@ -144,7 +151,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Accounts / Servers')),
+      appBar: AppBar(title: Text(AppLocalizations.of(context)!.accountsTitle)),
       body: ListView.builder(
         itemCount: _servers.length,
         itemBuilder: (context, index) {

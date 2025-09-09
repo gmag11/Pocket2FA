@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 import 'dart:developer' as developer;
 import '../services/api_service.dart';
 import '../models/server_connection.dart';
@@ -31,7 +32,7 @@ Future<ServerConnection?> showServerAddEditDialog({
           final urlText = urlCtrl.text.trim();
           final apiKeyText = apiCtrl.text.trim();
           if (urlText.isEmpty) {
-            setStateSB(() { errorText = 'URL required'; loading = false; });
+            setStateSB(() { errorText = AppLocalizations.of(context)!.urlRequired; loading = false; });
             return;
           }
 
@@ -107,8 +108,8 @@ Future<ServerConnection?> showServerAddEditDialog({
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Name')),
-              TextField(controller: urlCtrl, decoration: const InputDecoration(labelText: 'URL')),
+              TextField(controller: nameCtrl, decoration: InputDecoration(labelText: AppLocalizations.of(context)!.nameLabel)),
+              TextField(controller: urlCtrl, decoration: InputDecoration(labelText: AppLocalizations.of(context)!.urlLabel)),
               apiFieldLocal(),
               if (errorText != null) ...[
                 const SizedBox(height: 8),
@@ -117,12 +118,12 @@ Future<ServerConnection?> showServerAddEditDialog({
             ],
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.of(c).pop(null), child: const Text('Cancel')),
+            TextButton(onPressed: () => Navigator.of(c).pop(null), child: Text(AppLocalizations.of(context)!.cancel)),
             ElevatedButton(
               onPressed: loading ? null : () async { await validateAndClose(); },
               child: loading 
                 ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)) 
-                : Text(isEdit ? 'Save' : 'Add'),
+                : Text(isEdit ? AppLocalizations.of(context)!.save : AppLocalizations.of(context)!.add),
             ),
           ],
         );

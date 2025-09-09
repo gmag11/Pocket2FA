@@ -4,6 +4,7 @@ import 'dart:io';
 import '../models/account_entry.dart';
 import '../services/settings_service.dart';
 import 'account_tile_utils.dart';
+import '../l10n/app_localizations.dart';
 
 /// Reusable UI components for AccountTile
 class AccountTileUi {
@@ -104,7 +105,7 @@ class AccountTileUi {
             child: ElevatedButton(
               onPressed: onPressed,
               style: ElevatedButton.styleFrom(minimumSize: const Size(0, 36)),
-              child: const Text('Generate'),
+                  child: Builder(builder: (context) => Text(AppLocalizations.of(context)!.generate)),
             ),
           ),
         ),
@@ -160,12 +161,12 @@ class AccountTileUi {
                 if (hotpCounter != null)
                   Align(
                     alignment: Alignment.centerLeft,
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 2.0),
-                      child: Text('counter $hotpCounter',
-                          style: TextStyle(
-                              fontSize: 12, color: Colors.grey.shade500)),
-                    ),
+            child: Padding(
+            padding: const EdgeInsets.only(top: 2.0),
+            child: Builder(builder: (context) => Text(AppLocalizations.of(context)!.hotpCounter(hotpCounter),
+              style: TextStyle(
+                fontSize: 12, color: Colors.grey.shade500))),
+          ),
                   ),
               ],
             ),

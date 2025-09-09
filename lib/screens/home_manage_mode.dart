@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 import 'dart:developer' as developer;
 import '../services/api_service.dart';
 import '../models/server_connection.dart';
@@ -41,16 +42,16 @@ class HomeManageMode extends ChangeNotifier {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Accounts'),
-        content: Text('Are you sure you want to delete ${_selectedAccountIds.length} selected account(s)?'),
+        title: Text(AppLocalizations.of(context)!.deleteAccountsTitle),
+        content: Text(AppLocalizations.of(context)!.deleteAccountsConfirm(_selectedAccountIds.length)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Delete'),
+            child: Text(AppLocalizations.of(context)!.delete),
           ),
         ],
       ),
@@ -67,7 +68,7 @@ class HomeManageMode extends ChangeNotifier {
       serverManager.updateServerReachability(false);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No server selected'))
+          SnackBar(content: Text(AppLocalizations.of(context)!.noServerSelected))
         );
       }
       return false;
@@ -125,7 +126,7 @@ class HomeManageMode extends ChangeNotifier {
     if (!context.mounted) return true;
     
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Accounts deleted'))
+      SnackBar(content: Text(AppLocalizations.of(context)!.accountsDeleted))
     );
     
     return true;

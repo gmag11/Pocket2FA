@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 import '../models/server_connection.dart';
 import '../models/account_entry.dart';
 import 'dart:developer' as developer;
@@ -28,18 +29,18 @@ class _ServerDetailScreenState extends State<ServerDetailScreen> {
     final res = await showDialog<bool>(
       context: context,
       builder: (c) => AlertDialog(
-        title: const Text('Add account'),
+        title: Text(AppLocalizations.of(context)!.addAccount),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            TextField(controller: svc, decoration: const InputDecoration(labelText: 'Service')),
-            TextField(controller: acct, decoration: const InputDecoration(labelText: 'Account')),
-            TextField(controller: seed, decoration: const InputDecoration(labelText: 'Seed')),
+            TextField(controller: svc, decoration: InputDecoration(labelText: AppLocalizations.of(context)!.serviceLabel)),
+            TextField(controller: acct, decoration: InputDecoration(labelText: AppLocalizations.of(context)!.accountLabel)),
+            TextField(controller: seed, decoration: InputDecoration(labelText: AppLocalizations.of(context)!.seedLabel)),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(c).pop(false), child: const Text('Cancel')),
-          ElevatedButton(onPressed: () => Navigator.of(c).pop(true), child: const Text('Add')),
+          TextButton(onPressed: () => Navigator.of(c).pop(false), child: Text(AppLocalizations.of(context)!.cancel)),
+          ElevatedButton(onPressed: () => Navigator.of(c).pop(true), child: Text(AppLocalizations.of(context)!.add)),
         ],
       ),
     );
@@ -87,7 +88,7 @@ class _ServerDetailScreenState extends State<ServerDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Server: ${_server.name}')),
+  appBar: AppBar(title: Text('${AppLocalizations.of(context)!.serverLabel}: ${_server.name}')),
       body: ListView.builder(
         itemCount: _server.accounts.length,
         itemBuilder: (context, index) {

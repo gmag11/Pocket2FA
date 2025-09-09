@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:flutter/services.dart';
+import '../l10n/app_localizations.dart';
 import '../models/account_entry.dart';
 import '../services/settings_service.dart';
 import 'account_tile_animations.dart';
@@ -93,12 +94,19 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
   void _copyToClipboard(String code) async {
     if (!mounted) return;
     final trimmed = code.trim();
+
+    // Capture values that use BuildContext before any await to avoid
+    // use_build_context_synchronously lint warnings.
+    final horizontalMargin = MediaQuery.of(context).size.width * 0.12;
+    final messenger = ScaffoldMessenger.of(context);
+    final noCodeMsg = AppLocalizations.of(context)!.noCodeToCopy;
+    final copiedMsg = AppLocalizations.of(context)!.copied;
+    final errorCopyMsg = AppLocalizations.of(context)!.errorCopyingToClipboard;
+
     if (trimmed.isEmpty || trimmed.toLowerCase() == 'offline') {
-      final horizontalMargin = MediaQuery.of(context).size.width * 0.12;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: const Center(
-            child:
-                Text('No code to copy', style: TextStyle(color: Colors.white))),
+      messenger.showSnackBar(SnackBar(
+        content: Center(
+            child: Text(noCodeMsg, style: const TextStyle(color: Colors.white))),
         behavior: SnackBarBehavior.floating,
         margin: EdgeInsets.fromLTRB(horizontalMargin, 0, horizontalMargin, 96),
         padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 10.0),
@@ -113,11 +121,9 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
     try {
       await Clipboard.setData(ClipboardData(text: digits));
       if (!mounted) return;
-      final horizontalMargin = MediaQuery.of(context).size.width * 0.12;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: const Center(
-            child: Text('Copied to clipboard',
-                style: TextStyle(color: Colors.white))),
+      messenger.showSnackBar(SnackBar(
+        content: Center(
+            child: Text(copiedMsg, style: const TextStyle(color: Colors.white))),
         behavior: SnackBarBehavior.floating,
         margin: EdgeInsets.fromLTRB(horizontalMargin, 0, horizontalMargin, 96),
         padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 10.0),
@@ -128,11 +134,9 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
       ));
     } catch (_) {
       if (!mounted) return;
-      final horizontalMargin = MediaQuery.of(context).size.width * 0.12;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: const Center(
-            child: Text('Error copying to clipboard',
-                style: TextStyle(color: Colors.white))),
+      messenger.showSnackBar(SnackBar(
+        content: Center(
+            child: Text(errorCopyMsg, style: const TextStyle(color: Colors.white))),
         behavior: SnackBarBehavior.floating,
         margin: EdgeInsets.fromLTRB(horizontalMargin, 0, horizontalMargin, 96),
         padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 10.0),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/settings_service.dart';
+import '../l10n/app_localizations.dart';
 
 class SettingsScreen extends StatelessWidget {
   final SettingsService settings;
@@ -12,7 +13,7 @@ class SettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
+      appBar: AppBar(title: Text(AppLocalizations.of(context)!.settingsTitle)),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: AnimatedBuilder(
@@ -34,7 +35,7 @@ class SettingsScreen extends StatelessWidget {
                     const SizedBox(width: 8),
                     Flexible(
                       fit: FlexFit.loose,
-                      child: Text('Code formatting', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: enabled ? null : Colors.grey.shade600)),
+                      child: Text(AppLocalizations.of(context)!.codeFormatting, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: enabled ? null : Colors.grey.shade600)),
                     ),
                   ],
                 ),
@@ -44,9 +45,9 @@ class SettingsScreen extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      _formatButton(context, settings.format == CodeFormat.spaced3, 'by Trio', '123 456', enabled ? () => settings.setFormat(CodeFormat.spaced3) : () {}),
+                      _formatButton(context, settings.format == CodeFormat.spaced3, AppLocalizations.of(context)!.byTrio, '123 456', enabled ? () => settings.setFormat(CodeFormat.spaced3) : () {}),
                       const SizedBox(width: 4),
-                      _formatButton(context, settings.format == CodeFormat.spaced2, 'by Pair', '12 34 56', enabled ? () => settings.setFormat(CodeFormat.spaced2) : () {}),
+                      _formatButton(context, settings.format == CodeFormat.spaced2, AppLocalizations.of(context)!.byPair, '12 34 56', enabled ? () => settings.setFormat(CodeFormat.spaced2) : () {}),
                     ],
                   ),
                 ),
@@ -64,16 +65,20 @@ class SettingsScreen extends StatelessWidget {
                           value: settings.biometricEnabled,
                           onChanged: supported
                               ? (v) async {
+                                  // capture localized messages before awaiting
+                                  final enabledMsg = AppLocalizations.of(ctx)!.biometricEnabled;
+                                  final disabledMsg = AppLocalizations.of(ctx)!.biometricDisabled;
+                                  final operationFailedMsg = AppLocalizations.of(ctx)!.operationFailed;
                                   final ok = await settings.setBiometricEnabled(v);
                                   messenger.showSnackBar(SnackBar(
-                                    content: Text(ok ? (v ? 'Biometric enabled' : 'Biometric disabled') : 'Operation failed'),
+                                    content: Text(ok ? (v ? enabledMsg : disabledMsg) : operationFailedMsg),
                                   ));
                                 }
                               : null,
                           activeThumbColor: _baseAccent,
                         );
                         if (!supported) {
-                          return Tooltip(message: 'Biometrics not available on this device', child: switchWidget);
+                          return Tooltip(message: AppLocalizations.of(ctx)!.biometricsNotAvailable, child: switchWidget);
                         }
                         return switchWidget;
                       }),
@@ -81,7 +86,7 @@ class SettingsScreen extends StatelessWidget {
                       Flexible(
                         fit: FlexFit.loose,
                         child: Text(
-                          'Biometric protection',
+                          AppLocalizations.of(context)!.biometricProtection,
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -105,7 +110,7 @@ class SettingsScreen extends StatelessWidget {
                     Flexible(
                       fit: FlexFit.loose,
                       child: Text(
-                        'Hide OTPs on Home screen',
+                        AppLocalizations.of(context)!.hideOtpsOnHome,
                         style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: null),
                       ),
                     ),
@@ -115,7 +120,7 @@ class SettingsScreen extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.only(left: 56.0),
                   child: Text(
-                    'Long-press an OTP on the Home screen to reveal it for 10 seconds.',
+                    AppLocalizations.of(context)!.longPressReveal,
                     style: TextStyle(fontSize: 12, color: Colors.grey),
                   ),
                 ),

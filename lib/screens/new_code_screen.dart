@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 import '../models/group_entry.dart';
 import '../models/account_entry.dart';
 import 'advanced_form_screen.dart';
@@ -15,14 +16,14 @@ class NewCodeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Create new code')),
+      appBar: AppBar(title: Text(AppLocalizations.of(context)!.createNewCodeTitle)),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const SizedBox(height: 32),
-            Text('Choose how to create a new code:', style: Theme.of(context).textTheme.bodyLarge),
+            Text(AppLocalizations.of(context)!.chooseHowToCreate, style: Theme.of(context).textTheme.bodyLarge),
             const SizedBox(height: 16),
             // Prominent primary action: Scan QR
             SizedBox(
@@ -43,7 +44,7 @@ class NewCodeScreen extends StatelessWidget {
                   }
                 },
                 icon: const Icon(Icons.qr_code_scanner, size: 28, color: Colors.white),
-                label: const Text('Scan a QR code', style: TextStyle(fontSize: 16, color: Colors.white)),
+                label: Text(AppLocalizations.of(context)!.scanQRCode, style: const TextStyle(fontSize: 16, color: Colors.white)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF4F63E6),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
@@ -51,7 +52,7 @@ class NewCodeScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 64),
-            const Center(child: Text('Alternate methods', style: TextStyle(color: Colors.grey))),
+            Center(child: Text(AppLocalizations.of(context)!.alternateMethods, style: const TextStyle(color: Colors.grey))),
             const SizedBox(height: 12),
             SizedBox(
               height: 50,
@@ -70,7 +71,7 @@ class NewCodeScreen extends StatelessWidget {
                   }
                 },
                 icon: const Icon(Icons.image),
-                label: const Text('Select an image', style: TextStyle(fontSize: 16)),
+                label: Text(AppLocalizations.of(context)!.selectImageButton, style: const TextStyle(fontSize: 16)),
                 style: ElevatedButton.styleFrom(
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                 ),
@@ -87,7 +88,7 @@ class NewCodeScreen extends StatelessWidget {
                 }
               },
               icon: const Icon(Icons.edit),
-              label: const Text('Use the advanced form'),
+              label: Text(AppLocalizations.of(context)!.useAdvancedForm),
             ),
             const SizedBox(height: 12),
             // Space before the cancel button to separate it from the alternate methods
@@ -95,7 +96,7 @@ class NewCodeScreen extends StatelessWidget {
             ElevatedButton.icon(
               onPressed: () => Navigator.of(context).pop(),
               icon: const Icon(Icons.arrow_back),
-              label: const Text('Back'),
+              label: Text(AppLocalizations.of(context)!.back),
             ),
             const SizedBox(height: 12),
             // Push the user/server line to the bottom

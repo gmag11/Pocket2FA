@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'l10n/app_localizations.dart';
 import 'package:flutter/services.dart';
 import 'screens/home_screen.dart';
 import 'services/settings_service.dart';
@@ -28,7 +30,14 @@ class Pocket2FA extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Pocket2FA',
+      onGenerateTitle: (context) => AppLocalizations.of(context)?.appTitle ?? 'Pocket2FA',
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+      ],
+      supportedLocales: AppLocalizations.supportedLocales,
       theme: ThemeData(
         primarySwatch: Colors.indigo,
         scaffoldBackgroundColor: Colors.white,

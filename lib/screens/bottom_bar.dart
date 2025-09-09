@@ -4,12 +4,15 @@ import 'dart:developer' as developer;
 import 'package:url_launcher/url_launcher.dart';
 import '../models/server_connection.dart';
 import '../models/account_entry.dart';
+import '../l10n/app_localizations.dart';
 import '../services/settings_service.dart';
 import '../screens/accounts_screen.dart';
 import '../screens/settings_screen.dart';
 import 'new_code_screen.dart';
 
 Future<void> launchExternal(Uri uri, ScaffoldMessengerState messenger) async {
+  // Capture localized text before any await to avoid using BuildContext across async gaps
+  final couldNotOpen = AppLocalizations.of(messenger.context)?.couldNotOpenUrl ?? 'Could not open URL';
   try {
     if (await canLaunchUrl(uri)) {
       final ok = await launchUrl(uri, mode: LaunchMode.platformDefault);
@@ -23,9 +26,11 @@ Future<void> launchExternal(Uri uri, ScaffoldMessengerState messenger) async {
     }
   } catch (e) {
     developer.log('HomePage: cannot launch $uri: $e', name: 'HomePage');
-    messenger.showSnackBar(SnackBar(
-      content: Text('Could not open URL: $e'),
-    ));
+    if (messenger.mounted) {
+      messenger.showSnackBar(SnackBar(
+        content: Text('$couldNotOpen: $e'),
+      ));
+    }
   }
 }
 
@@ -81,7 +86,7 @@ class BottomBar extends StatelessWidget {
                     foregroundColor: Colors.white,
                     minimumSize: const Size(0, 36),
                   ),
-                  child: const Text('Delete', style: TextStyle(color: Colors.white)),
+                  child: Text(AppLocalizations.of(context)!.delete, style: const TextStyle(color: Colors.white)),
                 ),
                 const SizedBox(width: 12),
                 OutlinedButton(
@@ -90,7 +95,7 @@ class BottomBar extends StatelessWidget {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                     minimumSize: const Size(0, 36),
                   ),
-                  child: const Text('Done'),
+                  child: Text(AppLocalizations.of(context)!.done),
                 ),
               ] else ...[
                 // Modo Normal: Mostrar botones New y Manage
@@ -115,7 +120,7 @@ class BottomBar extends StatelessWidget {
                     backgroundColor: hasServers ? const Color(0xFF4F63E6) : Colors.grey,
                     foregroundColor: Colors.white,
                   ),
-                  label: const Text('New', style: TextStyle(color: Colors.white)),
+                  label: Text(AppLocalizations.of(context)!.newLabel, style: const TextStyle(color: Colors.white)),
                 ),
                 const SizedBox(width: 12),
                 OutlinedButton(
@@ -125,7 +130,7 @@ class BottomBar extends StatelessWidget {
                     foregroundColor: hasServers ? null : Colors.grey,
                     minimumSize: const Size(0, 36),
                   ),
-                  child: const Text('Manage'),
+                  child: Text(AppLocalizations.of(context)!.manage),
                 ),
               ],
             ],
@@ -140,9 +145,9 @@ class BottomBar extends StatelessWidget {
                 children: [
                     // Reachability indicator: icon + tooltip + semantics for accessibility
                     Tooltip(
-                      message: serverReachable ? 'Online' : 'Offline',
+                      message: serverReachable ? AppLocalizations.of(context)!.online : AppLocalizations.of(context)!.offline,
                       child: Semantics(
-                        label: serverReachable ? 'Server reachable' : 'Server unreachable',
+                        label: serverReachable ? AppLocalizations.of(context)!.serverReachable : AppLocalizations.of(context)!.serverUnreachable,
                         child: Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 6.0),
                           child: Icon(
@@ -161,14 +166,14 @@ class BottomBar extends StatelessWidget {
                           // Compute display text from the selected server/account safely
                           String displayText;
                           if (servers.isEmpty) {
-                            displayText = 'no-server';
+                            displayText = AppLocalizations.of(context)!.noServer;
                           } else {
                             final srv = selectedServerId != null
                                 ? servers.firstWhere((s) => s.id == selectedServerId, orElse: () => servers.first)
                                 : servers.first;
                             // Show only the server/user email. Do not display the selected
                             // account name in this top/bottom summary to avoid confusion.
-                            final acct = (srv.userEmail.isNotEmpty) ? srv.userEmail : 'no email';
+                            final acct = (srv.userEmail.isNotEmpty) ? srv.userEmail : AppLocalizations.of(context)!.noEmail;
                             displayText = '$acct - ${Uri.parse(srv.url).host}';
                           }
                           return Text(displayText, style: const TextStyle(color: Colors.grey));
@@ -180,6 +185,8 @@ class BottomBar extends StatelessWidget {
                       final s = settings;
                       final nav = Navigator.of(context);
                       final messenger = ScaffoldMessenger.of(context);
+                      // Capture localized strings before asynchronous gaps
+                      final storageNotAvailableMsg = AppLocalizations.of(context)?.storageNotAvailable ?? 'Storage not available';
                       showModalBottomSheet<String>(
                           context: context,
                           backgroundColor: Colors.white,
@@ -192,11 +199,11 @@ class BottomBar extends StatelessWidget {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   ListTile(
-                                    title: const Text('settings', textAlign: TextAlign.center),
+                                    title: Text(AppLocalizations.of(ctx)!.settingsLabel, textAlign: TextAlign.center),
                                     onTap: () => Navigator.of(ctx).pop('settings'),
                                   ),
                                   ListTile(
-                                    title: const Text('accounts', textAlign: TextAlign.center),
+                                    title: Text(AppLocalizations.of(ctx)!.accountsLabel, textAlign: TextAlign.center),
                                     onTap: () => Navigator.of(ctx).pop('accounts'),
                                   ),
                                   const SizedBox(height: 12),
@@ -217,7 +224,7 @@ class BottomBar extends StatelessWidget {
                               ),
                             );
                           },
-                        ).then((value) {
+                                ).then((value) {
                           if (value != null) {
                             if (value == 'settings') {
                               // open full settings screen using captured Navigator
@@ -226,14 +233,14 @@ class BottomBar extends StatelessWidget {
                               // delegate to the owner (HomePage) to open accounts so it can reload afterwards
                               if (onOpenAccounts != null) {
                                 onOpenAccounts!();
-                              } else {
-                                // fallback behaviour: try to open directly if storage is available
-                                if (s.storage != null) {
-                                  nav.push(MaterialPageRoute(builder: (c) => AccountsScreen(storage: s.storage!)));
                                 } else {
-                                  messenger.showSnackBar(const SnackBar(content: Text('Storage not available')));
+                                  // fallback behaviour: try to open directly if storage is available
+                                  if (s.storage != null) {
+                                    nav.push(MaterialPageRoute(builder: (c) => AccountsScreen(storage: s.storage!)));
+                                  } else {
+                                    messenger.showSnackBar(SnackBar(content: Text(storageNotAvailableMsg)));
+                                  }
                                 }
-                              }
                             }
                           }
                         });

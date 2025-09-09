@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 import '../models/account_entry.dart';
 import '../services/settings_service.dart';
 import 'account_tile_hotp.dart';
@@ -65,7 +66,7 @@ class AccountTile extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.only(bottom: 20.0),
                 child: Tooltip(
-                  message: 'Not synchronized (pending upload)',
+                  message: AppLocalizations.of(context)!.pendingUpload,
                   child: Container(
                     width: 28,
                     height: 28,

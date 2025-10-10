@@ -142,11 +142,10 @@ jobs:
               ca-certificates \
               && rm -rf /var/lib/apt/lists/*
 
-          # Install Flutter
+          # Install Flutter using git (works better for ARM64)
           RUN cd /opt && \
-              wget -q https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.35.1-stable.tar.xz && \
-              tar xf flutter_linux_3.35.1-stable.tar.xz && \
-              rm flutter_linux_3.35.1-stable.tar.xz
+              git clone https://github.com/flutter/flutter.git -b stable --depth 1 && \
+              chown -R root:root /opt/flutter
 
           ENV PATH="/opt/flutter/bin:${PATH}"
 

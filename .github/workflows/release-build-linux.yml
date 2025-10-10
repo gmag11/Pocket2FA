@@ -161,9 +161,18 @@ jobs:
           # Copy source code
           COPY . .
 
+          # Download and extract appimagetool for container environment
+          RUN wget -q -O appimagetool-aarch64.AppImage https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-aarch64.AppImage && \
+              chmod +x appimagetool-aarch64.AppImage && \
+              ./appimagetool-aarch64.AppImage --appimage-extract && \
+              mv squashfs-root/AppRun /usr/local/bin/appimagetool && \
+              chmod +x /usr/local/bin/appimagetool && \
+              rm -rf squashfs-root appimagetool-aarch64.AppImage
+
           # Make script executable and build AppImage
           RUN chmod +x scripts/build_appimage.sh
           RUN flutter pub get
+          ENV USE_EXTRACTED_APPIMAGETOOL=true
           RUN ./scripts/build_appimage.sh
 
           EOF

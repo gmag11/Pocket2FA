@@ -123,22 +123,32 @@ case "$TARGET_ARCH" in
         ;;
 esac
 
-if [ ! -f appimagetool-${APPIMAGETOOL_ARCH}.AppImage ]; then
+if [ ! -f appimagetool-${APPIMAGETOOL_ARCH}.AppImage ] && [ "$USE_EXTRACTED_APPIMAGETOOL" != "true" ]; then
     echo -e "${YELLOW}⬇️  Downloading appimagetool for $APPIMAGETOOL_ARCH...${NC}"
     wget -q -O appimagetool-${APPIMAGETOOL_ARCH}.AppImage https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-${APPIMAGETOOL_ARCH}.AppImage
     chmod +x appimagetool-${APPIMAGETOOL_ARCH}.AppImage
+elif [ "$USE_EXTRACTED_APPIMAGETOOL" = "true" ]; then
+    echo -e "${YELLOW}📦 Using extracted appimagetool from system...${NC}"
 fi
 
 # Create AppImage
 echo -e "${YELLOW}🏗️  Creating AppImage...${NC}"
 mkdir -p build/linux/${BUILD_DIR_ARCH}/release/appimage
 
+# Choose appimagetool command based on environment
+APPIMAGETOOL_CMD=""
+if [ "$USE_EXTRACTED_APPIMAGETOOL" = "true" ] && command -v appimagetool >/dev/null 2>&1; then
+    APPIMAGETOOL_CMD="appimagetool"
+else
+    APPIMAGETOOL_CMD="./appimagetool-${APPIMAGETOOL_ARCH}.AppImage"
+fi
+
 # Suprimir warnings en CI para output más limpio
 if [ "$CI_MODE" = true ]; then
-    ARCH=${TARGET_ARCH} ./appimagetool-${APPIMAGETOOL_ARCH}.AppImage build/appimage/Pocket2FA.AppDir build/linux/${BUILD_DIR_ARCH}/release/appimage/Pocket2FA-$VERSION-${TARGET_ARCH}.AppImage 2>/dev/null || \
-    ARCH=${TARGET_ARCH} ./appimagetool-${APPIMAGETOOL_ARCH}.AppImage build/appimage/Pocket2FA.AppDir build/linux/${BUILD_DIR_ARCH}/release/appimage/Pocket2FA-$VERSION-${TARGET_ARCH}.AppImage
+    ARCH=${TARGET_ARCH} $APPIMAGETOOL_CMD build/appimage/Pocket2FA.AppDir build/linux/${BUILD_DIR_ARCH}/release/appimage/Pocket2FA-$VERSION-${TARGET_ARCH}.AppImage 2>/dev/null || \
+    ARCH=${TARGET_ARCH} $APPIMAGETOOL_CMD build/appimage/Pocket2FA.AppDir build/linux/${BUILD_DIR_ARCH}/release/appimage/Pocket2FA-$VERSION-${TARGET_ARCH}.AppImage
 else
-    ARCH=${TARGET_ARCH} ./appimagetool-${APPIMAGETOOL_ARCH}.AppImage build/appimage/Pocket2FA.AppDir build/linux/${BUILD_DIR_ARCH}/release/appimage/Pocket2FA-$VERSION-${TARGET_ARCH}.AppImage
+    ARCH=${TARGET_ARCH} $APPIMAGETOOL_CMD build/appimage/Pocket2FA.AppDir build/linux/${BUILD_DIR_ARCH}/release/appimage/Pocket2FA-$VERSION-${TARGET_ARCH}.AppImage
 fi
 
 # Generate checksum

@@ -148,6 +148,9 @@ jobs:
 
                   ENV PATH="/opt/flutter/bin:${PATH}"
 
+                  # Configure Git to trust Flutter directory
+                  RUN git config --global --add safe.directory /opt/flutter
+
                   # Pre-download Flutter dependencies
                   RUN flutter doctor
                   RUN flutter config --enable-linux-desktop

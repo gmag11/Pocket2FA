@@ -1,221 +1,221 @@
 name: Build Linux AppImage
 
 on:
-    release:
-        types: [published]
-    workflow_dispatch:
-        inputs:
-            test_build:
-                description: "Test build without uploading to release"
-                required: false
-                default: true
-                type: boolean
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      test_build:
+        description: "Test build without uploading to release"
+        required: false
+        default: true
+        type: boolean
 
 jobs:
-    linux-x64:
-        name: Build Linux AppImage (x86_64)
-        runs-on: ubuntu-latest
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v4
+  linux-x64:
+    name: Build Linux AppImage (x86_64)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-            - name: Set up Flutter (stable)
-              uses: subosito/flutter-action@v2
-              with:
-                  flutter-version: "3.35.1"
-                  channel: stable
+      - name: Set up Flutter (stable)
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.35.1"
+          channel: stable
 
-            - name: Install Linux dependencies
-              run: |
-                  sudo apt-get update
-                  sudo apt-get install -y \
-                    clang \
-                    cmake \
-                    ninja-build \
-                    pkg-config \
-                    libgtk-3-dev \
-                    libsecret-1-dev \
-                    liblzma-dev \
-                    libstdc++-12-dev \
-                    wget \
-                    file
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            clang \
+            cmake \
+            ninja-build \
+            pkg-config \
+            libgtk-3-dev \
+            libsecret-1-dev \
+            liblzma-dev \
+            libstdc++-12-dev \
+            wget \
+            file
 
-            - name: Flutter version
-              run: flutter --version
+      - name: Flutter version
+        run: flutter --version
 
-            - name: Fetch Flutter dependencies
-              run: flutter pub get
+      - name: Fetch Flutter dependencies
+        run: flutter pub get
 
-            - name: Make build script executable
-              run: chmod +x scripts/build_appimage.sh
+      - name: Make build script executable
+        run: chmod +x scripts/build_appimage.sh
 
-            - name: Build Linux AppImage
-              run: ./scripts/build_appimage.sh
+      - name: Build Linux AppImage
+        run: ./scripts/build_appimage.sh
 
-            - name: Extract version from pubspec.yaml
-              id: get_version
-              run: |
-                  VERSION=$(grep "^version:" pubspec.yaml | cut -d' ' -f2)
-                  echo "version=$VERSION" >> $GITHUB_OUTPUT
-                  echo "Detected version: $VERSION"
+      - name: Extract version from pubspec.yaml
+        id: get_version
+        run: |
+          VERSION=$(grep "^version:" pubspec.yaml | cut -d' ' -f2)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Detected version: $VERSION"
 
-            - name: Verify AppImage exists
-              run: |
-                  if [ ! -f "build/linux/x64/release/appimage/Pocket2FA-${{ steps.get_version.outputs.version }}-x86_64.AppImage" ]; then
-                    echo "Error: x86_64 AppImage not found!"
-                    exit 1
-                  fi
-                  echo "x86_64 AppImage found and ready for upload"
-                  ls -la build/linux/x64/release/appimage/
+      - name: Verify AppImage exists
+        run: |
+          if [ ! -f "build/linux/x64/release/appimage/Pocket2FA-${{ steps.get_version.outputs.version }}-x86_64.AppImage" ]; then
+            echo "Error: x86_64 AppImage not found!"
+            exit 1
+          fi
+          echo "x86_64 AppImage found and ready for upload"
+          ls -la build/linux/x64/release/appimage/
 
-            - name: Test build complete (manual dispatch)
-              if: github.event_name == 'workflow_dispatch'
-              run: |
-                  echo "🎉 Manual test build completed successfully!"
-                  echo "📦 AppImage: build/linux/x64/release/appimage/Pocket2FA-${{ steps.get_version.outputs.version }}-x86_64.AppImage"
-                  echo "🔐 Checksum: $(cat build/linux/x64/release/appimage/Pocket2FA-${{ steps.get_version.outputs.version }}-x86_64.AppImage.sha256 | cut -d' ' -f1)"
-                  echo "ℹ️  This was a test build - no files were uploaded to release."
+      - name: Test build complete (manual dispatch)
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          echo "🎉 Manual test build completed successfully!"
+          echo "📦 AppImage: build/linux/x64/release/appimage/Pocket2FA-${{ steps.get_version.outputs.version }}-x86_64.AppImage"
+          echo "🔐 Checksum: $(cat build/linux/x64/release/appimage/Pocket2FA-${{ steps.get_version.outputs.version }}-x86_64.AppImage.sha256 | cut -d' ' -f1)"
+          echo "ℹ️  This was a test build - no files were uploaded to release."
 
-            - name: Upload x86_64 AppImage to release
-              if: github.event_name == 'release'
-              uses: actions/upload-release-asset@v1
-              env:
-                  GITHUB_TOKEN: ${{ secrets.TOKEN }}
-              with:
-                  upload_url: ${{ github.event.release.upload_url }}
-                  asset_path: build/linux/x64/release/appimage/Pocket2FA-${{ steps.get_version.outputs.version }}-x86_64.AppImage
-                  asset_name: Pocket2FA-${{ steps.get_version.outputs.version }}-x86_64.AppImage
-                  asset_content_type: application/x-executable
+      - name: Upload x86_64 AppImage to release
+        if: github.event_name == 'release'
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: build/linux/x64/release/appimage/Pocket2FA-${{ steps.get_version.outputs.version }}-x86_64.AppImage
+          asset_name: Pocket2FA-${{ steps.get_version.outputs.version }}-x86_64.AppImage
+          asset_content_type: application/x-executable
 
-            - name: Upload x86_64 AppImage checksum to release
-              if: github.event_name == 'release'
-              uses: actions/upload-release-asset@v1
-              env:
-                  GITHUB_TOKEN: ${{ secrets.TOKEN }}
-              with:
-                  upload_url: ${{ github.event.release.upload_url }}
-                  asset_path: build/linux/x64/release/appimage/Pocket2FA-${{ steps.get_version.outputs.version }}-x86_64.AppImage.sha256
-                  asset_name: Pocket2FA-${{ steps.get_version.outputs.version }}-x86_64.AppImage.sha256
-                  asset_content_type: text/plain
+      - name: Upload x86_64 AppImage checksum to release
+        if: github.event_name == 'release'
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: build/linux/x64/release/appimage/Pocket2FA-${{ steps.get_version.outputs.version }}-x86_64.AppImage.sha256
+          asset_name: Pocket2FA-${{ steps.get_version.outputs.version }}-x86_64.AppImage.sha256
+          asset_content_type: text/plain
 
-    linux-arm64:
-        name: Build Linux AppImage (ARM64)
-        runs-on: ubuntu-latest
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v4
+  linux-arm64:
+    name: Build Linux AppImage (ARM64)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-            - name: Set up QEMU
-              uses: docker/setup-qemu-action@v3
-              with:
-                  platforms: arm64
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
 
-            - name: Set up Docker Buildx
-              uses: docker/setup-buildx-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-            - name: Build ARM64 AppImage using QEMU
-              run: |
-                  # Create a Dockerfile for ARM64 build
-                  cat > Dockerfile.arm64 << 'EOF'
-                  FROM --platform=linux/arm64 ubuntu:22.04
+      - name: Build ARM64 AppImage using QEMU
+        run: |
+          # Create a Dockerfile for ARM64 build
+          cat > Dockerfile.arm64 << 'EOF'
+          FROM --platform=linux/arm64 ubuntu:22.04
 
-                  # Install dependencies
-                  RUN apt-get update && apt-get install -y \
-                      curl \
-                      git \
-                      unzip \
-                      xz-utils \
-                      zip \
-                      libglu1-mesa \
-                      clang \
-                      cmake \
-                      ninja-build \
-                      pkg-config \
-                      libgtk-3-dev \
-                      libsecret-1-dev \
-                      liblzma-dev \
-                      libstdc++-12-dev \
-                      wget \
-                      file \
-                      ca-certificates \
-                      && rm -rf /var/lib/apt/lists/*
+          # Install dependencies
+          RUN apt-get update && apt-get install -y \
+              curl \
+              git \
+              unzip \
+              xz-utils \
+              zip \
+              libglu1-mesa \
+              clang \
+              cmake \
+              ninja-build \
+              pkg-config \
+              libgtk-3-dev \
+              libsecret-1-dev \
+              liblzma-dev \
+              libstdc++-12-dev \
+              wget \
+              file \
+              ca-certificates \
+              && rm -rf /var/lib/apt/lists/*
 
-                  # Install Flutter
-                  RUN cd /opt && \
-                      wget -q https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.35.1-stable.tar.xz && \
-                      tar xf flutter_linux_3.35.1-stable.tar.xz && \
-                      rm flutter_linux_3.35.1-stable.tar.xz
+          # Install Flutter
+          RUN cd /opt && \
+              wget -q https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.35.1-stable.tar.xz && \
+              tar xf flutter_linux_3.35.1-stable.tar.xz && \
+              rm flutter_linux_3.35.1-stable.tar.xz
 
-                  ENV PATH="/opt/flutter/bin:${PATH}"
+          ENV PATH="/opt/flutter/bin:${PATH}"
 
-                  # Configure Git to trust Flutter directory
-                  RUN git config --global --add safe.directory /opt/flutter
+          # Configure Git to trust Flutter directory
+          RUN git config --global --add safe.directory /opt/flutter
 
-                  # Pre-download Flutter dependencies
-                  RUN flutter doctor
-                  RUN flutter config --enable-linux-desktop
+          # Pre-download Flutter dependencies
+          RUN flutter doctor
+          RUN flutter config --enable-linux-desktop
 
-                  WORKDIR /workspace
+          WORKDIR /workspace
 
-                  # Copy source code
-                  COPY . .
+          # Copy source code
+          COPY . .
 
-                  # Make script executable and build AppImage
-                  RUN chmod +x scripts/build_appimage.sh
-                  RUN flutter pub get
-                  RUN ./scripts/build_appimage.sh
+          # Make script executable and build AppImage
+          RUN chmod +x scripts/build_appimage.sh
+          RUN flutter pub get
+          RUN ./scripts/build_appimage.sh
 
-                  EOF
+          EOF
 
-                  # Build and extract AppImage
-                  docker buildx build --platform linux/arm64 -f Dockerfile.arm64 -t pocket2fa-arm64-builder .
-                  docker create --name pocket2fa-arm64-container --platform linux/arm64 pocket2fa-arm64-builder
-                  docker cp pocket2fa-arm64-container:/workspace/build ./build-arm64
-                  docker rm pocket2fa-arm64-container
+          # Build and extract AppImage
+          docker buildx build --platform linux/arm64 -f Dockerfile.arm64 -t pocket2fa-arm64-builder .
+          docker create --name pocket2fa-arm64-container --platform linux/arm64 pocket2fa-arm64-builder
+          docker cp pocket2fa-arm64-container:/workspace/build ./build-arm64
+          docker rm pocket2fa-arm64-container
 
-            - name: Extract version from pubspec.yaml
-              id: get_version
-              run: |
-                  VERSION=$(grep "^version:" pubspec.yaml | cut -d' ' -f2)
-                  echo "version=$VERSION" >> $GITHUB_OUTPUT
-                  echo "Detected version: $VERSION"
+      - name: Extract version from pubspec.yaml
+        id: get_version
+        run: |
+          VERSION=$(grep "^version:" pubspec.yaml | cut -d' ' -f2)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Detected version: $VERSION"
 
-            - name: Verify ARM64 AppImage exists
-              run: |
-                  if [ ! -f "build-arm64/linux/arm64/release/appimage/Pocket2FA-${{ steps.get_version.outputs.version }}-arm64.AppImage" ]; then
-                    echo "Error: ARM64 AppImage not found!"
-                    find build-arm64/ -name "*.AppImage" || true
-                    exit 1
-                  fi
-                  echo "ARM64 AppImage found and ready for upload"
-                  ls -la build-arm64/linux/arm64/release/appimage/
+      - name: Verify ARM64 AppImage exists
+        run: |
+          if [ ! -f "build-arm64/linux/arm64/release/appimage/Pocket2FA-${{ steps.get_version.outputs.version }}-arm64.AppImage" ]; then
+            echo "Error: ARM64 AppImage not found!"
+            find build-arm64/ -name "*.AppImage" || true
+            exit 1
+          fi
+          echo "ARM64 AppImage found and ready for upload"
+          ls -la build-arm64/linux/arm64/release/appimage/
 
-            - name: Test build complete (manual dispatch)
-              if: github.event_name == 'workflow_dispatch'
-              run: |
-                  echo "🎉 Manual ARM64 test build completed successfully!"
-                  echo "📦 AppImage: build-arm64/linux/arm64/release/appimage/Pocket2FA-${{ steps.get_version.outputs.version }}-arm64.AppImage"
-                  echo "🔐 Checksum: $(cat build-arm64/linux/arm64/release/appimage/Pocket2FA-${{ steps.get_version.outputs.version }}-arm64.AppImage.sha256 | cut -d' ' -f1)"
-                  echo "ℹ️  This was a test build - no files were uploaded to release."
+      - name: Test build complete (manual dispatch)
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          echo "🎉 Manual ARM64 test build completed successfully!"
+          echo "📦 AppImage: build-arm64/linux/arm64/release/appimage/Pocket2FA-${{ steps.get_version.outputs.version }}-arm64.AppImage"
+          echo "🔐 Checksum: $(cat build-arm64/linux/arm64/release/appimage/Pocket2FA-${{ steps.get_version.outputs.version }}-arm64.AppImage.sha256 | cut -d' ' -f1)"
+          echo "ℹ️  This was a test build - no files were uploaded to release."
 
-            - name: Upload ARM64 AppImage to release
-              if: github.event_name == 'release'
-              uses: actions/upload-release-asset@v1
-              env:
-                  GITHUB_TOKEN: ${{ secrets.TOKEN }}
-              with:
-                  upload_url: ${{ github.event.release.upload_url }}
-                  asset_path: build-arm64/linux/arm64/release/appimage/Pocket2FA-${{ steps.get_version.outputs.version }}-arm64.AppImage
-                  asset_name: Pocket2FA-${{ steps.get_version.outputs.version }}-arm64.AppImage
-                  asset_content_type: application/x-executable
+      - name: Upload ARM64 AppImage to release
+        if: github.event_name == 'release'
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: build-arm64/linux/arm64/release/appimage/Pocket2FA-${{ steps.get_version.outputs.version }}-arm64.AppImage
+          asset_name: Pocket2FA-${{ steps.get_version.outputs.version }}-arm64.AppImage
+          asset_content_type: application/x-executable
 
-            - name: Upload ARM64 AppImage checksum to release
-              if: github.event_name == 'release'
-              uses: actions/upload-release-asset@v1
-              env:
-                  GITHUB_TOKEN: ${{ secrets.TOKEN }}
-              with:
-                  upload_url: ${{ github.event.release.upload_url }}
-                  asset_path: build-arm64/linux/arm64/release/appimage/Pocket2FA-${{ steps.get_version.outputs.version }}-arm64.AppImage.sha256
-                  asset_name: Pocket2FA-${{ steps.get_version.outputs.version }}-arm64.AppImage.sha256
-                  asset_content_type: text/plain
+      - name: Upload ARM64 AppImage checksum to release
+        if: github.event_name == 'release'
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: build-arm64/linux/arm64/release/appimage/Pocket2FA-${{ steps.get_version.outputs.version }}-arm64.AppImage.sha256
+          asset_name: Pocket2FA-${{ steps.get_version.outputs.version }}-arm64.AppImage.sha256
+          asset_content_type: text/plain

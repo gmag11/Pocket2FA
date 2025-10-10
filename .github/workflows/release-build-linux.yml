@@ -37,6 +37,7 @@ jobs:
             libsecret-1-dev \
             liblzma-dev \
             libstdc++-12-dev \
+            libfuse2 \
             wget \
             file
 
@@ -135,6 +136,7 @@ jobs:
               libsecret-1-dev \
               liblzma-dev \
               libstdc++-12-dev \
+              libfuse2 \
               wget \
               file \
               ca-certificates \

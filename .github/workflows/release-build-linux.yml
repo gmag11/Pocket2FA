@@ -3,13 +3,6 @@ name: Build Linux AppImage
 on:
   release:
     types: [published]
-  workflow_dispatch:
-    inputs:
-      test_build:
-        description: "Test build without uploading to release"
-        required: false
-        default: true
-        type: boolean
 
 jobs:
   linux-x64:
@@ -103,97 +96,4 @@ jobs:
           upload_url: ${{ github.event.release.upload_url }}
           asset_path: build/linux/x64/release/appimage/Pocket2FA-${{ steps.get_version.outputs.version }}-x86_64.AppImage.sha256
           asset_name: Pocket2FA-${{ steps.get_version.outputs.version }}-x86_64.AppImage.sha256
-          asset_content_type: text/plain
-
-  linux-arm64:
-    name: Build Linux AppImage (ARM64)
-    runs-on: ubuntu-latest-arm64
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Flutter (stable)
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: "3.35.1"
-          channel: stable
-
-      - name: Install Linux dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            clang \
-            cmake \
-            ninja-build \
-            pkg-config \
-            libgtk-3-dev \
-            libsecret-1-dev \
-            liblzma-dev \
-            libstdc++-12-dev \
-            libfuse2 \
-            wget \
-            file
-
-      - name: Flutter version
-        run: flutter --version
-
-      - name: Flutter doctor
-        run: flutter doctor
-
-      - name: Enable Linux desktop
-        run: flutter config --enable-linux-desktop
-
-      - name: Get project version
-        id: get_version
-        run: |
-          VERSION=$(grep "version:" pubspec.yaml | awk '{print $2}' | sed 's/+.*//')
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "Project version: $VERSION"
-
-      - name: Make build script executable
-        run: chmod +x scripts/build_appimage.sh
-
-      - name: Run AppImage build script for ARM64
-        run: ./scripts/build_appimage.sh
-
-      - name: Verify ARM64 AppImage creation
-        run: |
-          if [ -f build/linux/arm64/release/appimage/Pocket2FA-${{ steps.get_version.outputs.version }}-arm64.AppImage ]; then
-            echo "ARM64 AppImage created successfully!"
-            ls -la build/linux/arm64/release/appimage/
-          else
-            echo "Error: ARM64 AppImage not found!"
-            exit 1
-          fi
-          echo "ARM64 AppImage found and ready for upload"
-          ls -la build/linux/arm64/release/appimage/
-
-      - name: Test build complete (manual dispatch)
-        if: github.event_name == 'workflow_dispatch'
-        run: |
-          echo "🎉 Manual test build completed successfully!"
-          echo "📦 AppImage: build/linux/arm64/release/appimage/Pocket2FA-${{ steps.get_version.outputs.version }}-arm64.AppImage"
-          echo "🔐 Checksum: $(cat build/linux/arm64/release/appimage/Pocket2FA-${{ steps.get_version.outputs.version }}-arm64.AppImage.sha256 | cut -d' ' -f1)"
-          echo "ℹ️  This was a test build - no files were uploaded to release."
-
-      - name: Upload ARM64 AppImage to release
-        if: github.event_name == 'release'
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.TOKEN }}
-        with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: build/linux/arm64/release/appimage/Pocket2FA-${{ steps.get_version.outputs.version }}-arm64.AppImage
-          asset_name: Pocket2FA-${{ steps.get_version.outputs.version }}-arm64.AppImage
-          asset_content_type: application/octet-stream
-
-      - name: Upload ARM64 AppImage checksum to release
-        if: github.event_name == 'release'
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.TOKEN }}
-        with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: build/linux/arm64/release/appimage/Pocket2FA-${{ steps.get_version.outputs.version }}-arm64.AppImage.sha256
-          asset_name: Pocket2FA-${{ steps.get_version.outputs.version }}-arm64.AppImage.sha256
           asset_content_type: text/plain

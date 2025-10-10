@@ -45,6 +45,9 @@ jobs:
             - name: Fetch Flutter dependencies
               run: flutter pub get
 
+            - name: Make build script executable
+              run: chmod +x scripts/build_appimage.sh
+
             - name: Build Linux AppImage
               run: ./scripts/build_appimage.sh
 
@@ -152,7 +155,8 @@ jobs:
                   # Copy source code
                   COPY . .
 
-                  # Build AppImage
+                  # Make script executable and build AppImage
+                  RUN chmod +x scripts/build_appimage.sh
                   RUN flutter pub get
                   RUN ./scripts/build_appimage.sh
 

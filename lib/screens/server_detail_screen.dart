@@ -83,19 +83,6 @@ class _ServerDetailScreenState extends State<ServerDetailScreen> {
     }
   }
 
-  void _removeAccount(int idx) {
-    final l = List.of(_server.accounts);
-    l.removeAt(idx);
-    setState(() => _server = ServerConnection(
-        id: _server.id,
-        name: _server.name,
-        url: _server.url,
-        apiKey: _server.apiKey,
-        accounts: l,
-        userEmail: _server.userEmail));
-    widget.onChanged(_server);
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -107,9 +94,6 @@ class _ServerDetailScreenState extends State<ServerDetailScreen> {
           return ListTile(
             title: Text(a.service),
             subtitle: Text(a.account),
-            trailing: IconButton(
-                icon: const Icon(Icons.delete),
-                onPressed: () => _removeAccount(index)),
           );
         },
       ),

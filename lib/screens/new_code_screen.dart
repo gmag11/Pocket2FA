@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'dart:io' show Platform;
 import '../l10n/app_localizations.dart';
 import '../models/group_entry.dart';
 import '../models/account_entry.dart';
@@ -37,16 +39,58 @@ class NewCodeScreen extends StatelessWidget {
               child: ElevatedButton.icon(
                 onPressed: () async {
                   final navigator = Navigator.of(context);
-                  final result = await navigator.push(MaterialPageRoute(
-                    builder: (c) => QrScannerScreen(
-                      userEmail: userEmail,
-                      serverHost: serverHost,
-                      groups: groups,
-                    ),
-                  ));
-                  if (result is AccountEntry) {
-                    // Forward created entry back to HomePage using saved NavigatorState
-                    navigator.pop(result);
+                  final messenger = ScaffoldMessenger.of(context);
+
+                  // Check if platform supports camera scanning
+                  // mobile_scanner only works on Android, iOS, macOS, and web
+                  final isSupportedPlatform = !kIsWeb &&
+                      (Platform.isAndroid ||
+                          Platform.isIOS ||
+                          Platform.isMacOS);
+
+                  if (!isSupportedPlatform) {
+                    // Platform doesn't support camera scanning
+                    messenger.showSnackBar(
+                      SnackBar(
+                        content: Text(l10n.noCameraMessage),
+                        backgroundColor: Colors.orange,
+                        duration: const Duration(seconds: 4),
+                      ),
+                    );
+                    return;
+                  }
+
+                  try {
+                    final result = await navigator.push(MaterialPageRoute(
+                      builder: (c) => QrScannerScreen(
+                        userEmail: userEmail,
+                        serverHost: serverHost,
+                        groups: groups,
+                      ),
+                    ));
+                    if (result is AccountEntry) {
+                      // Forward created entry back to HomePage using saved NavigatorState
+                      navigator.pop(result);
+                    }
+                  } catch (e) {
+                    // Handle camera not available error
+                    if (e.toString().contains('MissingPluginException') ||
+                        e.toString().contains('No implementation found')) {
+                      messenger.showSnackBar(
+                        SnackBar(
+                          content: Text(l10n.noCameraMessage),
+                          backgroundColor: Colors.orange,
+                          duration: const Duration(seconds: 4),
+                        ),
+                      );
+                    } else {
+                      messenger.showSnackBar(
+                        SnackBar(
+                          content: Text('${l10n.qrScannerError}: $e'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
                   }
                 },
                 icon: const Icon(Icons.qr_code_scanner,

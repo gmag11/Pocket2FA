@@ -324,6 +324,13 @@ class AppLocalizationsEs extends AppLocalizations {
   String get positionQr => 'Posiciona el código QR en el marco';
 
   @override
+  String get noCameraAvailable => 'No hay cámara disponible';
+
+  @override
+  String get noCameraMessage =>
+      'Este dispositivo no tiene cámara disponible. Usa la opción de seleccionar imagen o el formulario avanzado.';
+
+  @override
   String get addServerTitle => 'Añadir servidor';
 
   @override

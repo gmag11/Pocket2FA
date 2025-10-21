@@ -413,6 +413,14 @@
     "@positionQr": {
         "description": "Instrucción mostrada sobre la vista de cámara para escanear."
     },
+    "noCameraAvailable": "No hay cámara disponible",
+    "@noCameraAvailable": {
+        "description": "Mensaje mostrado cuando el dispositivo no tiene cámara."
+    },
+    "noCameraMessage": "Este dispositivo no tiene cámara disponible. Usa la opción de seleccionar imagen o el formulario avanzado.",
+    "@noCameraMessage": {
+        "description": "Mensaje explicativo cuando no hay cámara en el dispositivo."
+    },
     "addServerTitle": "Añadir servidor",
     "@addServerTitle": {
         "description": "Título del diálogo para añadir una nueva conexión de servidor."

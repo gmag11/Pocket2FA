@@ -411,7 +411,15 @@
     },
     "positionQr": "Position the QR code in the frame",
     "@positionQr": {
-        "description": "Instruction text shown over the camera preview for scanning."
+        "description": "Instruction shown over the camera view for scanning."
+    },
+    "noCameraAvailable": "No camera available",
+    "@noCameraAvailable": {
+        "description": "Message shown when the device doesn't have a camera."
+    },
+    "noCameraMessage": "This device doesn't have a camera available. Use the select image option or the advanced form.",
+    "@noCameraMessage": {
+        "description": "Explanatory message when there's no camera on the device."
     },
     "addServerTitle": "Add server",
     "@addServerTitle": {

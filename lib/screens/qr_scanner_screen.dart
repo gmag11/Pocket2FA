@@ -25,17 +25,46 @@ class QrScannerScreen extends StatefulWidget {
 class _QrScannerScreenState extends State<QrScannerScreen> {
   MobileScannerController? _controller;
   bool _isProcessing = false;
+  bool _hasCamera = true;
+  bool _isInitializing = true;
   AppLocalizations get l10n => AppLocalizations.of(context)!;
 
   @override
   void initState() {
     super.initState();
-    _controller = MobileScannerController();
+    _initializeScanner();
+  }
+
+  Future<void> _initializeScanner() async {
+    try {
+      _controller = MobileScannerController();
+      // Don't start the controller here, let MobileScanner widget handle it
+      if (mounted) {
+        setState(() {
+          _isInitializing = false;
+        });
+      }
+    } catch (e) {
+      developer.log('QrScannerScreen: Error initializing scanner: $e',
+          name: 'QrScannerScreen');
+      if (mounted) {
+        setState(() {
+          _hasCamera = false;
+          _isInitializing = false;
+        });
+      }
+    }
   }
 
   @override
   void dispose() {
-    _controller?.dispose();
+    // Only dispose if controller was successfully created
+    try {
+      _controller?.dispose();
+    } catch (e) {
+      developer.log('QrScannerScreen: Error disposing controller: $e',
+          name: 'QrScannerScreen');
+    }
     super.dispose();
   }
 
@@ -106,7 +135,13 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
 
     try {
       // Pause the detector to avoid multiple detections
-      await _controller?.stop();
+      try {
+        await _controller?.stop();
+      } catch (e) {
+        developer.log(
+            'QrScannerScreen: Error stopping controller (ignored): $e',
+            name: 'QrScannerScreen');
+      }
 
       final barcode = capture.barcodes.first;
       if (barcode.rawValue != null) {
@@ -140,6 +175,56 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Show loading indicator while initializing
+    if (_isInitializing) {
+      return Scaffold(
+        appBar: AppBar(
+          title: Text(l10n.scanQRCode),
+        ),
+        body: const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    // If there was an initialization error or no camera, show error message
+    if (!_hasCamera) {
+      return Scaffold(
+        appBar: AppBar(
+          title: Text(l10n.scanQRCode),
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.camera_alt_outlined,
+                    size: 64, color: Colors.grey),
+                const SizedBox(height: 16),
+                Text(
+                  l10n.noCameraAvailable,
+                  style: const TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  l10n.noCameraMessage,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.grey),
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text(l10n.back),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.scanQRCode),
@@ -156,6 +241,24 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
             controller: _controller,
             onDetect: _onQrDetected,
             fit: BoxFit.cover,
+            errorBuilder: (context, error) {
+              // Handle scanner errors (e.g., no camera available)
+              developer.log('QrScannerScreen: MobileScanner error: $error',
+                  name: 'QrScannerScreen');
+
+              // Update state to show error screen
+              Future.microtask(() {
+                if (mounted) {
+                  setState(() {
+                    _hasCamera = false;
+                  });
+                }
+              });
+
+              return const Center(
+                child: CircularProgressIndicator(),
+              );
+            },
           ),
           // Scanning guide overlay
           Center(

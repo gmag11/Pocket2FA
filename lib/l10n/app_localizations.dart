@@ -680,11 +680,23 @@ abstract class AppLocalizations {
   /// **'Error'**
   String get qrScannerError;
 
-  /// Instruction text shown over the camera preview for scanning.
+  /// Instruction shown over the camera view for scanning.
   ///
   /// In en, this message translates to:
   /// **'Position the QR code in the frame'**
   String get positionQr;
+
+  /// Message shown when the device doesn't have a camera.
+  ///
+  /// In en, this message translates to:
+  /// **'No camera available'**
+  String get noCameraAvailable;
+
+  /// Explanatory message when there's no camera on the device.
+  ///
+  /// In en, this message translates to:
+  /// **'This device doesn\'t have a camera available. Use the select image option or the advanced form.'**
+  String get noCameraMessage;
 
   /// Dialog title when adding a new server connection.
   ///

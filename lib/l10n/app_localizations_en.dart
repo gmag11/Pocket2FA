@@ -333,6 +333,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get serverUpdated => 'Server updated and validated';
 
   @override
+  String get deleteServerTitle => 'Delete server';
+
+  @override
+  String deleteServerConfirm(Object serverName) {
+    return 'Are you sure you want to delete the server \'$serverName\'?';
+  }
+
+  @override
   String get accountsTitle => 'Accounts / Servers';
 
   @override

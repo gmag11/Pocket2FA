@@ -87,6 +87,27 @@ class _AccountsScreenState extends State<AccountsScreen> {
   }
 
   Future<void> _deleteServer(ServerConnection s) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.deleteServerTitle),
+        content: Text(l10n.deleteServerConfirm(s.name)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(l10n.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(l10n.delete),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
     setState(() => _servers.removeWhere((x) => x.id == s.id));
     await _saveServers();
   }

@@ -429,6 +429,17 @@
     "@serverUpdated": {
         "description": "Confirmation shown after editing a server."
     },
+    "deleteServerTitle": "Delete server",
+    "@deleteServerTitle": {
+        "description": "Title for the confirmation dialog when deleting a server."
+    },
+    "deleteServerConfirm": "Are you sure you want to delete the server '{serverName}'?",
+    "@deleteServerConfirm": {
+        "description": "Confirmation message before deleting a server.",
+        "placeholders": {
+            "serverName": {}
+        }
+    },
     "accountsTitle": "Accounts / Servers",
     "@accountsTitle": {
         "description": "Title for the accounts/settings screen."

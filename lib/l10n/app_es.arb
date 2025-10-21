@@ -429,6 +429,17 @@
     "@serverUpdated": {
         "description": "Confirmación tras editar un servidor."
     },
+    "deleteServerTitle": "Eliminar servidor",
+    "@deleteServerTitle": {
+        "description": "Título del diálogo de confirmación al eliminar un servidor."
+    },
+    "deleteServerConfirm": "¿Seguro que quieres eliminar el servidor '{serverName}'?",
+    "@deleteServerConfirm": {
+        "description": "Mensaje de confirmación antes de eliminar un servidor.",
+        "placeholders": {
+            "serverName": {}
+        }
+    },
     "accountsTitle": "Cuentas / Servidores",
     "@accountsTitle": {
         "description": "Título para la pantalla de cuentas/servidores."

@@ -710,6 +710,18 @@ abstract class AppLocalizations {
   /// **'Server updated and validated'**
   String get serverUpdated;
 
+  /// Title for the confirmation dialog when deleting a server.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete server'**
+  String get deleteServerTitle;
+
+  /// Confirmation message before deleting a server.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete the server \'{serverName}\'?'**
+  String deleteServerConfirm(Object serverName);
+
   /// Title for the accounts/settings screen.
   ///
   /// In en, this message translates to:

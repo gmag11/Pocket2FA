@@ -7,7 +7,10 @@
     <!-- Required for QR code scanning via camera -->
     <uses-permission android:name="android.permission.CAMERA" />
     <!-- Required for accessing gallery images -->
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+    <!-- Required for Android 13+ to access images -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
 
     <application
         android:label="Pocket2FA"

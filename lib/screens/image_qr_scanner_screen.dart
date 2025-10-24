@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:image/image.dart' as img;
+import 'dart:io';
 import '../models/group_entry.dart';
 import '../models/account_entry.dart';
 import '../services/entry_creation_service.dart';
-import 'dart:developer' as developer;
 import '../l10n/app_localizations.dart';
 
 class ImageQrScannerScreen extends StatefulWidget {
@@ -43,46 +44,101 @@ class _ImageQrScannerScreenState extends State<ImageQrScannerScreen> {
       _isProcessing = true;
     });
 
+    MobileScannerController? controller;
+    String? processedImagePath;
+
     try {
-      developer.log('ImageQrScannerScreen: Analyzing image for QR code',
-          name: 'ImageQrScannerScreen');
-      final controller = MobileScannerController();
-      final capture = await controller.analyzeImage(image.path);
-      await controller.dispose();
+      // Read and preprocess the image
+      final imageFile = File(image.path);
+      final imageBytes = await imageFile.readAsBytes();
+      final decodedImage = img.decodeImage(imageBytes);
+
+      if (decodedImage == null) {
+        throw Exception('Failed to decode image');
+      }
+
+      // Resize image if it's too large (max 1500px on longest side)
+      img.Image processedImage = decodedImage;
+      const maxSize = 1500;
+
+      if (decodedImage.width > maxSize || decodedImage.height > maxSize) {
+        if (decodedImage.width > decodedImage.height) {
+          processedImage = img.copyResize(decodedImage,
+              width: maxSize, interpolation: img.Interpolation.linear);
+        } else {
+          processedImage = img.copyResize(decodedImage,
+              height: maxSize, interpolation: img.Interpolation.linear);
+        }
+      }
+
+      // Increase contrast to help detection
+      processedImage =
+          img.adjustColor(processedImage, contrast: 1.3, brightness: 1.1);
+
+      // Save processed image to temp file
+      final tempDir = await imageFile.parent.path;
+      processedImagePath = '$tempDir/processed_qr.jpg';
+      final processedFile = File(processedImagePath);
+      await processedFile
+          .writeAsBytes(img.encodeJpg(processedImage, quality: 95));
+
+      // Initialize controller and analyze image
+      controller = MobileScannerController(
+        detectionSpeed: DetectionSpeed.noDuplicates,
+        formats: [BarcodeFormat.qrCode],
+      );
+
+      final capture = await controller.analyzeImage(processedImagePath);
 
       if (capture != null && capture.barcodes.isNotEmpty) {
         final barcode = capture.barcodes.first;
-        if (barcode.rawValue != null) {
-          developer.log(
-              'ImageQrScannerScreen: QR code found in image, processing',
-              name: 'ImageQrScannerScreen');
+        if (barcode.rawValue != null && barcode.rawValue!.isNotEmpty) {
           final entry = await _parseAndCreateEntry(barcode.rawValue!);
 
           if (entry != null && mounted) {
-            developer.log('ImageQrScannerScreen: Returning with entry',
-                name: 'ImageQrScannerScreen');
             Navigator.of(context).pop(entry);
-            return; // Important: exit after navigating
+            return;
+          } else if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content:
+                    Text(l10n.errorScanningImage('Failed to parse QR code')),
+                backgroundColor: Colors.red,
+              ),
+            );
           }
-        }
-      } else {
-        developer.log('ImageQrScannerScreen: No QR code found in image',
-            name: 'ImageQrScannerScreen');
-        if (mounted) {
-          final noQrMsg = l10n.noQrInImage;
+        } else if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(noQrMsg), backgroundColor: Colors.orange));
+            SnackBar(
+              content: Text(l10n.noQrInImage),
+              backgroundColor: Colors.orange,
+            ),
+          );
         }
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(l10n.noQrInImage), backgroundColor: Colors.orange));
       }
     } catch (e) {
-      developer.log('ImageQrScannerScreen: Scan image failed: $e',
-          name: 'ImageQrScannerScreen');
       if (mounted) {
-        final err = l10n.errorScanningImage(e.toString());
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(err), backgroundColor: Colors.red));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(l10n.errorScanningImage(e.toString())),
+            backgroundColor: Colors.red));
       }
     } finally {
+      // Dispose controller
+      await controller?.dispose();
+
+      // Clean up temporary file
+      if (processedImagePath != null) {
+        try {
+          final tempFile = File(processedImagePath);
+          if (await tempFile.exists()) {
+            await tempFile.delete();
+          }
+        } catch (_) {}
+      }
+
       if (mounted) {
         setState(() {
           _isProcessing = false;
@@ -94,28 +150,17 @@ class _ImageQrScannerScreenState extends State<ImageQrScannerScreen> {
 
   // Parse otpauth URL and build AccountEntry using our service
   Future<AccountEntry?> _parseAndCreateEntry(String qrContent) async {
-    developer.log('ImageQrScannerScreen: Processing QR content',
-        name: 'ImageQrScannerScreen');
-
     // Parse QR content to create entry
     var entry = await EntryCreationService.parseOtpAuthUrl(qrContent, context,
         sourceTag: 'ImageQrScannerScreen');
 
     if (entry == null) {
-      developer.log('ImageQrScannerScreen: Failed to parse QR content',
-          name: 'ImageQrScannerScreen');
       return null;
     }
-
-    developer.log(
-        'ImageQrScannerScreen: Entry created from QR: ${entry.service}/${entry.account}',
-        name: 'ImageQrScannerScreen');
 
     // Attempt immediate upload if server host present
     if (widget.serverHost.isNotEmpty && mounted) {
       try {
-        developer.log('ImageQrScannerScreen: Attempting server upload',
-            name: 'ImageQrScannerScreen');
         final serverEntry = await EntryCreationService.createEntryOnServer(
             entry,
             serverHost: widget.serverHost,
@@ -124,27 +169,15 @@ class _ImageQrScannerScreenState extends State<ImageQrScannerScreen> {
             sourceTag: 'ImageQrScannerScreen');
 
         if (serverEntry != null && serverEntry.synchronized) {
-          developer.log(
-              'ImageQrScannerScreen: Server upload successful, returning entry',
-              name: 'ImageQrScannerScreen');
           return serverEntry;
-        } else {
-          developer.log(
-              'ImageQrScannerScreen: Server upload returned null or unsynchronized entry',
-              name: 'ImageQrScannerScreen');
         }
       } catch (e) {
-        developer.log('ImageQrScannerScreen: Error during server upload: $e',
-            name: 'ImageQrScannerScreen');
+        // Continue with local entry if server upload fails
       }
-    } else {
-      developer.log(
-          'ImageQrScannerScreen: Skipping server upload (no server or not mounted)',
-          name: 'ImageQrScannerScreen');
     }
 
-  // Return the local entry
-  return entry;
+    // Return the local entry
+    return entry;
   }
 
   @override

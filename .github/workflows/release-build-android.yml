@@ -89,42 +89,12 @@ jobs:
           cp build/app/outputs/flutter-apk/app-x86_64-release.apk dist/app-x86_64-release.apk || true
           cp build/app/outputs/flutter-apk/app-release.apk dist/app-universal-release.apk || true
 
-      - name: Upload app-arm64-v8a-release.apk to release
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.TOKEN }}
+      - name: Upload APKs to release
+        uses: softprops/action-gh-release@v2
         with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: dist/app-arm64-v8a-release.apk
-          asset_name: app-arm64-v8a-release.apk
-          asset_content_type: application/vnd.android.package-archive
-
-      - name: Upload app-armeabi-v7a-release.apk to release
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.TOKEN }}
-        with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: dist/app-armeabi-v7a-release.apk
-          asset_name: app-armeabi-v7a-release.apk
-          asset_content_type: application/vnd.android.package-archive
-
-      - name: Upload app-x86_64-release.apk to release
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.TOKEN }}
-        with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: dist/app-x86_64-release.apk
-          asset_name: app-x86_64-release.apk
-          asset_content_type: application/vnd.android.package-archive
-
-      - name: Upload app-universal-release.apk to release
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.TOKEN }}
-        with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: dist/app-universal-release.apk
-          asset_name: app-universal-release.apk
-          asset_content_type: application/vnd.android.package-archive
+          files: |
+            dist/app-arm64-v8a-release.apk
+            dist/app-armeabi-v7a-release.apk
+            dist/app-x86_64-release.apk
+            dist/app-universal-release.apk
+          token: ${{ secrets.TOKEN }}

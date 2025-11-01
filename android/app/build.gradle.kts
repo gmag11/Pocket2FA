@@ -8,16 +8,6 @@ plugins {
 import java.util.Properties
 import java.io.FileInputStream
 
-// Load signing properties from android/key.properties (if present)
-// key.properties lives in the android/ folder in this project
-val keystorePropertiesFile = rootProject.file("android/key.properties")
-val keystoreProperties = Properties()
-if (keystorePropertiesFile.exists()) {
-    FileInputStream(keystorePropertiesFile).use { fis ->
-        keystoreProperties.load(fis)
-    }
-}
-
 android {
     namespace = "net.gmartin.pocket2fa"
     compileSdk = flutter.compileSdkVersion
@@ -61,15 +51,26 @@ android {
             val envKeyPassword = System.getenv("KEY_PASSWORD")
 
             val resolvedStoreFile = when {
-                !envStorePath.isNullOrBlank() -> file(envStorePath)
-                !keystoreProperties.getProperty("storeFile").isNullOrBlank() -> file(keystoreProperties.getProperty("storeFile"))
+                !envStorePath.isNullOrBlank() -> {
+                    // Resolve environment variable path relative to app directory
+                    file(envStorePath)
+                }
+                !keystoreProperties.getProperty("storeFile").isNullOrBlank() -> {
+                    // Resolve property file path relative to app directory
+                    file(keystoreProperties.getProperty("storeFile"))
+                }
                 else -> null
             }
+            
             if (resolvedStoreFile != null) {
-                println("Current directory: ${projectDir.absolutePath}")
+                println("=== Keystore Configuration ===")
+                println("Project directory: ${projectDir.absolutePath}")
                 println("Keystore path from env: $envStorePath")
-                println("Resolved keystore path: ${resolvedStoreFile.absolutePath}")
+                println("Resolved keystore file: ${resolvedStoreFile.absolutePath}")
+                println("Keystore exists: ${resolvedStoreFile.exists()}")
                 storeFile = resolvedStoreFile
+            } else {
+                println("WARNING: No keystore file configured!")
             }
 
             storePassword = when {
@@ -89,6 +90,10 @@ android {
                 !keystoreProperties.getProperty("keyPassword").isNullOrBlank() -> keystoreProperties.getProperty("keyPassword")
                 else -> null
             }
+            
+            println("Signing config - Store password set: ${!storePassword.isNullOrBlank()}")
+            println("Signing config - Key alias set: ${!keyAlias.isNullOrBlank()}")
+            println("Signing config - Key password set: ${!keyPassword.isNullOrBlank()}")
         }
     }
 

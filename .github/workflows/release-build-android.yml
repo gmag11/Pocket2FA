@@ -8,6 +8,8 @@ jobs:
   android:
     name: Build Android and upload APKs
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -21,8 +23,8 @@ jobs:
       - name: Set up Flutter (stable)
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.35.1'
           channel: stable
+          cache: true
 
       - name: Flutter version
         run: flutter --version
@@ -55,8 +57,9 @@ jobs:
         shell: bash
         run: |
           cd android/app
-          chmod 644 keystore.jks
-          echo "KEYSTORE_PATH=keystore.jks" >> "$GITHUB_ENV"
+          chmod 600 keystore.jks
+          # Use absolute path from app directory
+          echo "KEYSTORE_PATH=$(pwd)/keystore.jks" >> "$GITHUB_ENV"
           cd ../..
           echo "KEYSTORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}" >> "$GITHUB_ENV"
           echo "KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> "$GITHUB_ENV"
@@ -69,6 +72,12 @@ jobs:
       - name: Build universal APK (all ABIs in one)
         shell: bash
         run: flutter build apk --release
+
+      - name: Verify APKs were built
+        shell: bash
+        run: |
+          echo "Checking for built APKs..."
+          ls -lh build/app/outputs/flutter-apk/
 
       - name: Rename APKs and prepare dist
         shell: bash

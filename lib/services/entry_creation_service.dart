@@ -105,7 +105,7 @@ class EntryCreationService {
       var entry = AccountEntry(
         id: -1,
         service: service,
-        account: account,
+        account: account.replaceAll(RegExp(r':'), '_'),
         seed: secret,
         group: group,
         groupId: null,
@@ -252,7 +252,7 @@ class EntryCreationService {
     return AccountEntry(
       id: -1,
       service: service,
-      account: account,
+      account: account.replaceAll(RegExp(r':'), '_'),
       seed: secret,
       group: group,
       groupId: groupId,

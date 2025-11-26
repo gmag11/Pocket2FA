@@ -403,7 +403,7 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
                                                 _otpService.nextCode, settings,
                                                 forceVisible: _revealNext
                                               ),
-                                              style: TextStyle(fontSize: 14, color: Colors.black),
+                                              style: TextStyle(fontSize: 14),
                                               maxLines: 1,
                                               overflow: TextOverflow.visible,
                                             ),

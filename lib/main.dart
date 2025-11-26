@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
-import 'l10n/app_localizations.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+
+import 'l10n/app_localizations.dart';
 import 'screens/home_screen.dart';
 import 'services/settings_service.dart';
 import 'services/settings_storage.dart';
@@ -29,21 +30,34 @@ class Pocket2FA extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      onGenerateTitle: (context) =>
-          AppLocalizations.of(context)?.appTitle ?? 'Pocket2FA',
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-      ],
-      supportedLocales: AppLocalizations.supportedLocales,
-      theme: ThemeData(
-        primarySwatch: Colors.indigo,
-        scaffoldBackgroundColor: Colors.white,
-      ),
-      home: HomePage(settings: settings),
+    return AnimatedBuilder(
+      animation: settings,
+      builder: (context, _) {
+        return MaterialApp(
+          onGenerateTitle: (context) =>
+              AppLocalizations.of(context)?.appTitle ?? 'Pocket2FA',
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+          ],
+          supportedLocales: AppLocalizations.supportedLocales,
+          theme: ThemeData(
+            colorSchemeSeed: Colors.indigo,
+            brightness: Brightness.light,
+            scaffoldBackgroundColor: Colors.white,
+            useMaterial3: true,
+          ),
+          darkTheme: ThemeData(
+            colorSchemeSeed: Colors.indigo,
+            brightness: Brightness.dark,
+            useMaterial3: true,
+          ),
+          themeMode: settings.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+          home: HomePage(settings: settings),
+        );
+      },
     );
   }
 }

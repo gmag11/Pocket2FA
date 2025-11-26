@@ -70,7 +70,6 @@ class BottomBar extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      color: Colors.white,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -159,7 +158,7 @@ class BottomBar extends StatelessWidget {
                           displayText = '$acct - ${Uri.parse(srv.url).host}';
                         }
                         return Text(displayText,
-                            style: const TextStyle(color: Colors.grey));
+                            style: TextStyle(color: Theme.of(ctx).colorScheme.onSurface.withValues(alpha: 0.6)));
                       }),
                     ),
                   ),

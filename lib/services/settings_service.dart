@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
 import 'settings_storage.dart';
 
 enum CodeFormat { compact, spaced3, spaced2 }
@@ -12,6 +13,7 @@ class SettingsService extends ChangeNotifier {
   static const _syncOnOpenKey = 'sync_on_home_open';
   static const _autoSyncEnabledKey = 'auto_sync_enabled';
   static const _autoSyncIntervalKey = 'auto_sync_interval_minutes';
+  static const _darkModeKey = 'dark_mode_enabled';
 
   CodeFormat _format = CodeFormat.spaced3;
   CodeFormat get format => _format;
@@ -37,9 +39,10 @@ class SettingsService extends ChangeNotifier {
       _enabled = box.get(_enabledKey, defaultValue: true) as bool;
       _biometricEnabled = box.get(_biometricKey, defaultValue: false) as bool;
       _hideOtps = box.get(_hideOtpsKey, defaultValue: false) as bool;
-  _syncOnOpen = box.get(_syncOnOpenKey, defaultValue: true) as bool;
-  _autoSyncEnabled = box.get(_autoSyncEnabledKey, defaultValue: false) as bool;
-  _autoSyncIntervalMinutes = box.get(_autoSyncIntervalKey, defaultValue: 30) as int;
+      _syncOnOpen = box.get(_syncOnOpenKey, defaultValue: true) as bool;
+      _autoSyncEnabled = box.get(_autoSyncEnabledKey, defaultValue: false) as bool;
+      _autoSyncIntervalMinutes = box.get(_autoSyncIntervalKey, defaultValue: 30) as int;
+      _isDarkMode = box.get(_darkModeKey, defaultValue: false) as bool;
       notifyListeners();
       return;
     }
@@ -49,9 +52,10 @@ class SettingsService extends ChangeNotifier {
     _format = _fromString(v);
     _enabled = prefs.getBool(_enabledKey) ?? true;
     _hideOtps = prefs.getBool(_hideOtpsKey) ?? false;
-  _syncOnOpen = prefs.getBool(_syncOnOpenKey) ?? true;
-  _autoSyncEnabled = prefs.getBool(_autoSyncEnabledKey) ?? false;
-  _autoSyncIntervalMinutes = prefs.getInt(_autoSyncIntervalKey) ?? 30;
+    _syncOnOpen = prefs.getBool(_syncOnOpenKey) ?? true;
+    _autoSyncEnabled = prefs.getBool(_autoSyncEnabledKey) ?? false;
+    _autoSyncIntervalMinutes = prefs.getInt(_autoSyncIntervalKey) ?? 30;
+    _isDarkMode = prefs.getBool(_darkModeKey) ?? false;
     notifyListeners();
   }
 
@@ -156,6 +160,23 @@ class SettingsService extends ChangeNotifier {
 
   bool _hideOtps = false;
   bool get hideOtps => _hideOtps;
+
+  bool _isDarkMode = false;
+  bool get isDarkMode => _isDarkMode;
+
+  Future<void> setDarkMode(bool on) async {
+    _isDarkMode = on;
+    if (storage != null) {
+      final box = storage!.box;
+      await box.put(_darkModeKey, on);
+      notifyListeners();
+      return;
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_darkModeKey, on);
+    notifyListeners();
+  }
 
   /// Toggle biometric protection for local Hive key. This will call into
   /// SettingsStorage to rewrap the key; no data should be lost during toggling.

@@ -488,6 +488,10 @@
   "@codeFormatting": {
     "description": "Label for the code formatting section in settings."
   },
+  "darkMode": "Dark mode",
+  "@darkMode": {
+    "description": "Label for the dark mode setting."
+  },
   "byTrio": "by Trio",
   "@byTrio": {
     "description": "Label describing a 3-digit grouping format."

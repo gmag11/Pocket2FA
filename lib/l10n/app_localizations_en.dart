@@ -380,6 +380,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get codeFormatting => 'Code formatting';
 
   @override
+  String get darkMode => 'Dark mode';
+
+  @override
   String get byTrio => 'by Trio';
 
   @override

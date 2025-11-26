@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+
 import '../l10n/app_localizations.dart';
-import '../widgets/account_tile.dart';
-import '../services/settings_service.dart';
 import '../models/account_entry.dart';
+import '../services/settings_service.dart';
+import '../widgets/account_tile.dart';
+import 'accounts_screen.dart';
 
 class AccountList extends StatefulWidget {
   final String selectedGroup;
@@ -10,6 +12,7 @@ class AccountList extends StatefulWidget {
   final SettingsService settings;
   final List<AccountEntry> items;
   final Future<void> Function()? onRefresh;
+  final Future<void> Function()? onReloadServers;
   final ScrollController? scrollController;
   final bool isManageMode;
   final Set<int> selectedAccountIds;
@@ -22,6 +25,7 @@ class AccountList extends StatefulWidget {
     required this.settings,
     required this.items,
     this.onRefresh,
+    this.onReloadServers,
     this.scrollController,
     required this.isManageMode,
     required this.selectedAccountIds,
@@ -69,12 +73,47 @@ class _AccountListState extends State<AccountList> {
           controller: widget.scrollController,
           physics: const AlwaysScrollableScrollPhysics(),
           children: [
-            const SizedBox(height: 120),
+            SizedBox(height: MediaQuery.of(context).size.height * 0.3),
             Center(
-              child: Text(
-                noServers ? l10n.noServersConfigured : l10n.noAccounts,
-                style: const TextStyle(color: Colors.grey, fontSize: 16),
-                textAlign: TextAlign.center,
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      noServers ? l10n.noServersConfigured : l10n.noAccounts,
+                      style: const TextStyle(color: Colors.grey, fontSize: 16),
+                      textAlign: TextAlign.center,
+                    ),
+                    if (noServers) ...[
+                      const SizedBox(height: 24),
+                      ElevatedButton.icon(
+                        onPressed: () async {
+                          if (widget.settings.storage != null) {
+                            await Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (c) => AccountsScreen(
+                                  storage: widget.settings.storage!,
+                                  onServerChanged: widget.onReloadServers,
+                                ),
+                              ),
+                            );
+                          }
+                        },
+                        icon: const Icon(Icons.add),
+                        label: Text(l10n.addServerButton),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF4F63E6),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 12,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
               ),
             ),
           ],

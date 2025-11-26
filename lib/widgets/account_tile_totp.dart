@@ -1,6 +1,8 @@
-import 'package:flutter/material.dart';
 import 'dart:async';
+
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
 import '../l10n/app_localizations.dart';
 import '../models/account_entry.dart';
 import '../services/settings_service.dart';
@@ -91,7 +93,7 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
     super.dispose();
   }
 
-  void _copyToClipboard(String code) async {
+  void _copyToClipboard(String code, {bool isNextCode = false}) async {
     if (!mounted) return;
     final trimmed = code.trim();
 
@@ -101,7 +103,7 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
     final messenger = ScaffoldMessenger.of(context);
     final l10n = AppLocalizations.of(context)!;
     final noCodeMsg = l10n.noCodeToCopy;
-    final copiedMsg = l10n.copied;
+    final copiedMsg = isNextCode ? l10n.nextCodeCopied : l10n.copied;
     final errorCopyMsg = l10n.errorCopyingToClipboard;
 
     if (trimmed.isEmpty || trimmed.toLowerCase() == 'offline') {
@@ -110,7 +112,7 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
             child:
                 Text(noCodeMsg, style: const TextStyle(color: Colors.white))),
         behavior: SnackBarBehavior.floating,
-        margin: EdgeInsets.fromLTRB(horizontalMargin, 0, horizontalMargin, 96),
+        margin: EdgeInsets.fromLTRB(horizontalMargin, 0, horizontalMargin, 16),
         padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 10.0),
         shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.all(Radius.circular(16.0))),
@@ -128,7 +130,7 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
             child:
                 Text(copiedMsg, style: const TextStyle(color: Colors.white))),
         behavior: SnackBarBehavior.floating,
-        margin: EdgeInsets.fromLTRB(horizontalMargin, 0, horizontalMargin, 96),
+        margin: EdgeInsets.fromLTRB(horizontalMargin, 0, horizontalMargin, 16),
         padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 10.0),
         shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.all(Radius.circular(16.0))),
@@ -142,7 +144,7 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
             child: Text(errorCopyMsg,
                 style: const TextStyle(color: Colors.white))),
         behavior: SnackBarBehavior.floating,
-        margin: EdgeInsets.fromLTRB(horizontalMargin, 0, horizontalMargin, 96),
+        margin: EdgeInsets.fromLTRB(horizontalMargin, 0, horizontalMargin, 16),
         padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 10.0),
         shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.all(Radius.circular(16.0))),
@@ -180,11 +182,20 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
       builder: (context, constraints) {
         final screenWidth = MediaQuery.of(context).size.width;
         final tile = borderWrap(
-          SizedBox(
-            height: 70, // Keep the same height in both modes
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: widget.isManageMode
+                  ? widget.onToggleSelection
+                  : () => _copyToClipboard(_otpService.currentCode),
+              onLongPress: widget.isManageMode
+                  ? null
+                  : () => _copyToClipboard(_otpService.nextCode, isNextCode: true),
+              child: SizedBox(
+                height: 70, // Keep the same height in both modes
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
                 // Top row: Avatar + Service name + OTP code
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
@@ -263,65 +274,54 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
                                   ? AnimatedBuilder(
                                       animation: settings!,
                                       builder: (context, _) {
-                                        return Material(
-                                          color: Colors.transparent,
-                                          child: InkWell(
-                                            borderRadius: BorderRadius.zero,
-                                            onTap: () => _copyToClipboard(
-                                                _otpService.currentCode),
-                                            onLongPress: () {
-                                              if (settings?.hideOtps == true) {
-                                                setState(() {
-                                                  _revealCurrent = true;
-                                                });
-                                                _revealTimerCurrent?.cancel();
-                                                _revealTimerCurrent = Timer(
-                                                    const Duration(seconds: 10),
-                                                    () {
-                                                  if (mounted) {
-                                                    setState(() {
-                                                      _revealCurrent = false;
-                                                    });
-                                                  }
-                                                });
-                                              }
-                                            },
-                                            child: Padding(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                      vertical: 0.0,
-                                                      horizontal: 2.0),
-                                              child: Text(
-                                                AccountTileUtils.formatCode(
-                                                    _otpService.currentCode,
-                                                    settings,
-                                                    forceVisible:
-                                                        _revealCurrent),
-                                                style: const TextStyle(
-                                                  fontSize: 24,
-                                                  fontWeight: FontWeight.w700,
-                                                ),
-                                                maxLines: 1,
-                                                overflow: TextOverflow.visible,
+                                        return GestureDetector(
+                                          onLongPress: () {
+                                            if (settings?.hideOtps == true) {
+                                              setState(() {
+                                                _revealCurrent = true;
+                                              });
+                                              _revealTimerCurrent?.cancel();
+                                              _revealTimerCurrent = Timer(
+                                                  const Duration(seconds: 10),
+                                                  () {
+                                                if (mounted) {
+                                                  setState(() {
+                                                    _revealCurrent = false;
+                                                  });
+                                                }
+                                              });
+                                            }
+                                          },
+                                          child: Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                              vertical: 0.0,
+                                              horizontal: 2.0
+                                            ),
+                                            child: Text(
+                                              AccountTileUtils.formatCode(
+                                                _otpService.currentCode,
+                                                settings,
+                                                forceVisible: _revealCurrent
                                               ),
+                                              style: const TextStyle(
+                                                fontSize: 24,
+                                                fontWeight: FontWeight.w700,
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.visible,
                                             ),
                                           ),
                                         );
                                       },
                                     )
-                                  : InkWell(
-                                      onTap: () => _copyToClipboard(
-                                          _otpService.currentCode),
-                                      child: Text(
-                                        AccountTileUtils.formatCode(
-                                            _otpService.currentCode, null),
-                                        style: const TextStyle(
-                                          fontSize: 24,
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.visible,
+                                  : Text(
+                                      AccountTileUtils.formatCode(_otpService.currentCode, null),
+                                      style: const TextStyle(
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.w700,
                                       ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.visible,
                                     ),
                             ),
                           ),
@@ -348,8 +348,7 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
                               left: widget.isManageMode ? 56.0 : 12.0),
                           child: Text(
                             widget.item.account,
-                            style: TextStyle(
-                                fontSize: 14, color: Colors.grey.shade600),
+                            style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -375,41 +374,35 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
                                     : 1.0;
                                 return Opacity(
                                   opacity: opacity,
-                                  child: Material(
-                                    color: Colors.transparent,
-                                    child: InkWell(
-                                      borderRadius: BorderRadius.zero,
-                                      onTap: () => _copyToClipboard(
-                                          _otpService.nextCode),
-                                      onLongPress: () {
-                                        if (settings?.hideOtps == true) {
-                                          setState(() {
-                                            _revealNext = true;
-                                          });
-                                          _revealTimerNext?.cancel();
-                                          _revealTimerNext = Timer(
-                                              const Duration(seconds: 10), () {
-                                            if (mounted) {
-                                              setState(() {
-                                                _revealNext = false;
-                                              });
-                                            }
-                                          });
-                                        }
-                                      },
-                                      child: Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                            vertical: 0.0, horizontal: 2.0),
-                                        child: Text(
-                                          AccountTileUtils.formatCode(
-                                              _otpService.nextCode, settings,
-                                              forceVisible: _revealNext),
-                                          style: TextStyle(
-                                              fontSize: 14,
-                                              color: Colors.black),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.visible,
+                                  child: GestureDetector(
+                                    onLongPress: () {
+                                      if (settings?.hideOtps == true) {
+                                        setState(() {
+                                          _revealNext = true;
+                                        });
+                                        _revealTimerNext?.cancel();
+                                        _revealTimerNext = Timer(
+                                            const Duration(seconds: 10), () {
+                                          if (mounted) {
+                                            setState(() {
+                                              _revealNext = false;
+                                            });
+                                          }
+                                        });
+                                      }
+                                    },
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 0.0, horizontal: 2.0
+                                      ),
+                                      child: Text(
+                                        AccountTileUtils.formatCode(
+                                          _otpService.nextCode, settings,
+                                          forceVisible: _revealNext
                                         ),
+                                        style: TextStyle(fontSize: 14, color: Colors.black),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.visible,
                                       ),
                                     ),
                                   ),
@@ -438,6 +431,8 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
               ],
             ),
           ),
+          ),
+        ),
         );
 
         if (screenWidth > 1200) {

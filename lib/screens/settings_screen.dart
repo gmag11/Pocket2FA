@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import '../services/settings_service.dart';
+
 import '../l10n/app_localizations.dart';
+import '../services/settings_service.dart';
 
 class SettingsScreen extends StatelessWidget {
   final SettingsService settings;
@@ -39,25 +40,23 @@ class SettingsScreen extends StatelessWidget {
               
               if (settings.enabled) ...[
                 const SizedBox(height: 8),
-                Padding(
-                  padding: const EdgeInsets.only(left: 56.0),
-                  child: Row(
-                    children: [
-                      _formatButton(
-                          context,
-                          settings.format == CodeFormat.spaced3,
-                          l10n.byTrio,
-                          '123 456',
-                          () => settings.setFormat(CodeFormat.spaced3)),
-                      const SizedBox(width: 8),
-                      _formatButton(
-                          context,
-                          settings.format == CodeFormat.spaced2,
-                          l10n.byPair,
-                          '12 34 56',
-                          () => settings.setFormat(CodeFormat.spaced2)),
-                    ],
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _formatButton(
+                        context,
+                        settings.format == CodeFormat.spaced3,
+                        l10n.byTrio,
+                        '123 456',
+                        () => settings.setFormat(CodeFormat.spaced3)),
+                    const SizedBox(width: 8),
+                    _formatButton(
+                        context,
+                        settings.format == CodeFormat.spaced2,
+                        l10n.byPair,
+                        '12 34 56',
+                        () => settings.setFormat(CodeFormat.spaced2)),
+                  ],
                 ),
               ],
               

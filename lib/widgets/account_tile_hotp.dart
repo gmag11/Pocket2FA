@@ -1,6 +1,8 @@
-import 'package:flutter/material.dart';
 import 'dart:async';
+
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
 import '../l10n/app_localizations.dart';
 import '../models/account_entry.dart';
 import '../services/settings_service.dart';
@@ -80,15 +82,22 @@ class _AccountTileHOTPState extends State<AccountTileHOTP> {
   void _copyToClipboard(String code) async {
     if (!mounted) return;
     final trimmed = code.trim();
+
+    // Capture values that use BuildContext before any await to avoid
+    // use_build_context_synchronously lint warnings.
+    final horizontalMargin = MediaQuery.of(context).size.width * 0.12;
+    final messenger = ScaffoldMessenger.of(context);
+    final noCodeMsg = l10n.noCodeToCopy;
+    final copiedMsg = l10n.copied;
+    final errorCopyMsg = l10n.errorCopyingToClipboard;
+
     if (trimmed.isEmpty || trimmed.toLowerCase() == 'offline') {
-      final horizontalMargin = MediaQuery.of(context).size.width * 0.12;
-      final noCodeMsg = l10n.noCodeToCopy;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      messenger.showSnackBar(SnackBar(
         content: Center(
             child:
                 Text(noCodeMsg, style: const TextStyle(color: Colors.white))),
         behavior: SnackBarBehavior.floating,
-        margin: EdgeInsets.fromLTRB(horizontalMargin, 0, horizontalMargin, 96),
+        margin: EdgeInsets.fromLTRB(horizontalMargin, 0, horizontalMargin, 16),
         padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 10.0),
         shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.all(Radius.circular(16.0))),
@@ -101,14 +110,12 @@ class _AccountTileHOTPState extends State<AccountTileHOTP> {
     try {
       await Clipboard.setData(ClipboardData(text: digits));
       if (!mounted) return;
-      final horizontalMargin = MediaQuery.of(context).size.width * 0.12;
-      final copiedMsg = l10n.copied;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      messenger.showSnackBar(SnackBar(
         content: Center(
             child:
                 Text(copiedMsg, style: const TextStyle(color: Colors.white))),
         behavior: SnackBarBehavior.floating,
-        margin: EdgeInsets.fromLTRB(horizontalMargin, 0, horizontalMargin, 96),
+        margin: EdgeInsets.fromLTRB(horizontalMargin, 0, horizontalMargin, 16),
         padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 10.0),
         shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.all(Radius.circular(16.0))),
@@ -117,14 +124,12 @@ class _AccountTileHOTPState extends State<AccountTileHOTP> {
       ));
     } catch (_) {
       if (!mounted) return;
-      final horizontalMargin = MediaQuery.of(context).size.width * 0.12;
-      final errorCopyMsg = l10n.errorCopyingToClipboard;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      messenger.showSnackBar(SnackBar(
         content: Center(
             child: Text(errorCopyMsg,
                 style: const TextStyle(color: Colors.white))),
         behavior: SnackBarBehavior.floating,
-        margin: EdgeInsets.fromLTRB(horizontalMargin, 0, horizontalMargin, 96),
+        margin: EdgeInsets.fromLTRB(horizontalMargin, 0, horizontalMargin, 16),
         padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 10.0),
         shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.all(Radius.circular(16.0))),
@@ -246,162 +251,160 @@ class _AccountTileHOTPState extends State<AccountTileHOTP> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final screenWidth = MediaQuery.of(context).size.width;
-        final tile = SizedBox(
-          height: 70,
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              // Left column: Avatar + Service name + Account user
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 6.0),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // First row: Avatar and service name
-                      Row(
+        final tile = Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: _otpService.hotpCode != null
+                ? () => _copyToClipboard(_otpService.hotpCode ?? '')
+                : null,
+            child: SizedBox(
+              height: 70,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // Left column: Avatar + Service name + Account user
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 6.0),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const SizedBox(width: 10),
-                          AccountTileUi.buildServiceAvatar(widget.item, color),
-                          const SizedBox(width: 8),
-                          Expanded(
+                          // First row: Avatar and service name
+                          Row(
+                            children: [
+                              const SizedBox(width: 10),
+                              AccountTileUi.buildServiceAvatar(widget.item, color),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  widget.item.service,
+                                  style: const TextStyle(
+                                      fontSize: 24, fontWeight: FontWeight.w400),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          // Second row: Account username
+                          Padding(
+                            padding: const EdgeInsets.only(left: 12.0),
                             child: Text(
-                              widget.item.service,
-                              style: const TextStyle(
-                                  fontSize: 24, fontWeight: FontWeight.w400),
+                              widget.item.account,
+                              style: TextStyle(
+                                  fontSize: 14, color: Colors.grey.shade600),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 4),
-                      // Second row: Account username
-                      Padding(
-                        padding: const EdgeInsets.only(left: 12.0),
-                        child: Text(
-                          widget.item.account,
-                          style: TextStyle(
-                              fontSize: 14, color: Colors.grey.shade600),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              // Right column: HOTP states (takes minimal space)
-              (() {
-                if (_otpService.hotpCode == null) {
-                  // State 1: "Generate" button centered vertically
-                  return Container(
-                    padding: const EdgeInsets.only(right: 12.0),
-                    child: Center(
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 180),
-                        child: ElevatedButton(
-                          onPressed: _otpService.requestHotp,
-                          style: ElevatedButton.styleFrom(
-                              minimumSize: const Size(0, 36)),
-                          child: Text(l10n.generate),
-                        ),
-                      ),
                     ),
-                  );
-                }
+                  ),
 
-                // State 2: OTP + Counter
-                return Container(
-                  padding: const EdgeInsets.only(right: 12.0),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // OTP right-aligned, no clipping
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: settings != null
-                            ? AnimatedBuilder(
-                                animation: settings!,
-                                builder: (context, _) {
-                                  return Material(
-                                    color: Colors.transparent,
-                                    child: InkWell(
-                                      borderRadius: BorderRadius.zero,
-                                      onTap: () => _copyToClipboard(
-                                          _otpService.hotpCode ?? ''),
-                                      onLongPress: () {
-                                        if (settings?.hideOtps == true) {
-                                          setState(() {
-                                            _reveal = true;
-                                          });
-                                          _revealTimer?.cancel();
-                                          _revealTimer = Timer(
-                                              const Duration(seconds: 10), () {
-                                            if (mounted) {
-                                              setState(() {
-                                                _reveal = false;
-                                              });
-                                            }
-                                          });
-                                        }
-                                      },
-                                      child: Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                            vertical: 0.0, horizontal: 2.0),
-                                        child: Text(
-                                          AccountTileUtils.formatCode(
-                                              _otpService.hotpCode ?? '',
-                                              settings,
-                                              forceVisible: _reveal),
-                                          style: const TextStyle(
-                                            fontSize: 24,
-                                            fontWeight: FontWeight.w700,
-                                          ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.visible,
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                },
-                              )
-                            : InkWell(
-                                onTap: () => _copyToClipboard(
-                                    _otpService.hotpCode ?? ''),
-                                child: Text(
-                                  AccountTileUtils.formatCode(
-                                      _otpService.hotpCode ?? '', null),
-                                  style: const TextStyle(
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.visible,
-                                ),
-                              ),
-                      ),
-                      const SizedBox(height: 4),
-                      // Counter centered horizontally
-                      if (_otpService.hotpCounter != null)
-                        Align(
-                          alignment: Alignment.center,
-                          child: Text(
-                            l10n.hotpCounter(_otpService.hotpCounter ?? 0),
-                            style: TextStyle(
-                                fontSize: 14, color: Colors.grey.shade500),
-                            maxLines: 1,
-                            overflow: TextOverflow.visible,
+                  // Right column: HOTP states (takes minimal space)
+                  (() {
+                    if (_otpService.hotpCode == null) {
+                      // State 1: "Generate" button centered vertically
+                      return Container(
+                        padding: const EdgeInsets.only(right: 12.0),
+                        child: Center(
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 180),
+                            child: ElevatedButton(
+                              onPressed: _otpService.requestHotp,
+                              style: ElevatedButton.styleFrom(
+                                  minimumSize: const Size(0, 36)),
+                              child: Text(l10n.generate),
+                            ),
                           ),
                         ),
-                    ],
-                  ),
-                );
-              }()),
-            ],
+                      );
+                    }
+
+                    // State 2: OTP + Counter
+                    return Container(
+                      padding: const EdgeInsets.only(right: 12.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // OTP right-aligned, no clipping
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: settings != null
+                                ? AnimatedBuilder(
+                                    animation: settings!,
+                                    builder: (context, _) {
+                                      return GestureDetector(
+                                        onLongPress: () {
+                                          if (settings?.hideOtps == true) {
+                                            setState(() {
+                                              _reveal = true;
+                                            });
+                                            _revealTimer?.cancel();
+                                            _revealTimer = Timer(
+                                                const Duration(seconds: 10), () {
+                                              if (mounted) {
+                                                setState(() {
+                                                  _reveal = false;
+                                                });
+                                              }
+                                            });
+                                          }
+                                        },
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                              vertical: 0.0, horizontal: 2.0),
+                                          child: Text(
+                                            AccountTileUtils.formatCode(
+                                                _otpService.hotpCode ?? '',
+                                                settings,
+                                                forceVisible: _reveal),
+                                            style: const TextStyle(
+                                              fontSize: 24,
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.visible,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  )
+                                : Text(
+                                    AccountTileUtils.formatCode(
+                                        _otpService.hotpCode ?? '', null),
+                                    style: const TextStyle(
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.visible,
+                                  ),
+                          ),
+                          const SizedBox(height: 4),
+                          // Counter centered horizontally
+                          if (_otpService.hotpCounter != null)
+                            Align(
+                              alignment: Alignment.center,
+                              child: Text(
+                                l10n.hotpCounter(_otpService.hotpCounter ?? 0),
+                                style: TextStyle(
+                                    fontSize: 14, color: Colors.grey.shade500),
+                                maxLines: 1,
+                                overflow: TextOverflow.visible,
+                              ),
+                            ),
+                        ],
+                      ),
+                    );
+                  }()),
+                ],
+              ),
+            ),
           ),
         );
 

@@ -288,6 +288,10 @@
   "@copied": {
     "description": "Confirmation message shown after copying to clipboard."
   },
+  "nextCodeCopied": "Next code copied to clipboard",
+  "@nextCodeCopied": {
+    "description": "Confirmation message shown after copying next code to clipboard."
+  },
   "accountUpdated": "Account updated successfully",
   "@accountUpdated": {
     "description": "Snackbar message shown when an account was edited and saved successfully."
@@ -299,6 +303,10 @@
   "serversTitle": "Servers",
   "@serversTitle": {
     "description": "Title text for the servers selector header in Home screen."
+  },
+  "manageServers": "Manage server accounts",
+  "@manageServers": {
+    "description": "Label for the option to manage server accounts in the server selector."
   },
   "synchronize": "Synchronize",
   "@synchronize": {
@@ -429,6 +437,10 @@
   "@addServerTitle": {
     "description": "Dialog title when adding a new server connection."
   },
+  "addServerButton": "Add Server",
+  "@addServerButton": {
+    "description": "Button label for adding a new server."
+  },
   "serverSaved": "Server connection saved and validated",
   "@serverSaved": {
     "description": "Confirmation shown after saving a new server."
@@ -524,7 +536,7 @@
   "@search": {
     "description": "Placeholder text for search fields."
   },
-  "noServersConfigured": "No servers configured. Configure a server in settings to get started.",
+  "noServersConfigured": "Welcome to Pocket2FA! Let's get started by adding a server.",
   "@noServersConfigured": {
     "description": "Message shown when there are no servers in storage."
   },

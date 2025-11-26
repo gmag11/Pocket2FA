@@ -243,11 +243,12 @@ class _HomePageState extends State<HomePage>
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(12))),
       builder: (c) {
-        // Size the sheet based on number of servers + 1 for manage button
+        // Size the sheet based on number of servers, header, and manage button
         final mq = MediaQuery.of(c).size;
+        const double headerH = 40.0;
+        const double manageButtonH = 56.0;
         const double tileH = 72.0;
-        const double headerH = 56.0;
-        final desired = headerH + ((_serverManager.servers.length + 1) * tileH);
+        final desired = headerH + manageButtonH + ((_serverManager.servers.length) * tileH);
         final maxH = mq.height * 0.8;
         final height = desired.clamp(120.0, maxH);
 

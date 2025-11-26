@@ -79,20 +79,23 @@ class BottomBar extends StatelessWidget {
             children: [
               if (isManageMode) ...[
                 // Manage mode: show Delete and Done buttons
-                ElevatedButton(
-                  onPressed:
-                      selectedAccountIds.isNotEmpty ? onDeleteSelected : null,
-                  style: ElevatedButton.styleFrom(
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20)),
-                    backgroundColor: selectedAccountIds.isNotEmpty
-                        ? Colors.red
-                        : Colors.grey,
-                    foregroundColor: Colors.white,
-                    minimumSize: const Size(0, 36),
+                Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: ElevatedButton(
+                    onPressed:
+                        selectedAccountIds.isNotEmpty ? onDeleteSelected : null,
+                    style: ElevatedButton.styleFrom(
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20)),
+                      backgroundColor: selectedAccountIds.isNotEmpty
+                          ? Colors.red
+                          : Colors.grey,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(0, 36),
+                    ),
+                    child: Text(l10n.delete,
+                        style: const TextStyle(color: Colors.white)),
                   ),
-                  child: Text(l10n.delete,
-                      style: const TextStyle(color: Colors.white)),
                 ),
                 const SizedBox(width: 12),
                 OutlinedButton(
@@ -107,7 +110,7 @@ class BottomBar extends StatelessWidget {
               ],
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 6),
           // Always show server/account information, even in edit mode
           Row(
             mainAxisAlignment: MainAxisAlignment.center,

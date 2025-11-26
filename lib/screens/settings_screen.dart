@@ -146,17 +146,15 @@ class SettingsScreen extends StatelessWidget {
               // Sync interval (only shown when auto-sync is enabled)
               if (settings.autoSyncEnabled) ...[
                 const SizedBox(height: 12),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Row(
-                    children: [
-                      Text(l10n.syncEvery, style: const TextStyle(fontSize: 16)),
-                      const SizedBox(width: 12),
-                      _buildIntervalSelector(),
-                      const SizedBox(width: 12),
-                      Text(l10n.minutesLabel, style: const TextStyle(fontSize: 16)),
-                    ],
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(l10n.syncEvery, style: const TextStyle(fontSize: 16)),
+                    const SizedBox(width: 12),
+                    _buildIntervalSelector(),
+                    const SizedBox(width: 12),
+                    Text(l10n.minutesLabel, style: const TextStyle(fontSize: 16)),
+                  ],
                 ),
               ],
             ],

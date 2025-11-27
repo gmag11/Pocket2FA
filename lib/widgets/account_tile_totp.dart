@@ -191,102 +191,203 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
               onLongPress: widget.isManageMode
                   ? null
                   : () => _copyToClipboard(_otpService.nextCode, isNextCode: true),
-              child: SizedBox(
-                height: 70, // Keep the same height in both modes
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                // Top row: Avatar + Service name + OTP code
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    // In manage mode: Checkbox + Avatar, in normal mode: only Avatar with padding
-                    if (widget.isManageMode) ...[
-                      borderWrap(
-                        Padding(
-                          padding: const EdgeInsets.only(left: 8.0),
-                          child: Transform.scale(
-                            scale: 0.8, // Make the checkbox smaller
-                            child: Checkbox(
-                              value: widget.isSelected,
-                              onChanged: (_) =>
-                                  widget.onToggleSelection?.call(),
-                              materialTapTargetSize:
-                                  MaterialTapTargetSize.shrinkWrap,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                child: SizedBox(
+                  height: 70, // Keep the same height in both modes
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // Top row: Avatar + Service name + OTP code
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          // In manage mode: Checkbox + Avatar, in normal mode: only Avatar with padding
+                          if (widget.isManageMode) ...[
+                            borderWrap(
+                              Padding(
+                                padding: const EdgeInsets.only(left: 8.0),
+                                child: Transform.scale(
+                                  scale: 0.8, // Make the checkbox smaller
+                                  child: Checkbox(
+                                    value: widget.isSelected,
+                                    onChanged: (_) =>
+                                        widget.onToggleSelection?.call(),
+                                    materialTapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
+                                  ),
+                                ),
+                              ),
+                              padding: const EdgeInsets.all(2),
+                            ),
+                            const SizedBox(width: 4),
+                            borderWrap(
+                              AccountTileUi.buildServiceAvatar(widget.item, color),
+                              padding: const EdgeInsets.all(2),
+                            ),
+                          ] else
+                            // Avatar (ancho fijo) — add left padding
+                            borderWrap(
+                              Padding(
+                                padding: const EdgeInsets.only(left: 12.0),
+                                child: AccountTileUi.buildServiceAvatar(
+                                    widget.item, color),
+                              ),
+                              padding: const EdgeInsets.all(2),
+                            ),
+                          const SizedBox(width: 8),
+
+                          // Service name (flexible width, allow ellipsis)
+                          Expanded(
+                            child: borderWrap(
+                              Text(
+                                widget.item.service,
+                                style: const TextStyle(
+                                    fontSize: 24, fontWeight: FontWeight.w400),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              padding: const EdgeInsets.all(2),
                             ),
                           ),
-                        ),
-                        padding: const EdgeInsets.all(2),
-                      ),
-                      const SizedBox(width: 4),
-                      borderWrap(
-                        AccountTileUi.buildServiceAvatar(widget.item, color),
-                        padding: const EdgeInsets.all(2),
-                      ),
-                    ] else
-                      // Avatar (ancho fijo) — add left padding
-                      borderWrap(
-                        Padding(
-                          padding: const EdgeInsets.only(left: 12.0),
-                          child: AccountTileUi.buildServiceAvatar(
-                              widget.item, color),
-                        ),
-                        padding: const EdgeInsets.all(2),
-                      ),
-                    const SizedBox(width: 8),
 
-                    // Service name (flexible width, allow ellipsis)
-                    Expanded(
-                      child: borderWrap(
-                        Text(
-                          widget.item.service,
-                          style: const TextStyle(
-                              fontSize: 24, fontWeight: FontWeight.w400),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        padding: const EdgeInsets.all(2),
+                          // In manage mode: edit buttons, in normal mode: OTP code
+                          if (widget.isManageMode)
+                            Padding(
+                              padding: const EdgeInsets.only(right: 8.0),
+                              child: IconButton(
+                                icon: const Icon(Icons.edit,
+                                    color: Colors.blue, size: 18),
+                                onPressed: widget.onEdit,
+                                padding: const EdgeInsets.all(4),
+                                constraints:
+                                    const BoxConstraints(minWidth: 32, minHeight: 32),
+                              ),
+                            )
+                          else
+                            // OTP code (takes needed space, no clipping, right aligned)
+                            borderWrap(
+                              Padding(
+                                padding: const EdgeInsets.only(right: 12.0),
+                                child: IntrinsicWidth(
+                                  child: Align(
+                                    alignment: Alignment.centerRight,
+                                    child: settings != null
+                                        ? AnimatedBuilder(
+                                            animation: settings!,
+                                            builder: (context, _) {
+                                              return GestureDetector(
+                                                onLongPress: () {
+                                                  if (settings?.hideOtps == true) {
+                                                    setState(() {
+                                                      _revealCurrent = true;
+                                                    });
+                                                    _revealTimerCurrent?.cancel();
+                                                    _revealTimerCurrent = Timer(
+                                                        const Duration(seconds: 10),
+                                                        () {
+                                                      if (mounted) {
+                                                        setState(() {
+                                                          _revealCurrent = false;
+                                                        });
+                                                      }
+                                                    });
+                                                  }
+                                                },
+                                                child: Padding(
+                                                  padding: const EdgeInsets.symmetric(
+                                                    vertical: 0.0,
+                                                    horizontal: 2.0
+                                                  ),
+                                                  child: Text(
+                                                    AccountTileUtils.formatCode(
+                                                      _otpService.currentCode,
+                                                      settings,
+                                                      forceVisible: _revealCurrent
+                                                    ),
+                                                    style: const TextStyle(
+                                                      fontSize: 24,
+                                                      fontWeight: FontWeight.w700,
+                                                    ),
+                                                    maxLines: 1,
+                                                    overflow: TextOverflow.visible,
+                                                  ),
+                                                ),
+                                              );
+                                            },
+                                          )
+                                        : Text(
+                                            AccountTileUtils.formatCode(_otpService.currentCode, null),
+                                            style: const TextStyle(
+                                              fontSize: 24,
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.visible,
+                                          ),
+                                  ),
+                                ),
+                              ),
+                              padding: const EdgeInsets.all(2),
+                            ),
+                        ],
                       ),
-                    ),
 
-                    // In manage mode: edit buttons, in normal mode: OTP code
-                    if (widget.isManageMode)
-                      Padding(
-                        padding: const EdgeInsets.only(right: 8.0),
-                        child: IconButton(
-                          icon: const Icon(Icons.edit,
-                              color: Colors.blue, size: 18),
-                          onPressed: widget.onEdit,
-                          padding: const EdgeInsets.all(4),
-                          constraints:
-                              const BoxConstraints(minWidth: 32, minHeight: 32),
-                        ),
-                      )
-                    else
-                      // OTP code (takes needed space, no clipping, right aligned)
-                      borderWrap(
-                        Padding(
-                          padding: const EdgeInsets.only(right: 12.0),
-                          child: IntrinsicWidth(
-                            child: Align(
-                              alignment: Alignment.centerRight,
-                              child: settings != null
-                                  ? AnimatedBuilder(
-                                      animation: settings!,
-                                      builder: (context, _) {
-                                        return GestureDetector(
+                      // In normal mode: full spacing, in manage mode: reduced
+                      if (!widget.isManageMode) const SizedBox(height: 6),
+
+                      // Bottom row: Account user + Next OTP + Progress dots (solo account en modo manage)
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          // Account username (flexible width, allow ellipsis, left aligned)
+                          Expanded(
+                            child: borderWrap(
+                              Padding(
+                                // add left padding so username is not flush with the tile edge
+                                // In manage mode, add more padding to align with the checkbox
+                                padding: EdgeInsets.only(
+                                    left: widget.isManageMode ? 56.0 : 12.0),
+                                child: Text(
+                                  widget.item.account,
+                                  style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              padding: const EdgeInsets.all(2),
+                            ),
+                          ),
+
+                          // Only show Next OTP and Progress dots in normal mode
+                          if (!widget.isManageMode) ...[
+                            // Next OTP (takes needed space, no clipping, right aligned)
+                            borderWrap(
+                              IntrinsicWidth(
+                                child: Align(
+                                  alignment: Alignment.centerRight,
+                                  child: AnimatedBuilder(
+                                    animation: _animations.animController ??
+                                        Listenable.merge([]),
+                                    builder: (context, _) {
+                                      final anim = _animations.animController;
+                                      final opacity = (anim != null)
+                                          ? anim.value.clamp(0.0, 1.0)
+                                          : 1.0;
+                                      return Opacity(
+                                        opacity: opacity,
+                                        child: GestureDetector(
                                           onLongPress: () {
                                             if (settings?.hideOtps == true) {
                                               setState(() {
-                                                _revealCurrent = true;
+                                                _revealNext = true;
                                               });
-                                              _revealTimerCurrent?.cancel();
-                                              _revealTimerCurrent = Timer(
-                                                  const Duration(seconds: 10),
-                                                  () {
+                                              _revealTimerNext?.cancel();
+                                              _revealTimerNext = Timer(
+                                                  const Duration(seconds: 10), () {
                                                 if (mounted) {
                                                   setState(() {
-                                                    _revealCurrent = false;
+                                                    _revealNext = false;
                                                   });
                                                 }
                                               });
@@ -294,145 +395,47 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
                                           },
                                           child: Padding(
                                             padding: const EdgeInsets.symmetric(
-                                              vertical: 0.0,
-                                              horizontal: 2.0
+                                              vertical: 0.0, horizontal: 2.0
                                             ),
                                             child: Text(
                                               AccountTileUtils.formatCode(
-                                                _otpService.currentCode,
-                                                settings,
-                                                forceVisible: _revealCurrent
+                                                _otpService.nextCode, settings,
+                                                forceVisible: _revealNext
                                               ),
-                                              style: const TextStyle(
-                                                fontSize: 24,
-                                                fontWeight: FontWeight.w700,
-                                              ),
+                                              style: TextStyle(fontSize: 14, color: Colors.black),
                                               maxLines: 1,
                                               overflow: TextOverflow.visible,
                                             ),
                                           ),
-                                        );
-                                      },
-                                    )
-                                  : Text(
-                                      AccountTileUtils.formatCode(_otpService.currentCode, null),
-                                      style: const TextStyle(
-                                        fontSize: 24,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.visible,
-                                    ),
-                            ),
-                          ),
-                        ),
-                        padding: const EdgeInsets.all(2),
-                      ),
-                  ],
-                ),
-
-                // In normal mode: full spacing, in manage mode: reduced
-                if (!widget.isManageMode) const SizedBox(height: 6),
-
-                // Bottom row: Account user + Next OTP + Progress dots (solo account en modo manage)
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    // Account username (flexible width, allow ellipsis, left aligned)
-                    Expanded(
-                      child: borderWrap(
-                        Padding(
-                          // add left padding so username is not flush with the tile edge
-                          // In manage mode, add more padding to align with the checkbox
-                          padding: EdgeInsets.only(
-                              left: widget.isManageMode ? 56.0 : 12.0),
-                          child: Text(
-                            widget.item.account,
-                            style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        padding: const EdgeInsets.all(2),
-                      ),
-                    ),
-
-                    // Only show Next OTP and Progress dots in normal mode
-                    if (!widget.isManageMode) ...[
-                      // Next OTP (takes needed space, no clipping, right aligned)
-                      borderWrap(
-                        IntrinsicWidth(
-                          child: Align(
-                            alignment: Alignment.centerRight,
-                            child: AnimatedBuilder(
-                              animation: _animations.animController ??
-                                  Listenable.merge([]),
-                              builder: (context, _) {
-                                final anim = _animations.animController;
-                                final opacity = (anim != null)
-                                    ? anim.value.clamp(0.0, 1.0)
-                                    : 1.0;
-                                return Opacity(
-                                  opacity: opacity,
-                                  child: GestureDetector(
-                                    onLongPress: () {
-                                      if (settings?.hideOtps == true) {
-                                        setState(() {
-                                          _revealNext = true;
-                                        });
-                                        _revealTimerNext?.cancel();
-                                        _revealTimerNext = Timer(
-                                            const Duration(seconds: 10), () {
-                                          if (mounted) {
-                                            setState(() {
-                                              _revealNext = false;
-                                            });
-                                          }
-                                        });
-                                      }
-                                    },
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 0.0, horizontal: 2.0
-                                      ),
-                                      child: Text(
-                                        AccountTileUtils.formatCode(
-                                          _otpService.nextCode, settings,
-                                          forceVisible: _revealNext
                                         ),
-                                        style: TextStyle(fontSize: 14, color: Colors.black),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.visible,
-                                      ),
-                                    ),
+                                      );
+                                    },
                                   ),
-                                );
-                              },
+                                ),
+                              ),
+                              padding: const EdgeInsets.all(2),
                             ),
-                          ),
-                        ),
-                        padding: const EdgeInsets.all(2),
-                      ),
 
-                      const SizedBox(width: 12),
+                            const SizedBox(width: 12),
 
-                      // Progress dots (fixed width, right aligned) — add right padding
-                      borderWrap(
-                        Padding(
-                          padding: const EdgeInsets.only(right: 12.0),
-                          child: AccountTileUi.buildProgressDots(
-                              _animations.animController),
-                        ),
-                        padding: const EdgeInsets.all(2),
+                            // Progress dots (fixed width, right aligned) — add right padding
+                            borderWrap(
+                              Padding(
+                                padding: const EdgeInsets.only(right: 12.0),
+                                child: AccountTileUi.buildProgressDots(
+                                    _animations.animController),
+                              ),
+                              padding: const EdgeInsets.all(2),
+                            ),
+                          ],
+                        ],
                       ),
                     ],
-                  ],
+                  ),
                 ),
-              ],
+              ),
             ),
           ),
-          ),
-        ),
         );
 
         if (screenWidth > 1200) {

@@ -154,82 +154,85 @@ class _AccountTileHOTPState extends State<AccountTileHOTP> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final screenWidth = MediaQuery.of(context).size.width;
-        final tile = SizedBox(
-          height: 70, // Keep the same height as in normal mode
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Top row: checkbox + avatar + service name + edit button
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  // Checkbox for selection
-                  Padding(
-                    padding: const EdgeInsets.only(left: 8.0),
-                    child: Transform.scale(
-                      scale: 0.8, // Make the checkbox smaller
-                      child: Checkbox(
-                        value: widget.isSelected,
-                        onChanged: (_) => widget.onToggleSelection?.call(),
-                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        final tile = Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: SizedBox(
+            height: 70, // Keep the same height as in normal mode
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Top row: checkbox + avatar + service name + edit button
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // Checkbox for selection
+                    Padding(
+                      padding: const EdgeInsets.only(left: 8.0),
+                      child: Transform.scale(
+                        scale: 0.8, // Make the checkbox smaller
+                        child: Checkbox(
+                          value: widget.isSelected,
+                          onChanged: (_) => widget.onToggleSelection?.call(),
+                          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 4),
+                    const SizedBox(width: 4),
 
-                  // Avatar
-                  AccountTileUi.buildServiceAvatar(widget.item, color),
-                  const SizedBox(width: 8),
+                    // Avatar
+                    AccountTileUi.buildServiceAvatar(widget.item, color),
+                    const SizedBox(width: 8),
 
-                  // Service name - expandible
-                  Expanded(
-                    child: Text(
-                      widget.item.service,
-                      style: const TextStyle(
-                          fontSize: 24, fontWeight: FontWeight.w400),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-
-                  // Edit button
-                  Padding(
-                    padding: const EdgeInsets.only(right: 8.0),
-                    child: IconButton(
-                      icon:
-                          const Icon(Icons.edit, color: Colors.blue, size: 18),
-                      onPressed: widget.onEdit,
-                      padding: const EdgeInsets.all(4),
-                      constraints:
-                          const BoxConstraints(minWidth: 32, minHeight: 32),
-                    ),
-                  ),
-                ],
-              ),
-
-              // Small spacer (reduced in manage mode)
-              //const SizedBox(height: 2),
-
-              // Bottom row: account username aligned under service (use left padding to align with avatar in manage mode)
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.only(
-                          left: 56.0), // align under service like TOTP
+                    // Service name - expandible
+                    Expanded(
                       child: Text(
-                        widget.item.account,
-                        style: TextStyle(
-                            fontSize: 14, color: Colors.grey.shade600),
+                        widget.item.service,
+                        style: const TextStyle(
+                            fontSize: 24, fontWeight: FontWeight.w400),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ],
+
+                    // Edit button
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8.0),
+                      child: IconButton(
+                        icon:
+                            const Icon(Icons.edit, color: Colors.blue, size: 18),
+                        onPressed: widget.onEdit,
+                        padding: const EdgeInsets.all(4),
+                        constraints:
+                            const BoxConstraints(minWidth: 32, minHeight: 32),
+                      ),
+                    ),
+                  ],
+                ),
+
+                // Small spacer (reduced in manage mode)
+                //const SizedBox(height: 2),
+
+                // Bottom row: account username aligned under service (use left padding to align with avatar in manage mode)
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.only(
+                            left: 56.0), // align under service like TOTP
+                        child: Text(
+                          widget.item.account,
+                          style: TextStyle(
+                              fontSize: 14, color: Colors.grey.shade600),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         );
 
@@ -257,9 +260,11 @@ class _AccountTileHOTPState extends State<AccountTileHOTP> {
             onTap: _otpService.hotpCode != null
                 ? () => _copyToClipboard(_otpService.hotpCode ?? '')
                 : null,
-            child: SizedBox(
-              height: 70,
-              child: Row(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: SizedBox(
+                height: 70,
+                child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   // Left column: Avatar + Service name + Account user
@@ -404,6 +409,7 @@ class _AccountTileHOTPState extends State<AccountTileHOTP> {
                   }()),
                 ],
               ),
+            ),
             ),
           ),
         );

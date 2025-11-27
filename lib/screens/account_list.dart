@@ -168,9 +168,9 @@ class _AccountListState extends State<AccountList> {
           controller: widget.scrollController,
           physics: const AlwaysScrollableScrollPhysics(),
           itemCount: filtered.length,
-          separatorBuilder: (context, index) => Divider(
-            indent: 20,
-            endIndent: 20,
+          separatorBuilder: (context, index) => const Divider(
+            height: 1,
+            thickness: 1,
           ),
           itemBuilder: (context, index) {
             try {
@@ -188,6 +188,7 @@ class _AccountListState extends State<AccountList> {
               );
             } catch (e) {
               return ListTile(
+                contentPadding: EdgeInsets.all(8),
                 leading: const Icon(Icons.error, color: Colors.red),
                 title: Text(l10n.errorDisplayingAccount),
                 subtitle: Text(e.toString()),
@@ -239,6 +240,7 @@ class _AccountListState extends State<AccountList> {
                 border: Border(bottom: BorderSide(color: Color(0xFFE0E0E0))),
               ),
               child: ListTile(
+                contentPadding: EdgeInsets.all(8),
                 leading: const Icon(Icons.error, color: Colors.red),
                 title: Text(l10n.errorDisplayingAccount),
                 subtitle: Text(e.toString()),

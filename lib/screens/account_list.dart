@@ -162,15 +162,18 @@ class _AccountListState extends State<AccountList> {
     }
 
     if (columns == 1) {
+      final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+      
       return RefreshIndicator(
         onRefresh: handleRefresh,
         child: ListView.separated(
           controller: widget.scrollController,
           physics: const AlwaysScrollableScrollPhysics(),
           itemCount: filtered.length,
-          separatorBuilder: (context, index) => const Divider(
+          separatorBuilder: (context, index) => Divider(
             height: 1,
             thickness: 1,
+            color: isDarkMode ? Colors.grey[850] : Colors.grey[300],
           ),
           itemBuilder: (context, index) {
             try {

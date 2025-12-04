@@ -198,7 +198,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get counterHint => 'The initial counter value';
 
   @override
-  String get update => 'Edit';
+  String get update => 'Save';
 
   @override
   String get create => 'Create';

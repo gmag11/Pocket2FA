@@ -1,614 +1,614 @@
 {
-    "@@locale": "en",
-    "appTitle": "Pocket2FA",
-    "@appTitle": {
-        "description": "Application short title shown in the app window and app switcher."
-    },
-    "homeTitle": "Home",
-    "@homeTitle": {
-        "description": "Title for the Home screen."
-    },
-    "settingsTitle": "Settings",
-    "@settingsTitle": {
-        "description": "Title for the Settings screen and related labels."
-    },
-    "settingsGeneral": "GENERAL",
-    "@settingsGeneral": {
-        "description": "Label for the General settings section."
-    },
-    "settingsSecurity": "SECURITY",
-    "@settingsSecurity": {
-        "description": "Label for the Security settings section."
-    },
-    "settingsSynchronization": "SYNCHRONIZATION",
-    "@settingsSynchronization": {
-        "description": "Label for the Synchronization settings section."
-    },
-    "addAccount": "Add account",
-    "@addAccount": {
-        "description": "Label for action that adds a new account entry."
-    },
-    "add": "Add",
-    "@add": {
-        "description": "Generic add action label used on buttons."
-    },
-    "serviceLabel": "Service",
-    "@serviceLabel": {
-        "description": "Input field label for service name when creating a new account."
-    },
-    "serviceHint": "Google, Twitter, Apple",
-    "@serviceHint": {
-        "description": "Help text for the service input field."
-    },
-    "accountLabel": "Account",
-    "@accountLabel": {
-        "description": "Input field label for account identifier when creating a new account."
-    },
-    "accountHint": "John Doe",
-    "@accountHint": {
-        "description": "Help text for the account input field."
-    },
-    "seedLabel": "Seed",
-    "@seedLabel": {
-        "description": "Input field label for OTP seed when creating a new account."
-    },
-    "serverLabel": "Server",
-    "@serverLabel": {
-        "description": "Label prefix used when showing a server name in the app bar."
-    },
-    "errorParsingQr": "Error parsing QR: {error}",
-    "@errorParsingQr": {
-        "description": "Shown when a QR parsing operation fails.",
-        "placeholders": {
-            "error": {}
-        }
-    },
-    "noQrInImage": "No QR code found in image",
-    "@noQrInImage": {
-        "description": "Shown when no QR is found in a picked image."
-    },
-    "errorScanningImage": "Error scanning image: {error}",
-    "@errorScanningImage": {
-        "description": "Shown when scanning an image fails.",
-        "placeholders": {
-            "error": {}
-        }
-    },
-    "selectQrImageTitle": "Select QR Image",
-    "@selectQrImageTitle": {
-        "description": "Title for the image QR picker screen."
-    },
-    "selectImageFromGallery": "Select an image from gallery containing a QR code",
-    "@selectImageFromGallery": {
-        "description": "Help text instructing the user to pick an image containing QR."
-    },
-    "selectImageButton": "Select Image",
-    "@selectImageButton": {
-        "description": "Button label for picking an image from gallery."
-    },
-    "scanningFromImage": "Scanning QR from image...",
-    "@scanningFromImage": {
-        "description": "Progress label shown while scanning an image."
-    },
-    "back": "Back",
-    "@back": {
-        "description": "Generic back action label."
-    },
-    "createNewCodeTitle": "Create new code",
-    "@createNewCodeTitle": {
-        "description": "Title for the Create New Code screen."
-    },
-    "chooseHowToCreate": "Choose how to create a new code:",
-    "@chooseHowToCreate": {
-        "description": "Instruction to choose a creation method."
-    },
-    "alternateMethods": "Alternate methods",
-    "@alternateMethods": {
-        "description": "Label for the alternate creation methods section."
-    },
-    "useAdvancedForm": "Use the advanced form",
-    "@useAdvancedForm": {
-        "description": "Label for opening the advanced form to create a code."
-    },
-    "urlRequired": "URL required",
-    "@urlRequired": {
-        "description": "Validation message shown when URL is empty in server dialog."
-    },
-    "apiKeyLabel": "API key",
-    "@apiKeyLabel": {
-        "description": "Label for API key input."
-    },
-    "nameLabel": "Name",
-    "@nameLabel": {
-        "description": "Label for name input in server dialog."
-    },
-    "urlLabel": "URL",
-    "@urlLabel": {
-        "description": "Label for URL input in server dialog."
-    },
-    "save": "Save",
-    "@save": {
-        "description": "Generic save action label."
-    },
-    "totpLabel": "TOTP",
-    "@totpLabel": {
-        "description": "Label for Time-based OTP type option."
-    },
-    "hotpLabel": "HOTP",
-    "@hotpLabel": {
-        "description": "Label for HMAC-based OTP type option."
-    },
-    "steamLabel": "STEAM",
-    "@steamLabel": {
-        "description": "Label for Steam OTP type option."
-    },
-    "groupLabel": "Group",
-    "@groupLabel": {
-        "description": "Label for group field in advanced form."
-    },
-    "noGroupOption": "- No group -",
-    "@noGroupOption": {
-        "description": "Dropdown item indicating no group."
-    },
-    "groupHint": "The group to which the account is to be assigned",
-    "@groupHint": {
-        "description": "Help text for the group input field."
-    },
-    "chooseOtpType": "Choose the type of OTP to create",
-    "@chooseOtpType": {
-        "description": "Heading for OTP type picker."
-    },
-    "otpTypeHint": "Time-based OTP or HMAC-based OTP or Steam OTP",
-    "@otpTypeHint": {
-        "description": "Help text for the OTP type selection."
-    },
-    "secretLabel": "Secret",
-    "@secretLabel": {
-        "description": "Label for the secret input field."
-    },
-    "secretLockedHint": "Secret is locked - tap the lock to edit",
-    "@secretLockedHint": {
-        "description": "Hint shown when secret field is locked in edit mode."
-    },
-    "secretRequired": "Secret is required",
-    "@secretRequired": {
-        "description": "Validation error when secret is empty."
-    },
-    "secretBase32Error": "Secret must be Base32 (uppercase letters A-Z and digits 2-7)",
-    "@secretBase32Error": {
-        "description": "Validation error when secret isn't valid Base32."
-    },
-    "serviceRequired": "Service is required",
-    "@serviceRequired": {
-        "description": "Validation error when service field is empty."
-    },
-    "accountRequired": "Account is required",
-    "@accountRequired": {
-        "description": "Validation error when account field is empty."
-    },
-    "secretHint": "The key used to generate the security codes",
-    "@secretHint": {
-        "description": "Help text for the secret input field."
-    },
-    "groupAll": "All ({count})",
-    "@groupAll": {
-        "description": "Label for the 'All' group with item count",
-        "placeholders": {
-            "count": {
-                "type": "int",
-                "example": "12"
-            }
-        }
-    },
-    "optionsLabel": "Options",
-    "@optionsLabel": {
-        "description": "Label for advanced options section."
-    },
-    "optionsHint": "You can leave default values in next options if you don't know how to set them. They are the most commonly used values.",
-    "@optionsHint": {
-        "description": "Help text for advanced options."
-    },
-    "digitsLabel": "Digits",
-    "@digitsLabel": {
-        "description": "Label for digits selector."
-    },
-    "digitsHint": "The number of digits of the generated security codes",
-    "@digitsHint": {
-        "description": "Help text for digits selector."
-    },
-    "algorithmLabel": "Algorithm",
-    "@algorithmLabel": {
-        "description": "Label for algorithm selector."
-    },
-    "algorithmHint": "The algorithm used to secure your security codes",
-    "@algorithmHint": {
-        "description": "Help text for algorithm selector."
-    },
-    "periodLabel": "Period",
-    "@periodLabel": {
-        "description": "Label for period field."
-    },
-    "periodDefaultHint": "Default is 30",
-    "@periodDefaultHint": {
-        "description": "Hint showing the default period value."
-    },
-    "periodHint": "The period of validity of the generated security codes in second",
-    "@periodHint": {
-        "description": "Help text for period field."
-    },
-    "counterLabel": "Counter",
-    "@counterLabel": {
-        "description": "Label for counter field (HOTP)."
-    },
-    "counterDefaultHint": "Default is 0",
-    "@counterDefaultHint": {
-        "description": "Hint showing default counter value."
-    },
-    "counterHint": "The initial counter value",
-    "@counterHint": {
-        "description": "Help text for counter field."
-    },
-    "update": "Edit",
-    "@update": {
-        "description": "Label for edit action on advanced form."
-    },
-    "create": "Create",
-    "@create": {
-        "description": "Label for create action on advanced form."
-    },
-    "remove": "Remove",
-    "@remove": {
-        "description": "Generic remove/delete label used on buttons or menus."
-    },
-    "confirm": "Confirm",
-    "@confirm": {
-        "description": "Generic confirm action label used in dialogs."
-    },
-    "cancel": "Cancel",
-    "@cancel": {
-        "description": "Generic cancel action label used in dialogs."
-    },
-    "noAccounts": "No accounts found",
-    "@noAccounts": {
-        "description": "Empty state message shown when no accounts are available."
-    },
-    "scanQRCode": "Scan QR code",
-    "@scanQRCode": {
-        "description": "Label or title for QR code scanning UI."
-    },
-    "copy": "Copy",
-    "@copy": {
-        "description": "Label for copying content to clipboard."
-    },
-    "copied": "Copied to clipboard",
-    "@copied": {
-        "description": "Confirmation message shown after copying to clipboard."
-    },
-    "accountUpdated": "Account updated successfully",
-    "@accountUpdated": {
-        "description": "Snackbar message shown when an account was edited and saved successfully."
-    },
-    "cannotSync": "Cannot sync: offline or server unreachable",
-    "@cannotSync": {
-        "description": "Error shown when a sync attempt fails due to network or server issues."
-    },
-    "serversTitle": "Servers",
-    "@serversTitle": {
-        "description": "Title text for the servers selector header in Home screen."
-    },
-    "synchronize": "Synchronize",
-    "@synchronize": {
-        "description": "Tooltip and semantics label for the sync button."
-    },
-    "selectedCount": "{count} selected",
-    "@selectedCount": {
-        "description": "Text that shows the number of selected accounts in manage mode.",
-        "placeholders": {
-            "count": {}
-        }
-    },
-    "deleteAccountsTitle": "Delete Accounts",
-    "@deleteAccountsTitle": {
-        "description": "Title for the confirmation dialog when deleting multiple accounts."
-    },
-    "deleteAccountsConfirm": "Are you sure you want to delete {count} selected account(s)?",
-    "@deleteAccountsConfirm": {
-        "description": "Confirmation prompt shown before deleting selected accounts.",
-        "placeholders": {
-            "count": {}
-        }
-    },
-    "delete": "Delete",
-    "@delete": {
-        "description": "Label for the delete action in dialogs."
-    },
-    "noServerSelected": "No server selected",
-    "@noServerSelected": {
-        "description": "Shown when an operation requires a server but none is selected."
-    },
-    "accountsDeleted": "Accounts deleted",
-    "@accountsDeleted": {
-        "description": "Snackbar confirming accounts were deleted."
-    },
-    "storageNotAvailable": "Storage not available",
-    "@storageNotAvailable": {
-        "description": "Error shown when trying to access storage but none is configured."
-    },
-    "syncing": "Syncing...",
-    "@syncing": {
-        "description": "Short label shown during a full-screen sync operation."
-    },
-    "couldNotOpenUrl": "Could not open URL",
-    "@couldNotOpenUrl": {
-        "description": "Error shown when an external URL cannot be opened; exception appended."
-    },
-    "done": "Done",
-    "@done": {
-        "description": "Label for finishing an edit or exiting manage mode."
-    },
-    "newLabel": "New",
-    "@newLabel": {
-        "description": "Label for the button that adds a new account."
-    },
-    "manage": "Manage",
-    "@manage": {
-        "description": "Label to enter manage mode for selecting items."
-    },
-    "online": "Online",
-    "@online": {
-        "description": "Short status label indicating server is reachable."
-    },
-    "offline": "Offline",
-    "@offline": {
-        "description": "Short status label indicating server is unreachable."
-    },
-    "serverReachable": "Server reachable",
-    "@serverReachable": {
-        "description": "Accessibility label when server is reachable."
-    },
-    "serverUnreachable": "Server unreachable",
-    "@serverUnreachable": {
-        "description": "Accessibility label when server is unreachable."
-    },
-    "noServer": "no-server",
-    "@noServer": {
-        "description": "Placeholder text shown when no server is configured."
-    },
-    "noEmail": "no email",
-    "@noEmail": {
-        "description": "Placeholder used when server has no user email configured."
-    },
-    "settingsLabel": "Settings",
-    "@settingsLabel": {
-        "description": "Menu label for opening settings."
-    },
-    "accountsLabel": "Accounts",
-    "@accountsLabel": {
-        "description": "Menu label for opening accounts list."
-    },
-    "noCodeToCopy": "No code to copy",
-    "@noCodeToCopy": {
-        "description": "Shown when attempting to copy but there is no code available."
-    },
-    "errorCopyingToClipboard": "Error copying to clipboard",
-    "@errorCopyingToClipboard": {
-        "description": "Shown when copying to clipboard failed."
-    },
-    "generate": "Generate",
-    "@generate": {
-        "description": "Label for HOTP generation button."
-    },
-    "hotpCounter": "counter {count}",
-    "@hotpCounter": {
-        "description": "Label showing hotp counter value.",
-        "placeholders": {
-            "count": {}
-        }
-    },
-    "qrScannerError": "Error",
-    "@qrScannerError": {
-        "description": "Prefix used when showing QR scanner errors in a snackbar."
-    },
-    "positionQr": "Position the QR code in the frame",
-    "@positionQr": {
-        "description": "Instruction shown over the camera view for scanning."
-    },
-    "noCameraAvailable": "No camera available",
-    "@noCameraAvailable": {
-        "description": "Message shown when the device doesn't have a camera."
-    },
-    "noCameraMessage": "This device doesn't have a camera available. Use the select image option or the advanced form.",
-    "@noCameraMessage": {
-        "description": "Explanatory message when there's no camera on the device."
-    },
-    "addServerTitle": "Add server",
-    "@addServerTitle": {
-        "description": "Dialog title when adding a new server connection."
-    },
-    "serverSaved": "Server connection saved and validated",
-    "@serverSaved": {
-        "description": "Confirmation shown after saving a new server."
-    },
-    "editServerTitle": "Edit server",
-    "@editServerTitle": {
-        "description": "Dialog title when editing an existing server."
-    },
-    "serverUpdated": "Server updated and validated",
-    "@serverUpdated": {
-        "description": "Confirmation shown after editing a server."
-    },
-    "deleteServerTitle": "Delete server",
-    "@deleteServerTitle": {
-        "description": "Title for the confirmation dialog when deleting a server."
-    },
-    "deleteServerConfirm": "Are you sure you want to delete the server '{serverName}'?",
-    "@deleteServerConfirm": {
-        "description": "Confirmation message before deleting a server.",
-        "placeholders": {
-            "serverName": {}
-        }
-    },
-    "accountsTitle": "Accounts / Servers",
-    "@accountsTitle": {
-        "description": "Title for the accounts/settings screen."
-    },
-    "localDataProtected": "Local data is protected",
-    "@localDataProtected": {
-        "description": "Heading shown when storage is locked and requires unlocking."
-    },
-    "authenticateToUnlock": "Authenticate with biometrics to unlock your local data.",
-    "@authenticateToUnlock": {
-        "description": "Instruction to authenticate when storage is protected."
-    },
-    "authenticationFailed": "Authentication failed",
-    "@authenticationFailed": {
-        "description": "Shown when biometric auth fails."
-    },
-    "unlock": "Unlock",
-    "@unlock": {
-        "description": "Label for button that attempts to unlock protected storage."
-    },
-    "codeFormatting": "Code formatting",
-    "@codeFormatting": {
-        "description": "Label for the code formatting section in settings."
-    },
-    "byTrio": "by Trio",
-    "@byTrio": {
-        "description": "Label describing a 3-digit grouping format."
-    },
-    "byPair": "by Pair",
-    "@byPair": {
-        "description": "Label describing a 2-digit grouping format."
-    },
-    "biometricEnabled": "Biometric enabled",
-    "@biometricEnabled": {
-        "description": "Snackbar shown when biometric is enabled."
-    },
-    "biometricDisabled": "Biometric disabled",
-    "@biometricDisabled": {
-        "description": "Snackbar shown when biometric is disabled."
-    },
-    "operationFailed": "Operation failed",
-    "@operationFailed": {
-        "description": "Generic failure message for operations in settings."
-    },
-    "biometricsNotAvailable": "Biometrics not available on this device",
-    "@biometricsNotAvailable": {
-        "description": "Shown when biometric hardware or enrollment is not available on the device."
-    },
-    "biometricProtection": "Biometric protection",
-    "@biometricProtection": {
-        "description": "Label for biometric protection setting."
-    },
-    "hideOtpsOnHome": "Hide OTPs on Home screen",
-    "@hideOtpsOnHome": {
-        "description": "Label to hide OTP codes on the home screen."
-    },
-    "longPressReveal": "Long-press an OTP on the Home screen to reveal it for 10 seconds.",
-    "@longPressReveal": {
-        "description": "Help text explaining long-press to reveal OTPs."
-    },
-    "biometricAuthFailed": "Biometric authentication failed or was cancelled. Please retry to unlock your local data.",
-    "@biometricAuthFailed": {
-        "description": "Shown when biometric unlock fails and user must retry."
-    },
-    "retry": "Retry",
-    "@retry": {
-        "description": "Label for retrying biometric authentication."
-    },
-    "search": "Search",
-    "@search": {
-        "description": "Placeholder text for search fields."
-    },
-    "noServersConfigured": "No servers configured. Configure a server in settings to get started.",
-    "@noServersConfigured": {
-        "description": "Message shown when there are no servers in storage."
-    },
-    "noResults": "No results",
-    "@noResults": {
-        "description": "Shown when a search returns no results."
-    },
-    "errorDisplayingAccount": "Error displaying account",
-    "@errorDisplayingAccount": {
-        "description": "Shown when an account cannot be rendered due to an error."
-    },
-    "pendingUpload": "Not synchronized (pending upload)",
-    "@pendingUpload": {
-        "description": "Tooltip explaining that the account has not been uploaded to the server yet."
-    },
-    "userAtHost": "{user} - {host}",
-    "@userAtHost": {
-        "description": "Short line showing user email and server host.",
-        "placeholders": {
-            "user": {},
-            "host": {}
-        }
-    },
-    "serverWithHost": "{name} ({host})",
-    "@serverWithHost": {
-        "description": "Server display combining server name and host.",
-        "placeholders": {
-            "name": {},
-            "host": {}
-        }
-    },
-    "unknown": "Unknown",
-    "@unknown": {
-        "description": "Fallback label used when a value is not available."
-    },
-    "about": "About",
-    "@about": {
-        "description": "Label for the About menu or dialog title."
-    },
-    "aboutRepo": "Project repository: {url}",
-    "@aboutRepo": {
-        "description": "Label showing the repository URL.",
-        "placeholders": {
-            "url": {}
-        }
-    },
-    "about2fauth": "2FAuth project: {url}",
-    "@about2fauth": {
-        "description": "Label showing the 2FAuth project URL.",
-        "placeholders": {
-            "url": {}
-        }
-    },
-    "aboutVersion": "Version: {version}",
-    "@aboutVersion": {
-        "description": "Label showing the current application version.",
-        "placeholders": {
-            "version": {}
-        }
-    },
-    "aboutClose": "Close",
-    "@aboutClose": {
-        "description": "Label for closing the About dialog."
-    },
-    "syncOnHomeOpen": "Sync when opening application",
-    "@syncOnHomeOpen": {
-        "description": "Sync when opening the Home screen."
-    },
-    "autoSync": "Automatic synchronization",
-    "@autoSync": {
-        "description": "Label for automatic synchronization setting."
-    },
-    "autoSyncIntervalMinutes": "{minutes} minutes",
-    "@autoSyncIntervalMinutes": {
-        "description": "Label showing number of minutes for auto-sync interval.",
-        "placeholders": {
-            "minutes": {
-                "type": "int",
-                "example": "30"
-            }
-        }
-    },
-    "syncEvery": "Sync every",
-    "@syncEvery": {
-        "description": "Label for 'Sync every' text in settings."
-    },
-    "minutesLabel": "minutes",
-    "@minutesLabel": {
-        "description": "Short label for minutes unit in settings."
+  "@@locale": "en",
+  "appTitle": "Pocket2FA",
+  "@appTitle": {
+    "description": "Application short title shown in the app window and app switcher."
+  },
+  "homeTitle": "Home",
+  "@homeTitle": {
+    "description": "Title for the Home screen."
+  },
+  "settingsTitle": "Settings",
+  "@settingsTitle": {
+    "description": "Title for the Settings screen and related labels."
+  },
+  "settingsGeneral": "GENERAL",
+  "@settingsGeneral": {
+    "description": "Label for the General settings section."
+  },
+  "settingsSecurity": "SECURITY",
+  "@settingsSecurity": {
+    "description": "Label for the Security settings section."
+  },
+  "settingsSynchronization": "SYNCHRONIZATION",
+  "@settingsSynchronization": {
+    "description": "Label for the Synchronization settings section."
+  },
+  "addAccount": "Add account",
+  "@addAccount": {
+    "description": "Label for action that adds a new account entry."
+  },
+  "add": "Add",
+  "@add": {
+    "description": "Generic add action label used on buttons."
+  },
+  "serviceLabel": "Service",
+  "@serviceLabel": {
+    "description": "Input field label for service name when creating a new account."
+  },
+  "serviceHint": "Google, Twitter, Apple",
+  "@serviceHint": {
+    "description": "Help text for the service input field."
+  },
+  "accountLabel": "Account",
+  "@accountLabel": {
+    "description": "Input field label for account identifier when creating a new account."
+  },
+  "accountHint": "John Doe",
+  "@accountHint": {
+    "description": "Help text for the account input field."
+  },
+  "seedLabel": "Seed",
+  "@seedLabel": {
+    "description": "Input field label for OTP seed when creating a new account."
+  },
+  "serverLabel": "Server",
+  "@serverLabel": {
+    "description": "Label prefix used when showing a server name in the app bar."
+  },
+  "errorParsingQr": "Error parsing QR: {error}",
+  "@errorParsingQr": {
+    "description": "Shown when a QR parsing operation fails.",
+    "placeholders": {
+      "error": {}
     }
+  },
+  "noQrInImage": "No QR code found in image",
+  "@noQrInImage": {
+    "description": "Shown when no QR is found in a picked image."
+  },
+  "errorScanningImage": "Error scanning image: {error}",
+  "@errorScanningImage": {
+    "description": "Shown when scanning an image fails.",
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "selectQrImageTitle": "Select QR Image",
+  "@selectQrImageTitle": {
+    "description": "Title for the image QR picker screen."
+  },
+  "selectImageFromGallery": "Select an image from gallery containing a QR code",
+  "@selectImageFromGallery": {
+    "description": "Help text instructing the user to pick an image containing QR."
+  },
+  "selectImageButton": "Select Image",
+  "@selectImageButton": {
+    "description": "Button label for picking an image from gallery."
+  },
+  "scanningFromImage": "Scanning QR from image...",
+  "@scanningFromImage": {
+    "description": "Progress label shown while scanning an image."
+  },
+  "back": "Back",
+  "@back": {
+    "description": "Generic back action label."
+  },
+  "createNewCodeTitle": "Create new code",
+  "@createNewCodeTitle": {
+    "description": "Title for the Create New Code screen."
+  },
+  "chooseHowToCreate": "Choose how to create a new code:",
+  "@chooseHowToCreate": {
+    "description": "Instruction to choose a creation method."
+  },
+  "alternateMethods": "Alternate methods",
+  "@alternateMethods": {
+    "description": "Label for the alternate creation methods section."
+  },
+  "useAdvancedForm": "Use the advanced form",
+  "@useAdvancedForm": {
+    "description": "Label for opening the advanced form to create a code."
+  },
+  "urlRequired": "URL required",
+  "@urlRequired": {
+    "description": "Validation message shown when URL is empty in server dialog."
+  },
+  "apiKeyLabel": "API key",
+  "@apiKeyLabel": {
+    "description": "Label for API key input."
+  },
+  "nameLabel": "Name",
+  "@nameLabel": {
+    "description": "Label for name input in server dialog."
+  },
+  "urlLabel": "URL",
+  "@urlLabel": {
+    "description": "Label for URL input in server dialog."
+  },
+  "save": "Save",
+  "@save": {
+    "description": "Generic save action label."
+  },
+  "totpLabel": "TOTP",
+  "@totpLabel": {
+    "description": "Label for Time-based OTP type option."
+  },
+  "hotpLabel": "HOTP",
+  "@hotpLabel": {
+    "description": "Label for HMAC-based OTP type option."
+  },
+  "steamLabel": "STEAM",
+  "@steamLabel": {
+    "description": "Label for Steam OTP type option."
+  },
+  "groupLabel": "Group",
+  "@groupLabel": {
+    "description": "Label for group field in advanced form."
+  },
+  "noGroupOption": "- No group -",
+  "@noGroupOption": {
+    "description": "Dropdown item indicating no group."
+  },
+  "groupHint": "The group to which the account is to be assigned",
+  "@groupHint": {
+    "description": "Help text for the group input field."
+  },
+  "chooseOtpType": "Choose the type of OTP to create",
+  "@chooseOtpType": {
+    "description": "Heading for OTP type picker."
+  },
+  "otpTypeHint": "Time-based OTP or HMAC-based OTP or Steam OTP",
+  "@otpTypeHint": {
+    "description": "Help text for the OTP type selection."
+  },
+  "secretLabel": "Secret",
+  "@secretLabel": {
+    "description": "Label for the secret input field."
+  },
+  "secretLockedHint": "Secret is locked - tap the lock to edit",
+  "@secretLockedHint": {
+    "description": "Hint shown when secret field is locked in edit mode."
+  },
+  "secretRequired": "Secret is required",
+  "@secretRequired": {
+    "description": "Validation error when secret is empty."
+  },
+  "secretBase32Error": "Secret must be Base32 (uppercase letters A-Z and digits 2-7)",
+  "@secretBase32Error": {
+    "description": "Validation error when secret isn't valid Base32."
+  },
+  "serviceRequired": "Service is required",
+  "@serviceRequired": {
+    "description": "Validation error when service field is empty."
+  },
+  "accountRequired": "Account is required",
+  "@accountRequired": {
+    "description": "Validation error when account field is empty."
+  },
+  "secretHint": "The key used to generate the security codes",
+  "@secretHint": {
+    "description": "Help text for the secret input field."
+  },
+  "groupAll": "All ({count})",
+  "@groupAll": {
+    "description": "Label for the 'All' group with item count",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "12"
+      }
+    }
+  },
+  "optionsLabel": "Options",
+  "@optionsLabel": {
+    "description": "Label for advanced options section."
+  },
+  "optionsHint": "You can leave default values in next options if you don't know how to set them. They are the most commonly used values.",
+  "@optionsHint": {
+    "description": "Help text for advanced options."
+  },
+  "digitsLabel": "Digits",
+  "@digitsLabel": {
+    "description": "Label for digits selector."
+  },
+  "digitsHint": "The number of digits of the generated security codes",
+  "@digitsHint": {
+    "description": "Help text for digits selector."
+  },
+  "algorithmLabel": "Algorithm",
+  "@algorithmLabel": {
+    "description": "Label for algorithm selector."
+  },
+  "algorithmHint": "The algorithm used to secure your security codes",
+  "@algorithmHint": {
+    "description": "Help text for algorithm selector."
+  },
+  "periodLabel": "Period",
+  "@periodLabel": {
+    "description": "Label for period field."
+  },
+  "periodDefaultHint": "Default is 30",
+  "@periodDefaultHint": {
+    "description": "Hint showing the default period value."
+  },
+  "periodHint": "The period of validity of the generated security codes in second",
+  "@periodHint": {
+    "description": "Help text for period field."
+  },
+  "counterLabel": "Counter",
+  "@counterLabel": {
+    "description": "Label for counter field (HOTP)."
+  },
+  "counterDefaultHint": "Default is 0",
+  "@counterDefaultHint": {
+    "description": "Hint showing default counter value."
+  },
+  "counterHint": "The initial counter value",
+  "@counterHint": {
+    "description": "Help text for counter field."
+  },
+  "update": "Save",
+  "@update": {
+    "description": "Label for save action on advanced form."
+  },
+  "create": "Create",
+  "@create": {
+    "description": "Label for create action on advanced form."
+  },
+  "remove": "Remove",
+  "@remove": {
+    "description": "Generic remove/delete label used on buttons or menus."
+  },
+  "confirm": "Confirm",
+  "@confirm": {
+    "description": "Generic confirm action label used in dialogs."
+  },
+  "cancel": "Cancel",
+  "@cancel": {
+    "description": "Generic cancel action label used in dialogs."
+  },
+  "noAccounts": "No accounts found",
+  "@noAccounts": {
+    "description": "Empty state message shown when no accounts are available."
+  },
+  "scanQRCode": "Scan QR code",
+  "@scanQRCode": {
+    "description": "Label or title for QR code scanning UI."
+  },
+  "copy": "Copy",
+  "@copy": {
+    "description": "Label for copying content to clipboard."
+  },
+  "copied": "Copied to clipboard",
+  "@copied": {
+    "description": "Confirmation message shown after copying to clipboard."
+  },
+  "accountUpdated": "Account updated successfully",
+  "@accountUpdated": {
+    "description": "Snackbar message shown when an account was edited and saved successfully."
+  },
+  "cannotSync": "Cannot sync: offline or server unreachable",
+  "@cannotSync": {
+    "description": "Error shown when a sync attempt fails due to network or server issues."
+  },
+  "serversTitle": "Servers",
+  "@serversTitle": {
+    "description": "Title text for the servers selector header in Home screen."
+  },
+  "synchronize": "Synchronize",
+  "@synchronize": {
+    "description": "Tooltip and semantics label for the sync button."
+  },
+  "selectedCount": "{count} selected",
+  "@selectedCount": {
+    "description": "Text that shows the number of selected accounts in manage mode.",
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "deleteAccountsTitle": "Delete Accounts",
+  "@deleteAccountsTitle": {
+    "description": "Title for the confirmation dialog when deleting multiple accounts."
+  },
+  "deleteAccountsConfirm": "Are you sure you want to delete {count} selected account(s)?",
+  "@deleteAccountsConfirm": {
+    "description": "Confirmation prompt shown before deleting selected accounts.",
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "delete": "Delete",
+  "@delete": {
+    "description": "Label for the delete action in dialogs."
+  },
+  "noServerSelected": "No server selected",
+  "@noServerSelected": {
+    "description": "Shown when an operation requires a server but none is selected."
+  },
+  "accountsDeleted": "Accounts deleted",
+  "@accountsDeleted": {
+    "description": "Snackbar confirming accounts were deleted."
+  },
+  "storageNotAvailable": "Storage not available",
+  "@storageNotAvailable": {
+    "description": "Error shown when trying to access storage but none is configured."
+  },
+  "syncing": "Syncing...",
+  "@syncing": {
+    "description": "Short label shown during a full-screen sync operation."
+  },
+  "couldNotOpenUrl": "Could not open URL",
+  "@couldNotOpenUrl": {
+    "description": "Error shown when an external URL cannot be opened; exception appended."
+  },
+  "done": "Done",
+  "@done": {
+    "description": "Label for finishing an edit or exiting manage mode."
+  },
+  "newLabel": "New",
+  "@newLabel": {
+    "description": "Label for the button that adds a new account."
+  },
+  "manage": "Manage",
+  "@manage": {
+    "description": "Label to enter manage mode for selecting items."
+  },
+  "online": "Online",
+  "@online": {
+    "description": "Short status label indicating server is reachable."
+  },
+  "offline": "Offline",
+  "@offline": {
+    "description": "Short status label indicating server is unreachable."
+  },
+  "serverReachable": "Server reachable",
+  "@serverReachable": {
+    "description": "Accessibility label when server is reachable."
+  },
+  "serverUnreachable": "Server unreachable",
+  "@serverUnreachable": {
+    "description": "Accessibility label when server is unreachable."
+  },
+  "noServer": "no-server",
+  "@noServer": {
+    "description": "Placeholder text shown when no server is configured."
+  },
+  "noEmail": "no email",
+  "@noEmail": {
+    "description": "Placeholder used when server has no user email configured."
+  },
+  "settingsLabel": "Settings",
+  "@settingsLabel": {
+    "description": "Menu label for opening settings."
+  },
+  "accountsLabel": "Accounts",
+  "@accountsLabel": {
+    "description": "Menu label for opening accounts list."
+  },
+  "noCodeToCopy": "No code to copy",
+  "@noCodeToCopy": {
+    "description": "Shown when attempting to copy but there is no code available."
+  },
+  "errorCopyingToClipboard": "Error copying to clipboard",
+  "@errorCopyingToClipboard": {
+    "description": "Shown when copying to clipboard failed."
+  },
+  "generate": "Generate",
+  "@generate": {
+    "description": "Label for HOTP generation button."
+  },
+  "hotpCounter": "counter {count}",
+  "@hotpCounter": {
+    "description": "Label showing hotp counter value.",
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "qrScannerError": "Error",
+  "@qrScannerError": {
+    "description": "Prefix used when showing QR scanner errors in a snackbar."
+  },
+  "positionQr": "Position the QR code in the frame",
+  "@positionQr": {
+    "description": "Instruction shown over the camera view for scanning."
+  },
+  "noCameraAvailable": "No camera available",
+  "@noCameraAvailable": {
+    "description": "Message shown when the device doesn't have a camera."
+  },
+  "noCameraMessage": "This device doesn't have a camera available. Use the select image option or the advanced form.",
+  "@noCameraMessage": {
+    "description": "Explanatory message when there's no camera on the device."
+  },
+  "addServerTitle": "Add server",
+  "@addServerTitle": {
+    "description": "Dialog title when adding a new server connection."
+  },
+  "serverSaved": "Server connection saved and validated",
+  "@serverSaved": {
+    "description": "Confirmation shown after saving a new server."
+  },
+  "editServerTitle": "Edit server",
+  "@editServerTitle": {
+    "description": "Dialog title when editing an existing server."
+  },
+  "serverUpdated": "Server updated and validated",
+  "@serverUpdated": {
+    "description": "Confirmation shown after editing a server."
+  },
+  "deleteServerTitle": "Delete server",
+  "@deleteServerTitle": {
+    "description": "Title for the confirmation dialog when deleting a server."
+  },
+  "deleteServerConfirm": "Are you sure you want to delete the server '{serverName}'?",
+  "@deleteServerConfirm": {
+    "description": "Confirmation message before deleting a server.",
+    "placeholders": {
+      "serverName": {}
+    }
+  },
+  "accountsTitle": "Accounts / Servers",
+  "@accountsTitle": {
+    "description": "Title for the accounts/settings screen."
+  },
+  "localDataProtected": "Local data is protected",
+  "@localDataProtected": {
+    "description": "Heading shown when storage is locked and requires unlocking."
+  },
+  "authenticateToUnlock": "Authenticate with biometrics to unlock your local data.",
+  "@authenticateToUnlock": {
+    "description": "Instruction to authenticate when storage is protected."
+  },
+  "authenticationFailed": "Authentication failed",
+  "@authenticationFailed": {
+    "description": "Shown when biometric auth fails."
+  },
+  "unlock": "Unlock",
+  "@unlock": {
+    "description": "Label for button that attempts to unlock protected storage."
+  },
+  "codeFormatting": "Code formatting",
+  "@codeFormatting": {
+    "description": "Label for the code formatting section in settings."
+  },
+  "byTrio": "by Trio",
+  "@byTrio": {
+    "description": "Label describing a 3-digit grouping format."
+  },
+  "byPair": "by Pair",
+  "@byPair": {
+    "description": "Label describing a 2-digit grouping format."
+  },
+  "biometricEnabled": "Biometric enabled",
+  "@biometricEnabled": {
+    "description": "Snackbar shown when biometric is enabled."
+  },
+  "biometricDisabled": "Biometric disabled",
+  "@biometricDisabled": {
+    "description": "Snackbar shown when biometric is disabled."
+  },
+  "operationFailed": "Operation failed",
+  "@operationFailed": {
+    "description": "Generic failure message for operations in settings."
+  },
+  "biometricsNotAvailable": "Biometrics not available on this device",
+  "@biometricsNotAvailable": {
+    "description": "Shown when biometric hardware or enrollment is not available on the device."
+  },
+  "biometricProtection": "Biometric protection",
+  "@biometricProtection": {
+    "description": "Label for biometric protection setting."
+  },
+  "hideOtpsOnHome": "Hide OTPs on Home screen",
+  "@hideOtpsOnHome": {
+    "description": "Label to hide OTP codes on the home screen."
+  },
+  "longPressReveal": "Long-press an OTP on the Home screen to reveal it for 10 seconds.",
+  "@longPressReveal": {
+    "description": "Help text explaining long-press to reveal OTPs."
+  },
+  "biometricAuthFailed": "Biometric authentication failed or was cancelled. Please retry to unlock your local data.",
+  "@biometricAuthFailed": {
+    "description": "Shown when biometric unlock fails and user must retry."
+  },
+  "retry": "Retry",
+  "@retry": {
+    "description": "Label for retrying biometric authentication."
+  },
+  "search": "Search",
+  "@search": {
+    "description": "Placeholder text for search fields."
+  },
+  "noServersConfigured": "No servers configured. Configure a server in settings to get started.",
+  "@noServersConfigured": {
+    "description": "Message shown when there are no servers in storage."
+  },
+  "noResults": "No results",
+  "@noResults": {
+    "description": "Shown when a search returns no results."
+  },
+  "errorDisplayingAccount": "Error displaying account",
+  "@errorDisplayingAccount": {
+    "description": "Shown when an account cannot be rendered due to an error."
+  },
+  "pendingUpload": "Not synchronized (pending upload)",
+  "@pendingUpload": {
+    "description": "Tooltip explaining that the account has not been uploaded to the server yet."
+  },
+  "userAtHost": "{user} - {host}",
+  "@userAtHost": {
+    "description": "Short line showing user email and server host.",
+    "placeholders": {
+      "user": {},
+      "host": {}
+    }
+  },
+  "serverWithHost": "{name} ({host})",
+  "@serverWithHost": {
+    "description": "Server display combining server name and host.",
+    "placeholders": {
+      "name": {},
+      "host": {}
+    }
+  },
+  "unknown": "Unknown",
+  "@unknown": {
+    "description": "Fallback label used when a value is not available."
+  },
+  "about": "About",
+  "@about": {
+    "description": "Label for the About menu or dialog title."
+  },
+  "aboutRepo": "Project repository: {url}",
+  "@aboutRepo": {
+    "description": "Label showing the repository URL.",
+    "placeholders": {
+      "url": {}
+    }
+  },
+  "about2fauth": "2FAuth project: {url}",
+  "@about2fauth": {
+    "description": "Label showing the 2FAuth project URL.",
+    "placeholders": {
+      "url": {}
+    }
+  },
+  "aboutVersion": "Version: {version}",
+  "@aboutVersion": {
+    "description": "Label showing the current application version.",
+    "placeholders": {
+      "version": {}
+    }
+  },
+  "aboutClose": "Close",
+  "@aboutClose": {
+    "description": "Label for closing the About dialog."
+  },
+  "syncOnHomeOpen": "Sync when opening application",
+  "@syncOnHomeOpen": {
+    "description": "Sync when opening the Home screen."
+  },
+  "autoSync": "Automatic synchronization",
+  "@autoSync": {
+    "description": "Label for automatic synchronization setting."
+  },
+  "autoSyncIntervalMinutes": "{minutes} minutes",
+  "@autoSyncIntervalMinutes": {
+    "description": "Label showing number of minutes for auto-sync interval.",
+    "placeholders": {
+      "minutes": {
+        "type": "int",
+        "example": "30"
+      }
+    }
+  },
+  "syncEvery": "Sync every",
+  "@syncEvery": {
+    "description": "Label for 'Sync every' text in settings."
+  },
+  "minutesLabel": "minutes",
+  "@minutesLabel": {
+    "description": "Short label for minutes unit in settings."
+  }
 }

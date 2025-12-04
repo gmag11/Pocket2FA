@@ -200,7 +200,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get counterHint => 'Valor inicial del contador';
 
   @override
-  String get update => 'Editar';
+  String get update => 'Guardar';
 
   @override
   String get create => 'Crear';

@@ -452,10 +452,10 @@ abstract class AppLocalizations {
   /// **'The initial counter value'**
   String get counterHint;
 
-  /// Label for edit action on advanced form.
+  /// Label for save action on advanced form.
   ///
   /// In en, this message translates to:
-  /// **'Edit'**
+  /// **'Save'**
   String get update;
 
   /// Label for create action on advanced form.

@@ -284,6 +284,12 @@ abstract class AppLocalizations {
   /// **'Save'**
   String get save;
 
+  /// Notice shown above the 2FAuth project link in the About dialog explaining that the app needs a 2FAuth server and pointing to the project for setup/hosting options.
+  ///
+  /// In en, this message translates to:
+  /// **'Pocket2FA requires access to a 2FAuth server (self-hosted or remote) to sync accounts. See the 2FAuth project link below for setup and hosting options.'**
+  String get requires2fauth;
+
   /// Label for Time-based OTP type option.
   ///
   /// In en, this message translates to:

@@ -107,6 +107,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get save => 'Save';
 
   @override
+  String get requires2fauth =>
+      'Pocket2FA requires access to a 2FAuth server (self-hosted or remote) to sync accounts. See the 2FAuth project link below for setup and hosting options.';
+
+  @override
   String get totpLabel => 'TOTP';
 
   @override

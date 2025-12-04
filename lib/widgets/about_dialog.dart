@@ -41,7 +41,9 @@ class AboutDialogContent extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  Icon(icon, size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  Icon(icon,
+                      size: 20,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
@@ -73,11 +75,21 @@ class AboutDialogContent extends StatelessWidget {
               height: 72,
             ),
           ),
-          Text(l10n.appTitle, style: Theme.of(context).textTheme.headlineMedium),
+          Text(l10n.appTitle,
+              style: Theme.of(context).textTheme.headlineMedium),
           const SizedBox(height: 4),
-          Text(l10n.aboutVersion(appVersion), style: Theme.of(context).textTheme.bodyMedium),
-          const SizedBox(height: 24),
+          Text(l10n.aboutVersion(appVersion),
+              style: Theme.of(context).textTheme.bodyMedium),
           buildLink('https://github.com/gmag11/Pocket2FA', Icons.code),
+          const SizedBox(height: 24),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 6.0),
+            child: Text(
+              l10n.requires2fauth,
+              style: Theme.of(context).textTheme.bodyMedium,
+              textAlign: TextAlign.center,
+            ),
+          ),
           buildLink('https://github.com/Bubka/2FAuth', Icons.code),
           const SizedBox(height: 24),
           SizedBox(

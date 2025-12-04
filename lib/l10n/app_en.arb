@@ -130,6 +130,10 @@
   "@save": {
     "description": "Generic save action label."
   },
+  "requires2fauth": "Pocket2FA requires access to a 2FAuth server (self-hosted or remote) to sync accounts. See the 2FAuth project link below for setup and hosting options.",
+  "@requires2fauth": {
+    "description": "Notice shown above the 2FAuth project link in the About dialog explaining that the app needs a 2FAuth server and pointing to the project for setup/hosting options."
+  },
   "totpLabel": "TOTP",
   "@totpLabel": {
     "description": "Label for Time-based OTP type option."

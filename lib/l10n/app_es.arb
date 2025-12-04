@@ -130,6 +130,10 @@
   "@save": {
     "description": "Etiqueta genérica de guardar."
   },
+  "requires2fauth": "Pocket2FA requiere acceso a un servidor 2FAuth (autohospedado o remoto) para sincronizar cuentas. Consulta el enlace al proyecto 2FAuth más abajo para instrucciones de instalación y opciones de alojamiento.",
+  "@requires2fauth": {
+    "description": "Aviso mostrado encima del enlace al proyecto 2FAuth en el diálogo Acerca de explicando que la app necesita un servidor 2FAuth y remitiendo al proyecto para instalación y opciones de alojamiento."
+  },
   "totpLabel": "TOTP",
   "@totpLabel": {
     "description": "Etiqueta para la opción de OTP basada en tiempo."

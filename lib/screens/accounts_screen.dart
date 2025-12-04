@@ -99,8 +99,8 @@ class _AccountsScreenState extends State<AccountsScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: Text(l10n.delete),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: Text(l10n.delete),
           ),
         ],
       ),

@@ -377,6 +377,7 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
                                       return Opacity(
                                         opacity: opacity,
                                         child: GestureDetector(
+                                          onTap: () => _copyToClipboard(_otpService.nextCode, isNextCode: true),
                                           onLongPress: () {
                                             if (settings?.hideOtps == true) {
                                               setState(() {

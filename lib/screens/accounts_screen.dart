@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
+
+import '../l10n/app_localizations.dart';
 import '../models/server_connection.dart';
 import '../services/settings_storage.dart';
-import '../l10n/app_localizations.dart';
-import 'server_detail_screen.dart';
 import 'server_add_edit_dialog.dart';
+import 'server_detail_screen.dart';
 
 class AccountsScreen extends StatefulWidget {
   final SettingsStorage storage;
-  const AccountsScreen({required this.storage, super.key});
+  final Future<void> Function()? onServerChanged;
+  const AccountsScreen({required this.storage, this.onServerChanged, super.key});
 
   @override
   State<AccountsScreen> createState() => _AccountsScreenState();
@@ -27,6 +29,12 @@ class _AccountsScreenState extends State<AccountsScreen> {
     // unlock screen and the user can attemptUnlock() manually.
     if (widget.storage.isUnlocked) {
       _loadServers();
+      // If no servers, automatically open add dialog
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_servers.isEmpty) {
+          _addServer();
+        }
+      });
     }
   }
 
@@ -70,6 +78,9 @@ class _AccountsScreenState extends State<AccountsScreen> {
     if (result != null) {
       setState(() => _servers.add(result));
       await _saveServers();
+      if (widget.onServerChanged != null) {
+        await widget.onServerChanged!();
+      }
       _showGreenToast(serverSavedMsg);
     }
   }
@@ -82,6 +93,9 @@ class _AccountsScreenState extends State<AccountsScreen> {
     if (result != null) {
       setState(() => _servers[index] = result);
       await _saveServers();
+      if (widget.onServerChanged != null) {
+        await widget.onServerChanged!();
+      }
       _showGreenToast(serverUpdatedMsg);
     }
   }
@@ -99,8 +113,8 @@ class _AccountsScreenState extends State<AccountsScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: Text(l10n.delete),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: Text(l10n.delete),
           ),
         ],
       ),
@@ -110,6 +124,9 @@ class _AccountsScreenState extends State<AccountsScreen> {
 
     setState(() => _servers.removeWhere((x) => x.id == s.id));
     await _saveServers();
+    if (widget.onServerChanged != null) {
+      await widget.onServerChanged!();
+    }
   }
 
   void _showGreenToast(String text) {

@@ -231,6 +231,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get copied => 'Copiado al portapapeles';
 
   @override
+  String get nextCodeCopied => 'Próximo código copiado al portapapeles';
+
+  @override
   String get accountUpdated => 'Cuenta actualizada correctamente';
 
   @override
@@ -239,6 +242,9 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get serversTitle => 'Servidores';
+
+  @override
+  String get manageServers => 'Gestionar cuentas de servidor';
 
   @override
   String get synchronize => 'Sincronizar';
@@ -338,6 +344,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get addServerTitle => 'Añadir servidor';
 
   @override
+  String get addServerButton => 'Añadir servidor';
+
+  @override
   String get serverSaved => 'Conexión con el servidor guardada y validada';
 
   @override
@@ -414,7 +423,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get noServersConfigured =>
-      'No hay servidores configurados. Configura un servidor en ajustes para empezar.';
+      '¡Bienvenido a Pocket2FA! Comencemos añadiendo un servidor.';
 
   @override
   String get noResults => 'Sin resultados';

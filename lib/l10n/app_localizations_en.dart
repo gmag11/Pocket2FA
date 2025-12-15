@@ -229,6 +229,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get copied => 'Copied to clipboard';
 
   @override
+  String get nextCodeCopied => 'Next code copied to clipboard';
+
+  @override
   String get accountUpdated => 'Account updated successfully';
 
   @override
@@ -236,6 +239,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get serversTitle => 'Servers';
+
+  @override
+  String get manageServers => 'Manage server accounts';
 
   @override
   String get synchronize => 'Synchronize';
@@ -335,6 +341,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addServerTitle => 'Add server';
 
   @override
+  String get addServerButton => 'Add Server';
+
+  @override
   String get serverSaved => 'Server connection saved and validated';
 
   @override
@@ -411,7 +420,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noServersConfigured =>
-      'No servers configured. Configure a server in settings to get started.';
+      'Welcome to Pocket2FA! Let\'s get started by adding a server.';
 
   @override
   String get noResults => 'No results';

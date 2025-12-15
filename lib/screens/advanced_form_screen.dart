@@ -1,11 +1,13 @@
-import 'package:flutter/material.dart';
 import 'dart:developer' as developer;
-import '../l10n/app_localizations.dart';
+
 import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
+
+import '../l10n/app_localizations.dart';
 import '../models/account_entry.dart';
 import '../models/group_entry.dart';
-import '../services/entry_creation_service.dart';
 import '../services/api_service.dart';
+import '../services/entry_creation_service.dart';
 
 class AdvancedFormScreen extends StatefulWidget {
   final String userEmail;
@@ -470,9 +472,8 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
       ),
       // Fixed bottom container with action buttons and user/host line
       bottomNavigationBar: SafeArea(
-        minimum: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 12.0),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
           color: Theme.of(context).scaffoldBackgroundColor,
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -480,176 +481,179 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  ElevatedButton(
-                    onPressed: () async {
-                      final ok = _formKey.currentState?.validate() ?? false;
-                      if (!ok) return;
-
-                      // Determine the selected group ID (if any)
-                      int? selectedGroupId;
-                      if (_selectedGroup != '- No group -' &&
-                          widget.groups != null) {
-                        for (final g in widget.groups!) {
-                          if (g.name == _selectedGroup) {
-                            selectedGroupId = g.id;
-                            break;
+                  Padding(
+                    padding: const EdgeInsets.only(top: 6),
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        final ok = _formKey.currentState?.validate() ?? false;
+                        if (!ok) return;
+                    
+                        // Determine the selected group ID (if any)
+                        int? selectedGroupId;
+                        if (_selectedGroup != '- No group -' &&
+                            widget.groups != null) {
+                          for (final g in widget.groups!) {
+                            if (g.name == _selectedGroup) {
+                              selectedGroupId = g.id;
+                              break;
+                            }
                           }
                         }
-                      }
-
-                      final navigator = Navigator.of(context);
-
-                      if (widget.existingEntry != null) {
-                        // EDIT: Update existing entry
-                        final updatedEntry = widget.existingEntry!.copyWith(
-                          service: _serviceCtrl.text.trim(),
-                          account: _accountCtrl.text.trim(),
-                          seed: _secretCtrl.text.trim(),
-                          // Preserve the original icon unless the user explicitly changed it.
-                          icon: widget.existingEntry?.icon,
-                          group: _selectedGroup == '- No group -'
-                              ? ''
-                              : _selectedGroup,
-                          groupId: selectedGroupId,
-                          otpType: _otpType,
-                          digits: _digits,
-                          algorithm: _algorithm,
-                          period: _otpType == 'HOTP'
-                              ? null
-                              : (_periodCtrl.text.trim().isEmpty
-                                  ? 30
-                                  : int.tryParse(_periodCtrl.text.trim()) ??
-                                      30),
-                          counter: _otpType == 'HOTP'
-                              ? (_counterCtrl.text.trim().isEmpty
-                                  ? 0
-                                  : int.tryParse(_counterCtrl.text.trim()) ?? 0)
-                              : null,
-                          synchronized: false, // mark as unsynced by default
-                        );
-
-                        developer.log(
-                            'AdvancedForm: updated entry service=${updatedEntry.service} account=${updatedEntry.account} id=${updatedEntry.id}',
-                            name: 'AdvancedForm');
-
-                        // Attempt immediate server update (silent on failure)
-                        try {
-                          final resp = await ApiService.instance
-                              .updateAccountFromEntry(updatedEntry);
-                          if (resp.containsKey('id')) {
-                            // Preserve any locally cached icon file path so the UI
-                            // continues showing the avatar until the sync process
-                            // refreshes or re-downloads it.
-                            var serverEntry = AccountEntry.fromMap(
-                                    Map<dynamic, dynamic>.from(resp))
-                                .copyWith(
-                              synchronized: true,
-                              localIcon: widget.existingEntry?.localIcon,
-                            );
-                            developer.log(
-                                'AdvancedForm: updated on server id=${serverEntry.id}',
-                                name: 'AdvancedForm');
-                            navigator.pop(serverEntry);
-                            return;
-                          } else {
-                            developer.log(
-                                'AdvancedForm: server update returned unexpected payload, returning local unsynced entry',
-                                name: 'AdvancedForm');
-                          }
-                        } catch (e) {
+                    
+                        final navigator = Navigator.of(context);
+                    
+                        if (widget.existingEntry != null) {
+                          // EDIT: Update existing entry
+                          final updatedEntry = widget.existingEntry!.copyWith(
+                            service: _serviceCtrl.text.trim(),
+                            account: _accountCtrl.text.trim(),
+                            seed: _secretCtrl.text.trim(),
+                            // Preserve the original icon unless the user explicitly changed it.
+                            icon: widget.existingEntry?.icon,
+                            group: _selectedGroup == '- No group -'
+                                ? ''
+                                : _selectedGroup,
+                            groupId: selectedGroupId,
+                            otpType: _otpType,
+                            digits: _digits,
+                            algorithm: _algorithm,
+                            period: _otpType == 'HOTP'
+                                ? null
+                                : (_periodCtrl.text.trim().isEmpty
+                                    ? 30
+                                    : int.tryParse(_periodCtrl.text.trim()) ??
+                                        30),
+                            counter: _otpType == 'HOTP'
+                                ? (_counterCtrl.text.trim().isEmpty
+                                    ? 0
+                                    : int.tryParse(_counterCtrl.text.trim()) ?? 0)
+                                : null,
+                            synchronized: false, // mark as unsynced by default
+                          );
+                    
+                          developer.log(
+                              'AdvancedForm: updated entry service=${updatedEntry.service} account=${updatedEntry.account} id=${updatedEntry.id}',
+                              name: 'AdvancedForm');
+                    
+                          // Attempt immediate server update (silent on failure)
                           try {
-                            if (e is DioException) {
+                            final resp = await ApiService.instance
+                                .updateAccountFromEntry(updatedEntry);
+                            if (resp.containsKey('id')) {
+                              // Preserve any locally cached icon file path so the UI
+                              // continues showing the avatar until the sync process
+                              // refreshes or re-downloads it.
+                              var serverEntry = AccountEntry.fromMap(
+                                      Map<dynamic, dynamic>.from(resp))
+                                  .copyWith(
+                                synchronized: true,
+                                localIcon: widget.existingEntry?.localIcon,
+                              );
                               developer.log(
-                                  'AdvancedForm: server update DioException status=${e.response?.statusCode} data=${e.response?.data}',
+                                  'AdvancedForm: updated on server id=${serverEntry.id}',
+                                  name: 'AdvancedForm');
+                              navigator.pop(serverEntry);
+                              return;
+                            } else {
+                              developer.log(
+                                  'AdvancedForm: server update returned unexpected payload, returning local unsynced entry',
                                   name: 'AdvancedForm');
                             }
-                          } catch (_) {}
-                          developer.log(
-                              'AdvancedForm: server update failed (ignored): $e',
-                              name: 'AdvancedForm');
-                        }
-
-                        // If we reach here, server update did not succeed — return local unsynced entry
-                        navigator.pop(updatedEntry);
-                      } else {
-                        // CREATE: Create new entry
-                        final entry = EntryCreationService.buildManualEntry(
-                          service: _serviceCtrl.text.trim(),
-                          account: _accountCtrl.text.trim(),
-                          secret: _secretCtrl.text.trim(),
-                          group: _selectedGroup == '- No group -'
-                              ? ''
-                              : _selectedGroup,
-                          groupId: selectedGroupId,
-                          otpType: _otpType,
-                          digits: _digits,
-                          algorithm: _algorithm,
-                          period: _periodCtrl.text.trim().isEmpty
-                              ? (_otpType == 'TOTP' ? 30 : 0)
-                              : int.tryParse(_periodCtrl.text.trim()) ??
-                                  (_otpType == 'TOTP' ? 30 : 0),
-                        );
-
-                        developer.log(
-                            'AdvancedForm: local entry created service=${entry.service} account=${entry.account} id=${entry.id} synchronized=${entry.synchronized}',
-                            name: 'AdvancedForm');
-
-                        // Use our service to attempt server-side creation
-                        developer.log(
-                            'AdvancedForm: attempting immediate server create for service=${entry.service} account=${entry.account}',
-                            name: 'AdvancedForm');
-
-                        try {
-                          final serverEntry =
-                              await EntryCreationService.createEntryOnServer(
-                                  entry,
-                                  serverHost: widget.serverHost,
-                                  groups: widget.groups,
-                                  context: context,
-                                  sourceTag: 'AdvancedForm');
-
-                          if (serverEntry != null && serverEntry.synchronized) {
+                          } catch (e) {
+                            try {
+                              if (e is DioException) {
+                                developer.log(
+                                    'AdvancedForm: server update DioException status=${e.response?.statusCode} data=${e.response?.data}',
+                                    name: 'AdvancedForm');
+                              }
+                            } catch (_) {}
                             developer.log(
-                                'AdvancedForm: created on server id=${serverEntry.id}',
-                                name: 'AdvancedForm');
-                            navigator.pop(serverEntry);
-                            return;
-                          } else {
-                            developer.log(
-                                'AdvancedForm: server create returned no id, returning local entry',
+                                'AdvancedForm: server update failed (ignored): $e',
                                 name: 'AdvancedForm');
                           }
-                        } catch (e) {
+                    
+                          // If we reach here, server update did not succeed — return local unsynced entry
+                          navigator.pop(updatedEntry);
+                        } else {
+                          // CREATE: Create new entry
+                          final entry = EntryCreationService.buildManualEntry(
+                            service: _serviceCtrl.text.trim(),
+                            account: _accountCtrl.text.trim(),
+                            secret: _secretCtrl.text.trim(),
+                            group: _selectedGroup == '- No group -'
+                                ? ''
+                                : _selectedGroup,
+                            groupId: selectedGroupId,
+                            otpType: _otpType,
+                            digits: _digits,
+                            algorithm: _algorithm,
+                            period: _periodCtrl.text.trim().isEmpty
+                                ? (_otpType == 'TOTP' ? 30 : 0)
+                                : int.tryParse(_periodCtrl.text.trim()) ??
+                                    (_otpType == 'TOTP' ? 30 : 0),
+                          );
+                    
+                          developer.log(
+                              'AdvancedForm: local entry created service=${entry.service} account=${entry.account} id=${entry.id} synchronized=${entry.synchronized}',
+                              name: 'AdvancedForm');
+                    
+                          // Use our service to attempt server-side creation
+                          developer.log(
+                              'AdvancedForm: attempting immediate server create for service=${entry.service} account=${entry.account}',
+                              name: 'AdvancedForm');
+                    
                           try {
-                            if (e is DioException) {
+                            final serverEntry =
+                                await EntryCreationService.createEntryOnServer(
+                                    entry,
+                                    serverHost: widget.serverHost,
+                                    groups: widget.groups,
+                                    context: context,
+                                    sourceTag: 'AdvancedForm');
+                    
+                            if (serverEntry != null && serverEntry.synchronized) {
                               developer.log(
-                                  'AdvancedForm: server create DioException status=${e.response?.statusCode} data=${e.response?.data}',
+                                  'AdvancedForm: created on server id=${serverEntry.id}',
+                                  name: 'AdvancedForm');
+                              navigator.pop(serverEntry);
+                              return;
+                            } else {
+                              developer.log(
+                                  'AdvancedForm: server create returned no id, returning local entry',
                                   name: 'AdvancedForm');
                             }
-                          } catch (_) {}
+                          } catch (e) {
+                            try {
+                              if (e is DioException) {
+                                developer.log(
+                                    'AdvancedForm: server create DioException status=${e.response?.statusCode} data=${e.response?.data}',
+                                    name: 'AdvancedForm');
+                              }
+                            } catch (_) {}
+                            developer.log(
+                                'AdvancedForm: server create failed (ignored): $e',
+                                name: 'AdvancedForm');
+                          }
+                    
                           developer.log(
-                              'AdvancedForm: server create failed (ignored): $e',
+                              'AdvancedForm: created local AccountEntry: ${entry.toMap()}',
                               name: 'AdvancedForm');
+                          navigator.pop(entry);
                         }
-
-                        developer.log(
-                            'AdvancedForm: created local AccountEntry: ${entry.toMap()}',
-                            name: 'AdvancedForm');
-                        navigator.pop(entry);
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24)),
-                      backgroundColor: const Color(0xFF4F63E6),
-                      foregroundColor: Colors.white,
+                      },
+                      style: ElevatedButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24)),
+                        backgroundColor: const Color(0xFF4F63E6),
+                        foregroundColor: Colors.white,
+                      ),
+                      child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 20.0, vertical: 12.0),
+                          child: Text(widget.existingEntry != null
+                              ? l10n.update
+                              : l10n.create)),
                     ),
-                    child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 20.0, vertical: 12.0),
-                        child: Text(widget.existingEntry != null
-                            ? l10n.update
-                            : l10n.create)),
                   ),
                   const SizedBox(width: 12),
                   OutlinedButton(

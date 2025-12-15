@@ -288,6 +288,10 @@
   "@copied": {
     "description": "Mensaje de confirmación tras copiar al portapapeles."
   },
+  "nextCodeCopied": "Próximo código copiado al portapapeles",
+  "@nextCodeCopied": {
+    "description": "Mensaje de confirmación tras copiar el próximo código al portapapeles."
+  },
   "accountUpdated": "Cuenta actualizada correctamente",
   "@accountUpdated": {
     "description": "Snackbar mostrado cuando una cuenta fue editada y guardada."
@@ -299,6 +303,10 @@
   "serversTitle": "Servidores",
   "@serversTitle": {
     "description": "Título del selector de servidores en la pantalla Inicio."
+  },
+  "manageServers": "Gestionar cuentas de servidor",
+  "@manageServers": {
+    "description": "Etiqueta para la opción de gestionar cuentas de servidor en el selector de servidores."
   },
   "synchronize": "Sincronizar",
   "@synchronize": {
@@ -429,6 +437,10 @@
   "@addServerTitle": {
     "description": "Título del diálogo para añadir una nueva conexión de servidor."
   },
+  "addServerButton": "Añadir servidor",
+  "@addServerButton": {
+    "description": "Etiqueta del botón para añadir un nuevo servidor."
+  },
   "serverSaved": "Conexión con el servidor guardada y validada",
   "@serverSaved": {
     "description": "Confirmación tras guardar un nuevo servidor."
@@ -524,7 +536,7 @@
   "@search": {
     "description": "Texto de marcador para campos de búsqueda."
   },
-  "noServersConfigured": "No hay servidores configurados. Configura un servidor en ajustes para empezar.",
+  "noServersConfigured": "¡Bienvenido a Pocket2FA! Comencemos añadiendo un servidor.",
   "@noServersConfigured": {
     "description": "Mensaje mostrado cuando no hay servidores en almacenamiento."
   },

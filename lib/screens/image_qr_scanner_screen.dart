@@ -76,7 +76,7 @@ class _ImageQrScannerScreenState extends State<ImageQrScannerScreen> {
           img.adjustColor(processedImage, contrast: 1.3, brightness: 1.1);
 
       // Save processed image to temp file
-      final tempDir = await imageFile.parent.path;
+      final tempDir = imageFile.parent.path;
       processedImagePath = '$tempDir/processed_qr.jpg';
       final processedFile = File(processedImagePath);
       await processedFile

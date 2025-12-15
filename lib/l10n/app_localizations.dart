@@ -512,6 +512,12 @@ abstract class AppLocalizations {
   /// **'Copied to clipboard'**
   String get copied;
 
+  /// Confirmation message shown after copying next code to clipboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Next code copied to clipboard'**
+  String get nextCodeCopied;
+
   /// Snackbar message shown when an account was edited and saved successfully.
   ///
   /// In en, this message translates to:
@@ -529,6 +535,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Servers'**
   String get serversTitle;
+
+  /// Label for the option to manage server accounts in the server selector.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage server accounts'**
+  String get manageServers;
 
   /// Tooltip and semantics label for the sync button.
   ///
@@ -710,6 +722,12 @@ abstract class AppLocalizations {
   /// **'Add server'**
   String get addServerTitle;
 
+  /// Button label for adding a new server.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Server'**
+  String get addServerButton;
+
   /// Confirmation shown after saving a new server.
   ///
   /// In en, this message translates to:
@@ -851,7 +869,7 @@ abstract class AppLocalizations {
   /// Message shown when there are no servers in storage.
   ///
   /// In en, this message translates to:
-  /// **'No servers configured. Configure a server in settings to get started.'**
+  /// **'Welcome to Pocket2FA! Let\'s get started by adding a server.'**
   String get noServersConfigured;
 
   /// Shown when a search returns no results.

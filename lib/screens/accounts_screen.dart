@@ -237,7 +237,9 @@ class _AccountsScreenState extends State<AccountsScreen> {
       floatingActionButton: FloatingActionButton(
         onPressed: _addServer,
         foregroundColor: Colors.white,
-        backgroundColor: Color.lerp(_baseAccent, Colors.white, 0.22)!,
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+            ? Color.lerp(_baseAccent, Colors.black, 0.22)!
+            : Color.lerp(_baseAccent, Colors.white, 0.22)!,
         child: const Icon(Icons.add),
       ),
     );

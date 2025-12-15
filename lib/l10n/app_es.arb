@@ -488,6 +488,10 @@
   "@codeFormatting": {
     "description": "Etiqueta para la sección de formato de código en ajustes."
   },
+  "darkMode": "Modo oscuro",
+  "@darkMode": {
+    "description": "Etiqueta para el ajuste de modo oscuro."
+  },
   "byTrio": "por tríos",
   "@byTrio": {
     "description": "Etiqueta que describe un agrupado en 3 dígitos."

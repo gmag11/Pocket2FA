@@ -146,57 +146,66 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
   Widget _buildSecretField() {
     final isEditMode = widget.existingEntry != null;
     final canEdit = !isEditMode || _secretUnlocked;
-    return TextFormField(
-      controller: _secretCtrl,
-      // Keep the field enabled so suffixIcon remains interactive; use readOnly to prevent editing when locked.
-      enabled: true,
-      readOnly: !canEdit,
-      enableInteractiveSelection: canEdit,
-    obscureText:
-      isEditMode && !_secretUnlocked, // Hide text when it's locked
-      decoration: InputDecoration(
-        hintText: canEdit ? '' : l10n.secretLockedHint,
-        filled: !canEdit,
-        fillColor: !canEdit ? Colors.grey[100] : null,
-        border: OutlineInputBorder(
-          borderSide: BorderSide(
-            color: !canEdit ? Colors.grey : Colors.blue,
+    return Builder(
+      builder: (context) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        return TextFormField(
+          controller: _secretCtrl,
+          // Keep the field enabled so suffixIcon remains interactive; use readOnly to prevent editing when locked.
+          enabled: true,
+          readOnly: !canEdit,
+          enableInteractiveSelection: canEdit,
+        obscureText:
+          isEditMode && !_secretUnlocked, // Hide text when it's locked
+          decoration: InputDecoration(
+            hintText: canEdit ? '' : l10n.secretLockedHint,
+            filled: !canEdit,
+            fillColor: !canEdit 
+                ? (isDark 
+                    ? Theme.of(context).colorScheme.surfaceContainerHighest 
+                    : Colors.grey[100])
+                : null,
+            border: OutlineInputBorder(
+              borderSide: BorderSide(
+                color: !canEdit ? Colors.grey : Colors.blue,
+              ),
+            ),
+            // Lock button moved inside the field as suffixIcon. It toggles visibility and editability.
+            suffixIcon: isEditMode
+                ? IconButton(
+                    icon: Icon(
+                      _secretUnlocked ? Icons.lock_open : Icons.lock,
+                      color: _secretUnlocked ? Colors.green : Colors.grey,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _secretUnlocked = !_secretUnlocked;
+                        if (!_secretUnlocked) {
+                          // When locking, clear the selection
+                          _secretCtrl.selection =
+                              TextSelection.collapsed(offset: 0);
+                        }
+                      });
+                    },
+                    tooltip: _secretUnlocked
+                        ? 'Lock secret field'
+                        : 'Unlock secret field',
+                  )
+                : null,
           ),
-        ),
-        // Lock button moved inside the field as suffixIcon. It toggles visibility and editability.
-        suffixIcon: isEditMode
-            ? IconButton(
-                icon: Icon(
-                  _secretUnlocked ? Icons.lock_open : Icons.lock,
-                  color: _secretUnlocked ? Colors.green : Colors.grey,
-                ),
-                onPressed: () {
-                  setState(() {
-                    _secretUnlocked = !_secretUnlocked;
-                    if (!_secretUnlocked) {
-                      // When locking, clear the selection
-                      _secretCtrl.selection =
-                          TextSelection.collapsed(offset: 0);
-                    }
-                  });
-                },
-                tooltip: _secretUnlocked
-                    ? 'Lock secret field'
-                    : 'Unlock secret field',
-              )
-            : null,
-      ),
-      validator: (v) {
-        final s = v?.trim() ?? '';
-        if (s.isEmpty) return l10n.secretRequired;
-        // Normalize by removing spaces but do NOT change case; Base32 must be uppercase
-        final cleaned = s.replaceAll(' ', '');
-        // Base32: letters A-Z and digits 2-7, optionally padded with '=' characters at the end
-        final base32Regex = RegExp(r'^[A-Z2-7]+=*$');
-        if (!base32Regex.hasMatch(cleaned)) {
-          return l10n.secretBase32Error;
-        }
-        return null;
+          validator: (v) {
+            final s = v?.trim() ?? '';
+            if (s.isEmpty) return l10n.secretRequired;
+            // Normalize by removing spaces but do NOT change case; Base32 must be uppercase
+            final cleaned = s.replaceAll(' ', '');
+            // Base32: letters A-Z and digits 2-7, optionally padded with '=' characters at the end
+            final base32Regex = RegExp(r'^[A-Z2-7]+=*$');
+            if (!base32Regex.hasMatch(cleaned)) {
+              return l10n.secretBase32Error;
+            }
+            return null;
+          },
+        );
       },
     );
   }

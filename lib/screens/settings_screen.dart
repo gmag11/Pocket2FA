@@ -15,7 +15,6 @@ class SettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      backgroundColor: Colors.grey[50],
       appBar: AppBar(title: Text(l10n.settingsTitle)),
       body: AnimatedBuilder(
         animation: settings,
@@ -26,6 +25,17 @@ class SettingsScreen extends StatelessWidget {
               // GENERAL Section
               _buildSectionHeader(l10n.settingsGeneral),
               const SizedBox(height: 12),
+              
+              // Dark mode setting
+              _buildSettingTile(
+                icon: Icons.dark_mode,
+                title: l10n.darkMode,
+                trailing: Switch(
+                  value: settings.isDarkMode,
+                  onChanged: (v) => settings.setDarkMode(v),
+                  activeThumbColor: _baseAccent,
+                ),
+              ),
               
               // Code formatting setting
               _buildSettingTile(
@@ -165,17 +175,20 @@ class SettingsScreen extends StatelessWidget {
   }
 
   Widget _buildSectionHeader(String title) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 16.0, bottom: 8.0),
-      child: Text(
-        title,
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: Colors.grey[600],
-          letterSpacing: 0.5,
-        ),
-      ),
+    return Builder(
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.only(left: 16.0, bottom: 8.0),
+          child: Text(
+            title,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.5,
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -185,87 +198,103 @@ class SettingsScreen extends StatelessWidget {
     String? subtitle,
     required Widget trailing,
   }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12.0),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
+    return Builder(
+      builder: (context) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        return Container(
+          margin: const EdgeInsets.only(bottom: 12.0),
+          decoration: BoxDecoration(
+            color: isDark
+                ? Theme.of(context).colorScheme.surfaceContainerHighest
+                : Colors.white,
+            borderRadius: BorderRadius.circular(12),
+
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.1),
+                blurRadius: isDark ? 10 : 6,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        leading: Icon(icon, size: 24, color: Colors.grey[700]),
-        title: Text(
-          title,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-        ),
-        subtitle: subtitle != null
-            ? Text(
-                subtitle,
-                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-              )
-            : null,
-        trailing: trailing,
-      ),
+          child: ListTile(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            leading: Icon(icon, size: 24, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
+            title: Text(
+              title,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+            ),
+            subtitle: subtitle != null
+                ? Text(
+                    subtitle,
+                    style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
+                  )
+                : null,
+            trailing: trailing,
+          ),
+        );
+      },
     );
   }
 
   Widget _buildIntervalSelector() {
-    return Container(
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey[300]!),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          IconButton(
-            icon: const Icon(Icons.remove, size: 18),
-            onPressed: settings.autoSyncIntervalMinutes > 1
-                ? () => settings.setAutoSyncIntervalMinutes(
-                    settings.autoSyncIntervalMinutes - 1)
-                : null,
-            padding: const EdgeInsets.all(8),
-            constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+    return Builder(
+      builder: (context) {
+        return Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.5)),
+            borderRadius: BorderRadius.circular(8),
           ),
-          Container(
-            width: 60,
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Text(
-              '${settings.autoSyncIntervalMinutes}',
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-            ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.remove, size: 18),
+                onPressed: settings.autoSyncIntervalMinutes > 1
+                    ? () => settings.setAutoSyncIntervalMinutes(
+                        settings.autoSyncIntervalMinutes - 1)
+                    : null,
+                padding: const EdgeInsets.all(8),
+                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+              ),
+              Container(
+                width: 60,
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Text(
+                  '${settings.autoSyncIntervalMinutes}',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.add, size: 18),
+                onPressed: () => settings.setAutoSyncIntervalMinutes(
+                    settings.autoSyncIntervalMinutes + 1),
+                padding: const EdgeInsets.all(8),
+                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+              ),
+            ],
           ),
-          IconButton(
-            icon: const Icon(Icons.add, size: 18),
-            onPressed: () => settings.setAutoSyncIntervalMinutes(
-                settings.autoSyncIntervalMinutes + 1),
-            padding: const EdgeInsets.all(8),
-            constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
   Widget _formatButton(BuildContext context, bool selected, String label,
       String sample, VoidCallback onTap) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     // Slightly lighten the selected background so the button reads as "selected"
     // but less saturated than the raw accent color.
-    final bg =
-        selected ? Color.lerp(_baseAccent, Colors.white, 0.22)! : Colors.white;
-    final fg = selected ? Colors.white : Colors.black87;
+    final bg = selected
+        ? Color.lerp(_baseAccent, isDark ? Colors.black : Colors.white, 0.22)!
+        : (isDark ? Theme.of(context).colorScheme.surfaceContainerHighest : Colors.white);
+    final fg = selected
+        ? Colors.white
+        : Theme.of(context).colorScheme.onSurface;
     // Use a lighter border when selected to match the lighter background.
     final borderColor = selected
-        ? Color.lerp(_baseAccent, Colors.white, 0.18)!
-        : Colors.grey.shade300;
+        ? Color.lerp(_baseAccent, isDark ? Colors.black : Colors.white, 0.18)!
+        : Theme.of(context).colorScheme.outline.withValues(alpha: 0.3);
     return Material(
       color: bg,
       elevation: selected ? 2 : 0,

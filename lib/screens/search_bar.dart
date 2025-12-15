@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../l10n/app_localizations.dart';
 
 class HomeSearchBar extends StatelessWidget {
@@ -11,10 +12,14 @@ class HomeSearchBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Container(
       height: 48,
       decoration: BoxDecoration(
-        color: Colors.grey.shade100,
+        color: isDark
+            ? Theme.of(context).colorScheme.surfaceContainerHigh
+            : Colors.grey.shade100,
         borderRadius: BorderRadius.circular(24),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 12),

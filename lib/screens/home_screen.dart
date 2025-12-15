@@ -1,19 +1,23 @@
-import 'package:flutter/material.dart';
-import '../l10n/app_localizations.dart';
 import 'dart:async';
 import 'dart:developer' as developer;
-import '../services/settings_service.dart';
+
+import 'package:flutter/material.dart';
+import 'package:pocket2fa/screens/new_code_screen.dart';
+
+import '../l10n/app_localizations.dart';
 import '../models/account_entry.dart';
+import '../services/settings_service.dart';
 import '../widgets/about_dialog.dart';
-import 'accounts_screen.dart';
-import 'search_bar.dart';
 import 'account_list.dart';
-import 'bottom_bar.dart';
+import 'accounts_screen.dart';
 import 'advanced_form_screen.dart';
+import 'bottom_bar.dart';
+import 'home_header_animation.dart';
+import 'home_manage_mode.dart';
 import 'home_server_manager.dart';
 import 'home_sync_manager.dart';
-import 'home_manage_mode.dart';
-import 'home_header_animation.dart';
+import 'search_bar.dart';
+import 'settings_screen.dart';
 
 class HomePage extends StatefulWidget {
   final SettingsService settings;
@@ -239,11 +243,12 @@ class _HomePageState extends State<HomePage>
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(12))),
       builder: (c) {
-        // Size the sheet based on number of servers
+        // Size the sheet based on number of servers, header, and manage button
         final mq = MediaQuery.of(c).size;
+        const double headerH = 40.0;
+        const double manageButtonH = 56.0;
         const double tileH = 72.0;
-        const double headerH = 56.0;
-        final desired = headerH + (_serverManager.servers.length * tileH);
+        final desired = headerH + manageButtonH + ((_serverManager.servers.length) * tileH);
         final maxH = mq.height * 0.8;
         final height = desired.clamp(120.0, maxH);
 
@@ -264,9 +269,21 @@ class _HomePageState extends State<HomePage>
                 const Divider(height: 1),
                 Expanded(
                   child: ListView.builder(
-                    itemCount: _serverManager.servers.length,
+                    itemCount: _serverManager.servers.length + 1,
                     itemBuilder: (ctx, idx) {
-                      final srv = _serverManager.servers[idx];
+                      // First item is "Manage Servers"
+                      if (idx == 0) {
+                        return ListTile(
+                          leading: const Icon(Icons.settings, color: Colors.blue),
+                          title: Text(l10n.manageServers),
+                          onTap: () {
+                            Navigator.of(ctx).pop({'action': 'manage_servers'});
+                          },
+                        );
+                      }
+                      
+                      // Server items (shifted by 1)
+                      final srv = _serverManager.servers[idx - 1];
                       final isActive =
                           srv.id == _serverManager.selectedServerId;
                       return ListTile(
@@ -292,18 +309,37 @@ class _HomePageState extends State<HomePage>
     );
 
     if (choice != null && mounted) {
-      final serverId = choice['serverId'] as String;
+      // Handle "Manage Servers" action
+      if (choice['action'] == 'manage_servers') {
+        if (widget.settings.storage != null) {
+          await Navigator.of(context).push(MaterialPageRoute(
+              builder: (c) => AccountsScreen(
+                    storage: widget.settings.storage!,
+                    onServerChanged: _serverManager.loadServers,
+                  )));
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(l10n.storageNotAvailable)),
+          );
+        }
+        return;
+      }
+      
+      // Handle server selection
+      final serverId = choice['serverId'] as String?;
       final accountIndex = choice['accountIndex'] as int?;
 
-      final success = await _serverManager.selectServer(serverId,
-          accountIndex: accountIndex);
-      if (success) {
-        // Trigger sync for newly selected server
-        try {
-      developer.log('HomePage: server selected - performing throttled sync', name: 'HomePage');
-      await _syncManager.performThrottledSync();
-        } catch (_) {
-          // Ignore sync errors on server selection
+      if (serverId != null) {
+        final success = await _serverManager.selectServer(serverId,
+            accountIndex: accountIndex);
+        if (success) {
+          // Trigger sync for newly selected server
+          try {
+        developer.log('HomePage: server selected - performing throttled sync', name: 'HomePage');
+        await _syncManager.performThrottledSync();
+          } catch (_) {
+            // Ignore sync errors on server selection
+          }
         }
       }
     }
@@ -414,6 +450,38 @@ class _HomePageState extends State<HomePage>
           ],
         ),
       ),
+      floatingActionButton: !_manageMode.isManageMode && _serverManager.servers.isNotEmpty
+          ? Padding(
+              padding: const EdgeInsets.only(bottom: 56.0),
+              child: FloatingActionButton(
+                onPressed: () async {
+                  final srv = _serverManager.selectedServerId != null
+                      ? _serverManager.servers.firstWhere(
+                          (s) => s.id == _serverManager.selectedServerId,
+                          orElse: () => _serverManager.servers.first)
+                      : _serverManager.servers.first;
+                  final acct = (srv.userEmail.isNotEmpty) ? srv.userEmail : 'no email';
+                  final host = Uri.parse(srv.url).host;
+                  final result = await Navigator.of(context).push(
+                      MaterialPageRoute(
+                          builder: (c) => NewCodeScreen(
+                              userEmail: acct,
+                              serverHost: host,
+                              groups: srv.groups)));
+                  if (result is AccountEntry) {
+                    await _serverManager.updateAccount(result);
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(l10n.accountUpdated)),
+                      );
+                    }
+                  }
+                },
+                backgroundColor: const Color(0xFF4F63E6),
+                child: const Icon(Icons.qr_code, color: Colors.white),
+              ),
+            )
+          : null,
     );
   }
 
@@ -427,18 +495,62 @@ class _HomePageState extends State<HomePage>
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
           child: Row(
             children: [
-              if (_serverManager.servers.isNotEmpty)
-                Expanded(
-                  child: HomeSearchBar(
-                    controller: _searchController,
-                    focusNode: _searchFocus,
-                    onChanged: (v) => setState(() => _searchQuery = v),
-                  ),
-                )
-              else
-                const Expanded(child: SizedBox()),
+              Expanded(
+                child: HomeSearchBar(
+                  controller: _searchController,
+                  focusNode: _searchFocus,
+                  onChanged: (v) => setState(() => _searchQuery = v),
+                ),
+              ),
               const SizedBox(width: 8),
               _buildSyncButton(),
+              // Manage button
+              IconButton(
+                tooltip: l10n.manage,
+                icon: const Icon(Icons.edit_outlined),
+                onPressed: _serverManager.servers.isNotEmpty ? _manageMode.toggleManageMode : null,
+              ),
+              // Popup menu with About entry
+              PopupMenuButton<String>(
+                tooltip: l10n.about,
+                onSelected: (v) async {
+                  if (v == 'about') {
+                    _showAboutDialog();
+                  } else if (v == 'settings') {
+                    await Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (c) => SettingsScreen(settings: widget.settings),
+                      ),
+                    );
+                  }
+                },
+                itemBuilder: (ctx) => [
+                  PopupMenuItem(
+                    value: 'settings',
+                    child: Row(
+                      children: [
+                        const Icon(Icons.settings, size: 20),
+                        const SizedBox(width: 12),
+                        Text(l10n.settingsLabel),
+                      ],
+                    ),
+                  ),
+                  PopupMenuItem(
+                    value: 'about',
+                    child: Row(
+                      children: [
+                        const Icon(Icons.info_outline, size: 20),
+                        const SizedBox(width: 12),
+                        Text(l10n.about),
+                      ],
+                    ),
+                  ),
+                ],
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 6.0),
+                  child: Icon(Icons.more_vert),
+                ),
+              ),
             ],
           ),
         ),
@@ -473,35 +585,17 @@ class _HomePageState extends State<HomePage>
               )
             : Row(
                 mainAxisSize: MainAxisSize.min,
-        children: [
+                children: [
                   Semantics(
                     label: l10n.synchronize,
                     button: true,
                     child: IconButton(
                       tooltip: l10n.synchronize,
                       icon: const Icon(Icons.sync),
-            onPressed: _manageMode.isManageMode
-              ? null
-              : _syncManager.manualSyncPressed,
+                      onPressed: _manageMode.isManageMode ? null : _syncManager.manualSyncPressed,
                     ),
                   ),
                   // no countdown displayed
-                  // Popup menu with About entry
-                  PopupMenuButton<String>(
-                    tooltip: l10n.about,
-                    onSelected: (v) async {
-                      if (v == 'about') {
-                        _showAboutDialog();
-                      }
-                    },
-                    itemBuilder: (ctx) => [
-                      PopupMenuItem(value: 'about', child: Text(l10n.about)),
-                    ],
-                    child: const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 6.0),
-                      child: Icon(Icons.more_vert),
-                    ),
-                  ),
                 ],
               );
   }
@@ -581,6 +675,7 @@ class _HomePageState extends State<HomePage>
       settings: widget.settings,
       items: _serverManager.currentItems,
       onRefresh: _syncManager.onRefreshFromPull,
+      onReloadServers: _serverManager.loadServers,
       scrollController: _headerAnimation.listScrollController,
       isManageMode: _manageMode.isManageMode,
       selectedAccountIds: _manageMode.selectedAccountIds,
@@ -601,19 +696,6 @@ class _HomePageState extends State<HomePage>
       selectedAccountIds: _manageMode.selectedAccountIds,
       onToggleManageMode: _manageMode.toggleManageMode,
       onDeleteSelected: () => _manageMode.deleteSelectedAccounts(context),
-      onOpenAccounts: () async {
-        if (widget.settings.storage != null) {
-          await Navigator.of(context).push(MaterialPageRoute(
-              builder: (c) =>
-                  AccountsScreen(storage: widget.settings.storage!)));
-          // After returning from AccountsScreen, reload servers from storage
-          await _serverManager.loadServers();
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(l10n.storageNotAvailable)),
-          );
-        }
-      },
       onNewAccount: _serverManager.addNewAccount,
     );
   }

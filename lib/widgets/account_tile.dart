@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../l10n/app_localizations.dart';
 import '../models/account_entry.dart';
 import '../services/settings_service.dart';

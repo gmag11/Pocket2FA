@@ -208,10 +208,11 @@ class SettingsScreen extends StatelessWidget {
                 ? Theme.of(context).colorScheme.surfaceContainerHighest
                 : Colors.white,
             borderRadius: BorderRadius.circular(12),
+
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
-                blurRadius: 10,
+                color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.1),
+                blurRadius: isDark ? 10 : 6,
                 offset: const Offset(0, 2),
               ),
             ],

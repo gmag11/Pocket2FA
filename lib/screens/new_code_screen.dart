@@ -42,7 +42,7 @@ class NewCodeScreen extends StatelessWidget {
                   final messenger = ScaffoldMessenger.of(context);
 
                   // Check if platform supports camera scanning
-                  // mobile_scanner only works on Android, iOS, macOS, and web
+                  // flutter_zxing only works on Android, iOS, and macOS
                   final isSupportedPlatform = !kIsWeb &&
                       (Platform.isAndroid ||
                           Platform.isIOS ||

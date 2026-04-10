@@ -383,7 +383,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get codeFormatting => 'Formato de código';
 
   @override
-  String get darkMode => 'Modo oscuro';
+  String get darkMode => 'Tema';
 
   @override
   String get byTrio => 'por tríos';

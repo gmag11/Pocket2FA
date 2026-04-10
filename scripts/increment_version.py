@@ -22,7 +22,7 @@ import os
 import re
 import shutil
 import sys
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 
 def parse_version(version: str) -> List[int]:
@@ -50,7 +50,13 @@ def is_newer_version(new: str, current: str) -> bool:
     return parse_version(new) > parse_version(current)
 
 
-def read_pubspec_version(path: str) -> Tuple[str, str]:
+def read_pubspec_version(path: str) -> Tuple[str, int, str]:
+    """Returns (version_name, build_number, full_text).
+
+    Parses the Flutter pubspec version format ``X.Y.Z+N``:
+    - version_name: the part before ``+`` (e.g. ``0.9.5``)
+    - build_number: the integer after ``+`` (``flutter.versionCode``); 0 if absent
+    """
     pubspec_path = os.path.join(path, "pubspec.yaml")
     if not os.path.exists(pubspec_path):
         raise FileNotFoundError(f"pubspec.yaml not found at {pubspec_path}")
@@ -58,29 +64,45 @@ def read_pubspec_version(path: str) -> Tuple[str, str]:
     m = re.search(r"^version:\s*(\S+)", text, flags=re.MULTILINE)
     if not m:
         raise ValueError("Could not find a 'version:' line in pubspec.yaml")
-    return m.group(1), text
+    full_version = m.group(1)
+    if '+' in full_version:
+        name_part, build_part = full_version.split('+', 1)
+        build_number = int(build_part) if build_part.isdigit() else 0
+    else:
+        name_part = full_version
+        build_number = 0
+    return name_part, build_number, text
 
 
-def write_pubspec_version(path: str, new_version: str, original_text: str) -> None:
+def write_pubspec_version(path: str, new_version_name: str, new_build_number: int, original_text: str) -> None:
     pubspec_path = os.path.join(path, "pubspec.yaml")
     bak_path = pubspec_path + ".bak"
     shutil.copyfile(pubspec_path, bak_path)
+    full_version = f"{new_version_name}+{new_build_number}"
     # Use concatenation instead of backreference in a single replacement string so
     # we don't accidentally create sequences like "\\10" which are treated as
     # group 10 by the regex engine when the new version starts with a digit.
-    new_text = re.sub(r"(^version:\s*)(\S+)", lambda m: m.group(1) + new_version, original_text, flags=re.MULTILINE)
+    new_text = re.sub(r"(^version:\s*)(\S+)", lambda m: m.group(1) + full_version, original_text, flags=re.MULTILINE)
     with open(pubspec_path, "w", encoding="utf-8") as f:
         f.write(new_text)
 
 
-def increment_version_code_in_gradle(path: str) -> Tuple[int, str]:
+def increment_version_code_in_gradle(path: str) -> Tuple[Optional[int], Optional[int]]:
+    """Increments a hardcoded versionCode in build.gradle.kts if present.
+
+    Returns ``(old_code, new_code)``.
+    Returns ``(None, None)`` when versionCode uses ``flutter.versionCode`` or
+    another non-literal expression — the build number is already driven by
+    the ``+N`` suffix in pubspec.yaml in that case.
+    """
     gradle_path = os.path.join(path, "android", "app", "build.gradle.kts")
     if not os.path.exists(gradle_path):
         raise FileNotFoundError(f"{gradle_path} not found")
     text = open(gradle_path, "r", encoding="utf-8").read()
     m = re.search(r"versionCode\s*=\s*(\d+)", text)
     if not m:
-        raise ValueError("Could not find a 'versionCode = <number>' assignment in build.gradle.kts")
+        # versionCode uses flutter.versionCode — pubspec.yaml +N drives it
+        return None, None
     current_code = int(m.group(1))
     new_code = current_code + 1
     bak_path = gradle_path + ".bak"
@@ -198,15 +220,20 @@ def main(argv: List[str]) -> int:
 
     root = os.path.abspath(args.path)
     try:
-        current_version, pubspec_text = read_pubspec_version(root)
+        current_version_name, current_build_number, pubspec_text = read_pubspec_version(root)
     except Exception as e:
         print(f"Error reading pubspec.yaml: {e}")
         return 2
+    current_version = (
+        f"{current_version_name}+{current_build_number}"
+        if current_build_number
+        else current_version_name
+    )
 
     if args.new_version:
         new_version = args.new_version.strip()
     else:
-        new_version = input(f"Current version in pubspec.yaml is {current_version}. Enter the new version: ").strip()
+        new_version = input(f"Current version is {current_version}. Enter new version name (e.g. 1.2.3): ").strip()
 
     if not re.match(r"^\d+(\.\d+){0,2}([.-].*)?$", new_version):
         print("The new version doesn't look like a valid numeric version (e.g. 1.2.3). Aborting.")
@@ -216,14 +243,15 @@ def main(argv: List[str]) -> int:
         print(f"Provided version {new_version} is not greater than current version {current_version}. Aborting.")
         return 4
 
+    new_build_number = current_build_number + 1
     # Update pubspec.yaml
     try:
-        write_pubspec_version(root, new_version, pubspec_text)
+        write_pubspec_version(root, new_version, new_build_number, pubspec_text)
     except Exception as e:
         print(f"Failed to update pubspec.yaml: {e}")
         return 5
 
-    # Update android versionCode (if file present)
+    # Update android versionCode (if file present and hardcoded)
     gradle_path = os.path.join(root, "android", "app", "build.gradle.kts")
     try:
         old_code, new_code = increment_version_code_in_gradle(root)
@@ -235,9 +263,13 @@ def main(argv: List[str]) -> int:
         print(f"Failed to update build.gradle.kts: {e}")
         return 6
 
+    new_full_version = f"{new_version}+{new_build_number}"
     print("Update complete:")
-    print(f" - pubspec.yaml: {current_version} -> {new_version} (backup at pubspec.yaml.bak)")
-    print(f" - android/app/build.gradle.kts: versionCode {old_code} -> {new_code} (backup at android/app/build.gradle.kts.bak)")
+    print(f" - pubspec.yaml: {current_version} -> {new_full_version} (backup at pubspec.yaml.bak)")
+    if old_code is not None:
+        print(f" - android/app/build.gradle.kts: versionCode {old_code} -> {new_code} (backup at android/app/build.gradle.kts.bak)")
+    else:
+        print(f" - android/app/build.gradle.kts: versionCode driven by pubspec.yaml +{new_build_number}, no change needed")
     # Update Inno Setup script if present
     try:
         modified = update_iss_version(root, new_version)

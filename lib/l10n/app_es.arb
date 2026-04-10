@@ -488,9 +488,9 @@
   "@codeFormatting": {
     "description": "Etiqueta para la sección de formato de código en ajustes."
   },
-  "darkMode": "Modo oscuro",
+  "darkMode": "Tema",
   "@darkMode": {
-    "description": "Etiqueta para el ajuste de modo oscuro."
+    "description": "Etiqueta para el ajuste de tema (sistema/claro/oscuro)."
   },
   "byTrio": "por tríos",
   "@byTrio": {

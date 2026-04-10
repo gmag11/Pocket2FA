@@ -488,9 +488,9 @@
   "@codeFormatting": {
     "description": "Label for the code formatting section in settings."
   },
-  "darkMode": "Dark mode",
+  "darkMode": "Theme",
   "@darkMode": {
-    "description": "Label for the dark mode setting."
+    "description": "Label for the theme mode setting (system/light/dark)."
   },
   "byTrio": "by Trio",
   "@byTrio": {

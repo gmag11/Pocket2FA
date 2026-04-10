@@ -54,7 +54,7 @@ class Pocket2FA extends StatelessWidget {
             brightness: Brightness.dark,
             useMaterial3: true,
           ),
-          themeMode: settings.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+          themeMode: settings.themeMode,
           home: HomePage(settings: settings),
         );
       },

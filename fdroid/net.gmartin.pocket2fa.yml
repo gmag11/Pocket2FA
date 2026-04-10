@@ -43,7 +43,7 @@ Description: |-
   <li>One-tap copy to clipboard</li>
   <li>Group organisation for easy browsing</li>
   <li>Service icon support</li>
-  <li>QR code scanning via camera or gallery image</li>
+  <li>QR code scanning via camera or gallery image (ZXing, Apache 2.0)</li>
   <li>Multiple 2FAuth server support</li>
   </ul>
 
@@ -53,9 +53,9 @@ RepoType: git
 Repo: https://github.com/gmag11/Pocket2FA
 
 Builds:
-  - versionName: '0.9.4'
-    versionCode: 16
-    commit: '0.9.4'
+  - versionName: '0.9.6'
+    versionCode: 17
+    commit: '0.9.6'
     subdir: android
 
     # Install system dependencies needed for Flutter + Android build
@@ -88,5 +88,5 @@ Builds:
 AutoUpdateMode: Version
 UpdateCheckMode: Tags
 UpdateCheckData: pubspec.yaml|^version:\s+(\S+)|.|^version:\s+\S+\+(\d+)
-CurrentVersion: '0.9.4'
-CurrentVersionCode: 16
+CurrentVersion: '0.9.6'
+CurrentVersionCode: 17

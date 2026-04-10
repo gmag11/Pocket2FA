@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:flutter_zxing/flutter_zxing.dart';
 import 'package:image/image.dart' as img;
 import 'dart:io';
 import '../models/group_entry.dart';
@@ -44,7 +44,6 @@ class _ImageQrScannerScreenState extends State<ImageQrScannerScreen> {
       _isProcessing = true;
     });
 
-    MobileScannerController? controller;
     String? processedImagePath;
 
     try {
@@ -82,36 +81,24 @@ class _ImageQrScannerScreenState extends State<ImageQrScannerScreen> {
       await processedFile
           .writeAsBytes(img.encodeJpg(processedImage, quality: 95));
 
-      // Initialize controller and analyze image
-      controller = MobileScannerController(
-        detectionSpeed: DetectionSpeed.noDuplicates,
-        formats: [BarcodeFormat.qrCode],
-      );
+      // Decode QR code from processed image
+      final codeResult = await zx.readBarcodeImagePathString(
+          processedImagePath, DecodeParams(tryHarder: true));
 
-      final capture = await controller.analyzeImage(processedImagePath);
+      if (codeResult.isValid &&
+          codeResult.text != null &&
+          codeResult.text!.isNotEmpty) {
+        final entry = await _parseAndCreateEntry(codeResult.text!);
 
-      if (capture != null && capture.barcodes.isNotEmpty) {
-        final barcode = capture.barcodes.first;
-        if (barcode.rawValue != null && barcode.rawValue!.isNotEmpty) {
-          final entry = await _parseAndCreateEntry(barcode.rawValue!);
-
-          if (entry != null && mounted) {
-            Navigator.of(context).pop(entry);
-            return;
-          } else if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content:
-                    Text(l10n.errorScanningImage('Failed to parse QR code')),
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
+        if (entry != null && mounted) {
+          Navigator.of(context).pop(entry);
+          return;
         } else if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(l10n.noQrInImage),
-              backgroundColor: Colors.orange,
+              content:
+                  Text(l10n.errorScanningImage('Failed to parse QR code')),
+              backgroundColor: Colors.red,
             ),
           );
         }
@@ -126,9 +113,6 @@ class _ImageQrScannerScreenState extends State<ImageQrScannerScreen> {
             backgroundColor: Colors.red));
       }
     } finally {
-      // Dispose controller
-      await controller?.dispose();
-
       // Clean up temporary file
       if (processedImagePath != null) {
         try {

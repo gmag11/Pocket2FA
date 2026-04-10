@@ -8,9 +8,11 @@ jobs:
   linux-x64:
     name: Build Linux AppImage (x86_64)
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Flutter (stable)
         uses: subosito/flutter-action@v2
@@ -78,22 +80,9 @@ jobs:
 
       - name: Upload x86_64 AppImage to release
         if: github.event_name == 'release'
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.TOKEN }}
+        uses: softprops/action-gh-release@v2
         with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: build/linux/x64/release/appimage/Pocket2FA-${{ steps.get_version.outputs.version }}-x86_64.AppImage
-          asset_name: Pocket2FA-${{ steps.get_version.outputs.version }}-x86_64.AppImage
-          asset_content_type: application/octet-stream
-
-      - name: Upload x86_64 AppImage checksum to release
-        if: github.event_name == 'release'
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.TOKEN }}
-        with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: build/linux/x64/release/appimage/Pocket2FA-${{ steps.get_version.outputs.version }}-x86_64.AppImage.sha256
-          asset_name: Pocket2FA-${{ steps.get_version.outputs.version }}-x86_64.AppImage.sha256
-          asset_content_type: text/plain
+          files: |
+            build/linux/x64/release/appimage/Pocket2FA-${{ steps.get_version.outputs.version }}-x86_64.AppImage
+            build/linux/x64/release/appimage/Pocket2FA-${{ steps.get_version.outputs.version }}-x86_64.AppImage.sha256
+          token: ${{ secrets.TOKEN }}

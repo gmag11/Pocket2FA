@@ -1,9 +1,11 @@
 import 'dart:convert';
+import 'dart:io' show Platform;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:path_provider/path_provider.dart';
 
 /// Simple storage wrapper that initialises Hive and provides an encrypted box
 /// using a key stored in the platform secure storage (keystore/keychain).
@@ -36,7 +38,15 @@ class SettingsStorage {
 
   /// Initialise Hive and the encrypted box. Call this early (before runApp)
   Future<void> init() async {
-    await Hive.initFlutter();
+    // On Linux, Hive.initFlutter() defaults to ~/Documents via
+    // getApplicationDocumentsDirectory(). Use getApplicationSupportDirectory()
+    // instead so data lands in ~/.local/share/pocket2fa/ (XDG_DATA_HOME).
+    if (!kIsWeb && Platform.isLinux) {
+      final supportDir = await getApplicationSupportDirectory();
+      Hive.init(supportDir.path);
+    } else {
+      await Hive.initFlutter();
+    }
     // Behaviour: if biometric protection is enabled, require authentication
     // before reading the stored key and opening the box. If authentication
     // fails, do not open the box and leave the store locked; caller can

@@ -26,14 +26,32 @@ class SettingsScreen extends StatelessWidget {
               _buildSectionHeader(l10n.settingsGeneral),
               const SizedBox(height: 12),
               
-              // Dark mode setting
+              // Theme mode setting
               _buildSettingTile(
-                icon: Icons.dark_mode,
+                icon: Icons.brightness_medium,
                 title: l10n.darkMode,
-                trailing: Switch(
-                  value: settings.isDarkMode,
-                  onChanged: (v) => settings.setDarkMode(v),
-                  activeThumbColor: _baseAccent,
+                trailing: SegmentedButton<ThemeMode>(
+                  segments: const [
+                    ButtonSegment(
+                      value: ThemeMode.system,
+                      icon: Icon(Icons.brightness_auto),
+                      tooltip: 'System',
+                    ),
+                    ButtonSegment(
+                      value: ThemeMode.light,
+                      icon: Icon(Icons.light_mode),
+                      tooltip: 'Light',
+                    ),
+                    ButtonSegment(
+                      value: ThemeMode.dark,
+                      icon: Icon(Icons.dark_mode),
+                      tooltip: 'Dark',
+                    ),
+                  ],
+                  selected: {settings.themeMode},
+                  onSelectionChanged: (values) =>
+                      settings.setThemeMode(values.first),
+                  showSelectedIcon: false,
                 ),
               ),
               

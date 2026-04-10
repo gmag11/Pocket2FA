@@ -99,6 +99,7 @@ Future<ServerConnection?> showServerAddEditDialog({
           return TextField(
             controller: apiCtrl,
             focusNode: apiFocus,
+            autofillHints: const [AutofillHints.password],
             decoration: InputDecoration(
               labelText: l10n.apiKeyLabel,
               suffixIcon: IconButton(

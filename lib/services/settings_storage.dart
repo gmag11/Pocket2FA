@@ -72,21 +72,30 @@ class SettingsStorage {
     }
 
     // Try to read an existing key from secure storage, otherwise generate and save one.
-    String? encoded = await _secure.read(key: _keyName);
-    Uint8List encryptionKey;
-    if (encoded == null) {
-      // Create a new 256-bit key
-      final key = Hive.generateSecureKey();
-      await _secure.write(key: _keyName, value: base64Encode(key));
-      encryptionKey = Uint8List.fromList(key);
-    } else {
-      encryptionKey = Uint8List.fromList(base64Decode(encoded));
-    }
+    // Wrapped in a try-catch so that a PlatformException from flutter_secure_storage
+    // (e.g. when release-mode R8 strips EncryptedSharedPreferences / Tink classes and
+    // no proguard-rules.pro keep rules are present) does not crash main() before
+    // runApp() is called, which would produce a blank screen.
+    try {
+      String? encoded = await _secure.read(key: _keyName);
+      Uint8List encryptionKey;
+      if (encoded == null) {
+        // Create a new 256-bit key
+        final key = Hive.generateSecureKey();
+        await _secure.write(key: _keyName, value: base64Encode(key));
+        encryptionKey = Uint8List.fromList(key);
+      } else {
+        encryptionKey = Uint8List.fromList(base64Decode(encoded));
+      }
 
-    // Open the encrypted box (will be created if missing)
-    await Hive.openBox(_hiveBox,
-        encryptionCipher: HiveAesCipher(encryptionKey));
-    _unlocked = true;
+      // Open the encrypted box (will be created if missing)
+      await Hive.openBox(_hiveBox,
+          encryptionCipher: HiveAesCipher(encryptionKey));
+      _unlocked = true;
+    } catch (e) {
+      debugPrint('SettingsStorage.init: failed to open encrypted box: $e');
+      // Leave _unlocked = false; the app will show the unlock/retry UI.
+    }
   }
 
   bool _unlocked = false;

@@ -1,0 +1,92 @@
+# F-Droid metadata for Pocket2FA
+#
+# This file is a TEMPLATE to submit to the fdroiddata GitLab repository:
+#   https://gitlab.com/fdroid/fdroiddata
+#
+# Steps:
+#   1. Fork https://gitlab.com/fdroid/fdroiddata
+#   2. Create a new branch named after the app (e.g. net.gmartin.pocket2fa)
+#   3. Add this file as metadata/net.gmartin.pocket2fa.yml
+#   4. Open a merge request
+#
+# See https://f-droid.org/docs/Submitting_to_F-Droid_Quick_Start_Guide/
+
+Categories:
+  - Security
+
+License: AGPL-3.0-only
+
+AuthorName: Germán Martín
+
+WebSite: https://github.com/gmag11/Pocket2FA
+SourceCode: https://github.com/gmag11/Pocket2FA
+IssueTracker: https://github.com/gmag11/Pocket2FA/issues
+Changelog: https://github.com/gmag11/Pocket2FA/releases
+
+AutoName: Pocket2FA
+
+# The description shown on the F-Droid website.
+# Keep it plain text or use supported HTML: <b>, <i>, <u>, <a href="">, <p>, <ul>, <li>.
+Description: |-
+  Pocket2FA is a native Android client for the
+  <a href="https://github.com/Bubka/2FAuth">2FAuth</a> self-hosted two-factor
+  authentication server. It generates TOTP and Steam OTP codes locally on your
+  device while synchronising with your own 2FAuth instance.
+
+  <b>Features</b>
+  <ul>
+  <li>TOTP and Steam OTP code generation — secrets stay on-device</li>
+  <li>Encrypted storage using Android Keystore</li>
+  <li>Optional biometric authentication (fingerprint / face recognition)</li>
+  <li>Real-time code refresh with countdown timer</li>
+  <li>Privacy mode: hide codes by default, reveal with long-press</li>
+  <li>One-tap copy to clipboard</li>
+  <li>Group organisation for easy browsing</li>
+  <li>Service icon support</li>
+  <li>QR code scanning via camera or gallery image</li>
+  <li>Multiple 2FAuth server support</li>
+  </ul>
+
+  <i>Requires a self-hosted 2FAuth instance.</i>
+
+RepoType: git
+Repo: https://github.com/gmag11/Pocket2FA
+
+Builds:
+  - versionName: '0.9.4'
+    versionCode: 16
+    commit: '0.9.4'
+    subdir: android
+
+    # Install system dependencies needed for Flutter + Android build
+    sudo:
+      - apt-get update
+      - apt-get install -y --no-install-recommends unzip curl xz-utils
+
+    # Download Flutter SDK matching pubspec.yaml environment constraint
+    init:
+      - wget -q "https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.35.1-stable.tar.xz"
+        -O flutter.tar.xz
+      - tar xf flutter.tar.xz -C /opt
+      - rm flutter.tar.xz
+
+    # Resolve Dart/Flutter dependencies before Gradle picks them up
+    prebuild:
+      - export PATH="/opt/flutter/bin:$PATH"
+      - cd ..
+      - flutter pub get --no-example
+
+    # Ensure Gradle can find the Flutter wrapper
+    build:
+      - export PATH="/opt/flutter/bin:$PATH"
+
+    gradle:
+      - yes
+
+# When a new tag matching this pattern is pushed, F-Droid bot can create an
+# update MR automatically.
+AutoUpdateMode: Version
+UpdateCheckMode: Tags
+UpdateCheckData: pubspec.yaml|^version:\s+(\S+)|.|^version:\s+\S+\+(\d+)
+CurrentVersion: '0.9.4'
+CurrentVersionCode: 16

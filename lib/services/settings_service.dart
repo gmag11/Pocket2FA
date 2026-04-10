@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart' show ThemeMode;
 import 'package:shared_preferences/shared_preferences.dart';
+
 import 'settings_storage.dart';
 
 enum CodeFormat { compact, spaced3, spaced2 }
@@ -12,6 +14,8 @@ class SettingsService extends ChangeNotifier {
   static const _syncOnOpenKey = 'sync_on_home_open';
   static const _autoSyncEnabledKey = 'auto_sync_enabled';
   static const _autoSyncIntervalKey = 'auto_sync_interval_minutes';
+  static const _darkModeKey = 'dark_mode_enabled'; // legacy, kept for migration
+  static const _themeModeKey = 'theme_mode';
 
   CodeFormat _format = CodeFormat.spaced3;
   CodeFormat get format => _format;
@@ -37,9 +41,17 @@ class SettingsService extends ChangeNotifier {
       _enabled = box.get(_enabledKey, defaultValue: true) as bool;
       _biometricEnabled = box.get(_biometricKey, defaultValue: false) as bool;
       _hideOtps = box.get(_hideOtpsKey, defaultValue: false) as bool;
-  _syncOnOpen = box.get(_syncOnOpenKey, defaultValue: true) as bool;
-  _autoSyncEnabled = box.get(_autoSyncEnabledKey, defaultValue: false) as bool;
-  _autoSyncIntervalMinutes = box.get(_autoSyncIntervalKey, defaultValue: 30) as int;
+      _syncOnOpen = box.get(_syncOnOpenKey, defaultValue: true) as bool;
+      _autoSyncEnabled = box.get(_autoSyncEnabledKey, defaultValue: false) as bool;
+      _autoSyncIntervalMinutes = box.get(_autoSyncIntervalKey, defaultValue: 30) as int;
+      final storedTheme = box.get(_themeModeKey) as String?;
+      if (storedTheme != null) {
+        _themeMode = _themeModeFromString(storedTheme);
+      } else {
+        // Migrate from old bool key
+        final legacyDark = box.get(_darkModeKey, defaultValue: false) as bool;
+        _themeMode = legacyDark ? ThemeMode.dark : ThemeMode.system;
+      }
       notifyListeners();
       return;
     }
@@ -49,9 +61,17 @@ class SettingsService extends ChangeNotifier {
     _format = _fromString(v);
     _enabled = prefs.getBool(_enabledKey) ?? true;
     _hideOtps = prefs.getBool(_hideOtpsKey) ?? false;
-  _syncOnOpen = prefs.getBool(_syncOnOpenKey) ?? true;
-  _autoSyncEnabled = prefs.getBool(_autoSyncEnabledKey) ?? false;
-  _autoSyncIntervalMinutes = prefs.getInt(_autoSyncIntervalKey) ?? 30;
+    _syncOnOpen = prefs.getBool(_syncOnOpenKey) ?? true;
+    _autoSyncEnabled = prefs.getBool(_autoSyncEnabledKey) ?? false;
+    _autoSyncIntervalMinutes = prefs.getInt(_autoSyncIntervalKey) ?? 30;
+    final storedTheme = prefs.getString(_themeModeKey);
+    if (storedTheme != null) {
+      _themeMode = _themeModeFromString(storedTheme);
+    } else {
+      // Migrate from old bool key
+      final legacyDark = prefs.getBool(_darkModeKey) ?? false;
+      _themeMode = legacyDark ? ThemeMode.dark : ThemeMode.system;
+    }
     notifyListeners();
   }
 
@@ -156,6 +176,46 @@ class SettingsService extends ChangeNotifier {
 
   bool _hideOtps = false;
   bool get hideOtps => _hideOtps;
+
+  ThemeMode _themeMode = ThemeMode.system;
+  ThemeMode get themeMode => _themeMode;
+
+  Future<void> setThemeMode(ThemeMode mode) async {
+    _themeMode = mode;
+    final modeString = _themeModeToString(mode);
+    if (storage != null) {
+      final box = storage!.box;
+      await box.put(_themeModeKey, modeString);
+      notifyListeners();
+      return;
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_themeModeKey, modeString);
+    notifyListeners();
+  }
+
+  static String _themeModeToString(ThemeMode mode) {
+    switch (mode) {
+      case ThemeMode.light:
+        return 'light';
+      case ThemeMode.dark:
+        return 'dark';
+      case ThemeMode.system:
+        return 'system';
+    }
+  }
+
+  static ThemeMode _themeModeFromString(String s) {
+    switch (s) {
+      case 'light':
+        return ThemeMode.light;
+      case 'dark':
+        return ThemeMode.dark;
+      default:
+        return ThemeMode.system;
+    }
+  }
 
   /// Toggle biometric protection for local Hive key. This will call into
   /// SettingsStorage to rewrap the key; no data should be lost during toggling.

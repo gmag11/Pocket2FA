@@ -794,6 +794,12 @@ abstract class AppLocalizations {
   /// **'Code formatting'**
   String get codeFormatting;
 
+  /// Label for the theme mode setting (system/light/dark).
+  ///
+  /// In en, this message translates to:
+  /// **'Theme'**
+  String get darkMode;
+
   /// Label describing a 3-digit grouping format.
   ///
   /// In en, this message translates to:

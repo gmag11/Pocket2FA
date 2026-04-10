@@ -577,27 +577,15 @@ class _HomePageState extends State<HomePage>
               ),
             ),
           )
-        : _serverManager.servers.isEmpty
-            ? const SizedBox(
-                width: 48,
-                height: 48,
-                child: Icon(Icons.sync, color: Colors.grey),
-              )
-            : Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Semantics(
-                    label: l10n.synchronize,
-                    button: true,
-                    child: IconButton(
-                      tooltip: l10n.synchronize,
-                      icon: const Icon(Icons.sync),
-                      onPressed: _manageMode.isManageMode ? null : _syncManager.manualSyncPressed,
-                    ),
-                  ),
-                  // no countdown displayed
-                ],
-              );
+        : Semantics(
+          label: l10n.synchronize,
+          button: true,
+          child: IconButton(
+            tooltip: l10n.synchronize,
+            icon: const Icon(Icons.sync),
+            onPressed: _serverManager.servers.isEmpty || _manageMode.isManageMode ? null : _syncManager.manualSyncPressed,
+          )
+        );
   }
 
   // Countdown helper removed
@@ -616,7 +604,7 @@ class _HomePageState extends State<HomePage>
     return _manageMode.isManageMode && _manageMode.selectedAccountIds.isNotEmpty
         ? Text(
             l10n.selectedCount(_manageMode.selectedAccountIds.length),
-            style: TextStyle(color: Colors.grey.shade700),
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
           )
         : PopupMenuButton<String>(
             initialValue: _selectedGroup,
@@ -641,11 +629,11 @@ class _HomePageState extends State<HomePage>
                       ? l10n.groupAll(_serverManager.currentItems.length)
                       : '$_selectedGroup (${_serverManager.currentItems.where((a) => a.group.trim() == _selectedGroup).length})';
                   return Text(display,
-                      style: TextStyle(color: Colors.grey.shade700));
+                      style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)));
                 }),
                 const SizedBox(width: 6),
                 Icon(Icons.keyboard_arrow_down,
-                    size: 18, color: Colors.grey.shade600),
+                    size: 18, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
               ],
             ),
           );

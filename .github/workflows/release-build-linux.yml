@@ -8,6 +8,8 @@ jobs:
   linux-x64:
     name: Build Linux AppImage (x86_64)
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -83,5 +85,4 @@ jobs:
           files: |
             build/linux/x64/release/appimage/Pocket2FA-${{ steps.get_version.outputs.version }}-x86_64.AppImage
             build/linux/x64/release/appimage/Pocket2FA-${{ steps.get_version.outputs.version }}-x86_64.AppImage.sha256
-        env:
-          GITHUB_TOKEN: ${{ secrets.TOKEN }}
+          token: ${{ secrets.TOKEN }}

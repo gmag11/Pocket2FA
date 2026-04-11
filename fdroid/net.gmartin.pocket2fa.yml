@@ -54,7 +54,7 @@ Repo: https://github.com/gmag11/Pocket2FA
 
 Builds:
   - versionName: 0.9.8
-    versionCode: 191
+    versionCode: 19
     commit: 8ad1e2c0a2df788899398d037459d5835f1bc7e3
     output: build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk
     srclibs:
@@ -75,7 +75,7 @@ Builds:
     ndk: 27.0.12077973
 
   - versionName: 0.9.8
-    versionCode: 192
+    versionCode: 19
     commit: 8ad1e2c0a2df788899398d037459d5835f1bc7e3
     output: build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
     srclibs:
@@ -96,7 +96,7 @@ Builds:
     ndk: 27.0.12077973
 
   - versionName: 0.9.8
-    versionCode: 193
+    versionCode: 19
     commit: 8ad1e2c0a2df788899398d037459d5835f1bc7e3
     output: build/app/outputs/flutter-apk/app-x86_64-release.apk
     srclibs:
@@ -116,8 +116,7 @@ Builds:
       - $$flutter$$/bin/flutter build apk --release --split-per-abi --target-platform="android-x64"
     ndk: 27.0.12077973
 
-AutoUpdateMode: Version
-UpdateCheckMode: Tags
-UpdateCheckData: pubspec.yaml|version:\s.+\+(\d+)|.|version:\s(.+)\+
+AutoUpdateMode: None
+UpdateCheckMode: None
 CurrentVersion: 0.9.8
 CurrentVersionCode: 193

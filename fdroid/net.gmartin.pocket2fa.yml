@@ -53,40 +53,71 @@ RepoType: git
 Repo: https://github.com/gmag11/Pocket2FA
 
 Builds:
-  - versionName: '0.9.6'
-    versionCode: 17
-    commit: '0.9.6'
-    subdir: android
-
-    # Install system dependencies needed for Flutter + Android build
-    sudo:
-      - apt-get update
-      - apt-get install -y --no-install-recommends unzip curl xz-utils
-
-    # Download Flutter SDK matching pubspec.yaml environment constraint
-    init:
-      - wget -q "https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.35.1-stable.tar.xz"
-        -O flutter.tar.xz
-      - tar xf flutter.tar.xz -C /opt
-      - rm flutter.tar.xz
-
-    # Resolve Dart/Flutter dependencies before Gradle picks them up
+  - versionName: 0.9.8
+    versionCode: 191
+    commit: cebde74b053c213630238cc15c09d9cf0159cf9d
+    output: build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk
+    srclibs:
+      - flutter@stable
     prebuild:
-      - export PATH="/opt/flutter/bin:$PATH"
-      - cd ..
-      - flutter pub get --no-example
-
-    # Ensure Gradle can find the Flutter wrapper
+      - export flutterVersion=$(sed -n -E 's/^\s+flutter:\s+"?([0-9]+\.[0-9]+\.[0-9]+).*/\1/p'
+        pubspec.yaml)
+      - '[[ $flutterVersion ]]'
+      - git -C $$flutter$$ checkout -f $flutterVersion
+      - export PUB_CACHE=$(pwd)/.pub-cache
+      - $$flutter$$/bin/flutter config --no-analytics
+      - $$flutter$$/bin/flutter pub get
+    scandelete:
+      - .pub-cache
     build:
-      - export PATH="/opt/flutter/bin:$PATH"
+      - export PUB_CACHE=$(pwd)/.pub-cache
+      - $$flutter$$/bin/flutter build apk --release --split-per-abi --target-platform="android-arm"
+    ndk: 27.0.12077973
 
-    gradle:
-      - yes
+  - versionName: 0.9.8
+    versionCode: 192
+    commit: cebde74b053c213630238cc15c09d9cf0159cf9d
+    output: build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
+    srclibs:
+      - flutter@stable
+    prebuild:
+      - export flutterVersion=$(sed -n -E 's/^\s+flutter:\s+"?([0-9]+\.[0-9]+\.[0-9]+).*/\1/p'
+        pubspec.yaml)
+      - '[[ $flutterVersion ]]'
+      - git -C $$flutter$$ checkout -f $flutterVersion
+      - export PUB_CACHE=$(pwd)/.pub-cache
+      - $$flutter$$/bin/flutter config --no-analytics
+      - $$flutter$$/bin/flutter pub get
+    scandelete:
+      - .pub-cache
+    build:
+      - export PUB_CACHE=$(pwd)/.pub-cache
+      - $$flutter$$/bin/flutter build apk --release --split-per-abi --target-platform="android-arm64"
+    ndk: 27.0.12077973
 
-# When a new tag matching this pattern is pushed, F-Droid bot can create an
-# update MR automatically.
+  - versionName: 0.9.8
+    versionCode: 193
+    commit: cebde74b053c213630238cc15c09d9cf0159cf9d
+    output: build/app/outputs/flutter-apk/app-x86_64-release.apk
+    srclibs:
+      - flutter@stable
+    prebuild:
+      - export flutterVersion=$(sed -n -E 's/^\s+flutter:\s+"?([0-9]+\.[0-9]+\.[0-9]+).*/\1/p'
+        pubspec.yaml)
+      - '[[ $flutterVersion ]]'
+      - git -C $$flutter$$ checkout -f $flutterVersion
+      - export PUB_CACHE=$(pwd)/.pub-cache
+      - $$flutter$$/bin/flutter config --no-analytics
+      - $$flutter$$/bin/flutter pub get
+    scandelete:
+      - .pub-cache
+    build:
+      - export PUB_CACHE=$(pwd)/.pub-cache
+      - $$flutter$$/bin/flutter build apk --release --split-per-abi --target-platform="android-x64"
+    ndk: 27.0.12077973
+
 AutoUpdateMode: Version
 UpdateCheckMode: Tags
-UpdateCheckData: pubspec.yaml|^version:\s+(\S+)|.|^version:\s+\S+\+(\d+)
-CurrentVersion: '0.9.6'
-CurrentVersionCode: 17
+UpdateCheckData: pubspec.yaml|version:\s.+\+(\d+)|.|version:\s(.+)\+
+CurrentVersion: 0.9.8
+CurrentVersionCode: 193

@@ -270,6 +270,7 @@ def main(argv: List[str]) -> int:
         print(f" - android/app/build.gradle.kts: versionCode {old_code} -> {new_code} (backup at android/app/build.gradle.kts.bak)")
     else:
         print(f" - android/app/build.gradle.kts: versionCode driven by pubspec.yaml +{new_build_number}, no change needed")
+        print(f"   ABI split versionCodes → armeabi-v7a={new_build_number * 10 + 1}, arm64-v8a={new_build_number * 10 + 2}, x86_64={new_build_number * 10 + 3}")
     # Update Inno Setup script if present
     try:
         modified = update_iss_version(root, new_version)

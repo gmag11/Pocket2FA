@@ -79,6 +79,7 @@ jobs:
         run: flutter build apk --release
 
       - name: Verify APKs were built
+        if: steps.detect_keystore.outputs.has_keystore == 'true'
         shell: bash
         run: |
           echo "Checking for built APKs..."

@@ -1,32 +1,13 @@
-# F-Droid metadata for Pocket2FA
-#
-# This file is a TEMPLATE to submit to the fdroiddata GitLab repository:
-#   https://gitlab.com/fdroid/fdroiddata
-#
-# Steps:
-#   1. Fork https://gitlab.com/fdroid/fdroiddata
-#   2. Create a new branch named after the app (e.g. net.gmartin.pocket2fa)
-#   3. Add this file as metadata/net.gmartin.pocket2fa.yml
-#   4. Open a merge request
-#
-# See https://f-droid.org/docs/Submitting_to_F-Droid_Quick_Start_Guide/
-
 Categories:
   - Security
-
 License: AGPL-3.0-only
-
 AuthorName: Germán Martín
-
 WebSite: https://github.com/gmag11/Pocket2FA
 SourceCode: https://github.com/gmag11/Pocket2FA
 IssueTracker: https://github.com/gmag11/Pocket2FA/issues
 Changelog: https://github.com/gmag11/Pocket2FA/releases
 
 AutoName: Pocket2FA
-
-# The description shown on the F-Droid website.
-# Keep it plain text or use supported HTML: <b>, <i>, <u>, <a href="">, <p>, <ul>, <li>.
 Description: |-
   Pocket2FA is a native Android client for the
   <a href="https://github.com/Bubka/2FAuth">2FAuth</a> self-hosted two-factor
@@ -55,7 +36,7 @@ Repo: https://github.com/gmag11/Pocket2FA
 Builds:
   - versionName: 0.9.8
     versionCode: 19
-    commit: 8ad1e2c0a2df788899398d037459d5835f1bc7e3
+    commit: ee1fd55130a909709810acced1da9b8cf4c584db
     output: build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk
     srclibs:
       - flutter@stable
@@ -76,7 +57,7 @@ Builds:
 
   - versionName: 0.9.8
     versionCode: 19
-    commit: 8ad1e2c0a2df788899398d037459d5835f1bc7e3
+    commit: ee1fd55130a909709810acced1da9b8cf4c584db
     output: build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
     srclibs:
       - flutter@stable
@@ -97,7 +78,7 @@ Builds:
 
   - versionName: 0.9.8
     versionCode: 19
-    commit: 8ad1e2c0a2df788899398d037459d5835f1bc7e3
+    commit: ee1fd55130a909709810acced1da9b8cf4c584db
     output: build/app/outputs/flutter-apk/app-x86_64-release.apk
     srclibs:
       - flutter@stable

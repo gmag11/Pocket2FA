@@ -55,7 +55,7 @@ Repo: https://github.com/gmag11/Pocket2FA
 Builds:
   - versionName: 0.9.8
     versionCode: 191
-    commit: cebde74b053c213630238cc15c09d9cf0159cf9d
+    commit: c40af9841a8d0aae76698a22920e01ef0d1a1fd0
     output: build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk
     srclibs:
       - flutter@stable
@@ -76,7 +76,7 @@ Builds:
 
   - versionName: 0.9.8
     versionCode: 192
-    commit: cebde74b053c213630238cc15c09d9cf0159cf9d
+    commit: c40af9841a8d0aae76698a22920e01ef0d1a1fd0
     output: build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
     srclibs:
       - flutter@stable
@@ -97,7 +97,7 @@ Builds:
 
   - versionName: 0.9.8
     versionCode: 193
-    commit: cebde74b053c213630238cc15c09d9cf0159cf9d
+    commit: c40af9841a8d0aae76698a22920e01ef0d1a1fd0
     output: build/app/outputs/flutter-apk/app-x86_64-release.apk
     srclibs:
       - flutter@stable

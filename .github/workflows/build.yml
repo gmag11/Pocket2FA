@@ -85,12 +85,12 @@ jobs:
           echo "Checking for built APKs..."
           ls -lh build/app/outputs/flutter-apk/
 
-      - name: Upload Android artifact
+      - name: Upload APKs artifact
         if: steps.detect_keystore.outputs.has_keystore == 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: android-appbundle
-          path: build/app/outputs/bundle/release/
+          name: android-apks
+          path: build/app/outputs/flutter-apk/
 #   linux:
 #     name: Build Linux (desktop)
 #     runs-on: ubuntu-latest

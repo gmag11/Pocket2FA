@@ -10,7 +10,7 @@ import 'log_service.dart';
 import 'settings_storage.dart';
 
 void _log(String message, {LogLevel level = LogLevel.info}) {
-  _log(message);
+  developer.log('SyncService: $message', name: 'SyncService');
   LogService.instance.log(message, name: 'SyncService', level: level);
 }
 

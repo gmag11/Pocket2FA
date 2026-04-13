@@ -630,5 +630,69 @@
     "minutesLabel": "minutes",
     "@minutesLabel": {
         "description": "Libellé court pour l'unité de minutes dans les paramètres."
+    },
+    "settingsDiagnostics": "DIAGNOSTICS",
+    "@settingsDiagnostics": {
+        "description": "Libellé de la section de diagnostics dans les paramètres."
+    },
+    "viewLog": "Voir le journal de diagnostic",
+    "@viewLog": {
+        "description": "Libellé du tile des paramètres pour ouvrir le journal."
+    },
+    "viewLogSubtitle": "Inspecter et partager les journaux détaillés",
+    "@viewLogSubtitle": {
+        "description": "Sous-titre du tile pour le journal de diagnostic."
+    },
+    "logTitle": "Journal de diagnostic",
+    "@logTitle": {
+        "description": "Titre de l'écran du journal de diagnostic."
+    },
+    "logEmpty": "Aucune entrée dans le journal",
+    "@logEmpty": {
+        "description": "Affiché quand la liste du journal est vide."
+    },
+    "logCopied": "Journal copié dans le presse-papiers",
+    "@logCopied": {
+        "description": "Message snackbar après la copie du journal."
+    },
+    "logExportFailed": "Échec de l'exportation du journal",
+    "@logExportFailed": {
+        "description": "Message snackbar quand l'export échoue."
+    },
+    "logClearTitle": "Effacer le journal",
+    "@logClearTitle": {
+        "description": "Titre de la boîte de dialogue de confirmation."
+    },
+    "logClearConfirm": "Voulez-vous vraiment effacer toutes les entrées du journal ?",
+    "@logClearConfirm": {
+        "description": "Corps de la boîte de dialogue de confirmation."
+    },
+    "logClearAction": "Effacer",
+    "@logClearAction": {
+        "description": "Libellé du bouton de confirmation."
+    },
+    "logFilter": "Filtrer par niveau",
+    "@logFilter": {
+        "description": "Infobulle du bouton de filtre."
+    },
+    "logFilterAll": "Tous les niveaux",
+    "@logFilterAll": {
+        "description": "Option pour afficher tous les niveaux."
+    },
+    "logCopy": "Copier dans le presse-papiers",
+    "@logCopy": {
+        "description": "Infobulle du bouton de copie."
+    },
+    "logShare": "Partager le journal",
+    "@logShare": {
+        "description": "Infobulle du bouton de partage."
+    },
+    "logClear": "Effacer le journal",
+    "@logClear": {
+        "description": "Infobulle du bouton d'effacement."
+    },
+    "logScrollToBottom": "Aller en bas",
+    "@logScrollToBottom": {
+        "description": "Infobulle du bouton FAB pour défiler vers le bas."
     }
 }

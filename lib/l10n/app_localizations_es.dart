@@ -487,4 +487,54 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get minutesLabel => 'minutos';
+
+  @override
+  String get settingsDiagnostics => 'DIAGNÓSTICO';
+
+  @override
+  String get viewLog => 'Ver registro de diagnóstico';
+
+  @override
+  String get viewLogSubtitle =>
+      'Inspecciona y comparte los registros detallados';
+
+  @override
+  String get logTitle => 'Registro de diagnóstico';
+
+  @override
+  String get logEmpty => 'No hay entradas de registro';
+
+  @override
+  String get logCopied => 'Registro copiado al portapapeles';
+
+  @override
+  String get logExportFailed => 'Error al exportar el registro';
+
+  @override
+  String get logClearTitle => 'Borrar registro';
+
+  @override
+  String get logClearConfirm =>
+      '¿Seguro que quieres borrar todas las entradas del registro?';
+
+  @override
+  String get logClearAction => 'Borrar';
+
+  @override
+  String get logFilter => 'Filtrar por nivel';
+
+  @override
+  String get logFilterAll => 'Todos los niveles';
+
+  @override
+  String get logCopy => 'Copiar al portapapeles';
+
+  @override
+  String get logShare => 'Compartir registro';
+
+  @override
+  String get logClear => 'Borrar registro';
+
+  @override
+  String get logScrollToBottom => 'Ir al final';
 }

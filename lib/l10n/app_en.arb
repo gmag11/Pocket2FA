@@ -630,5 +630,69 @@
   "minutesLabel": "minutes",
   "@minutesLabel": {
     "description": "Short label for minutes unit in settings."
+  },
+  "settingsDiagnostics": "DIAGNOSTICS",
+  "@settingsDiagnostics": {
+    "description": "Label for the Diagnostics settings section."
+  },
+  "viewLog": "View diagnostic log",
+  "@viewLog": {
+    "description": "Settings tile label to open the diagnostic log screen."
+  },
+  "viewLogSubtitle": "Inspect and share detailed app logs",
+  "@viewLogSubtitle": {
+    "description": "Settings tile subtitle for the diagnostic log option."
+  },
+  "logTitle": "Diagnostic Log",
+  "@logTitle": {
+    "description": "Title of the diagnostic log screen."
+  },
+  "logEmpty": "No log entries yet",
+  "@logEmpty": {
+    "description": "Shown when the log list is empty."
+  },
+  "logCopied": "Log copied to clipboard",
+  "@logCopied": {
+    "description": "Snackbar message after copying the log."
+  },
+  "logExportFailed": "Failed to export log",
+  "@logExportFailed": {
+    "description": "Snackbar message when log export fails."
+  },
+  "logClearTitle": "Clear log",
+  "@logClearTitle": {
+    "description": "Title of the clear-log confirmation dialog."
+  },
+  "logClearConfirm": "Are you sure you want to clear all log entries?",
+  "@logClearConfirm": {
+    "description": "Body text of the clear-log confirmation dialog."
+  },
+  "logClearAction": "Clear",
+  "@logClearAction": {
+    "description": "Action button label to confirm clearing the log."
+  },
+  "logFilter": "Filter by level",
+  "@logFilter": {
+    "description": "Tooltip for the log filter button."
+  },
+  "logFilterAll": "All levels",
+  "@logFilterAll": {
+    "description": "Filter option to show all log levels."
+  },
+  "logCopy": "Copy to clipboard",
+  "@logCopy": {
+    "description": "Tooltip for the copy-log button."
+  },
+  "logShare": "Share log",
+  "@logShare": {
+    "description": "Tooltip for the share-log button."
+  },
+  "logClear": "Clear log",
+  "@logClear": {
+    "description": "Tooltip for the clear-log button."
+  },
+  "logScrollToBottom": "Scroll to bottom",
+  "@logScrollToBottom": {
+    "description": "Tooltip for the scroll-to-bottom FAB in the log screen."
   }
 }

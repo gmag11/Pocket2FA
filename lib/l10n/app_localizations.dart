@@ -975,6 +975,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'minutes'**
   String get minutesLabel;
+
+  /// Label for the Diagnostics settings section.
+  ///
+  /// In en, this message translates to:
+  /// **'DIAGNOSTICS'**
+  String get settingsDiagnostics;
+
+  /// Settings tile label to open the diagnostic log screen.
+  ///
+  /// In en, this message translates to:
+  /// **'View diagnostic log'**
+  String get viewLog;
+
+  /// Settings tile subtitle for the diagnostic log option.
+  ///
+  /// In en, this message translates to:
+  /// **'Inspect and share detailed app logs'**
+  String get viewLogSubtitle;
+
+  /// Title of the diagnostic log screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Diagnostic Log'**
+  String get logTitle;
+
+  /// Shown when the log list is empty.
+  ///
+  /// In en, this message translates to:
+  /// **'No log entries yet'**
+  String get logEmpty;
+
+  /// Snackbar message after copying the log.
+  ///
+  /// In en, this message translates to:
+  /// **'Log copied to clipboard'**
+  String get logCopied;
+
+  /// Snackbar message when log export fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to export log'**
+  String get logExportFailed;
+
+  /// Title of the clear-log confirmation dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear log'**
+  String get logClearTitle;
+
+  /// Body text of the clear-log confirmation dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to clear all log entries?'**
+  String get logClearConfirm;
+
+  /// Action button label to confirm clearing the log.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get logClearAction;
+
+  /// Tooltip for the log filter button.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter by level'**
+  String get logFilter;
+
+  /// Filter option to show all log levels.
+  ///
+  /// In en, this message translates to:
+  /// **'All levels'**
+  String get logFilterAll;
+
+  /// Tooltip for the copy-log button.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy to clipboard'**
+  String get logCopy;
+
+  /// Tooltip for the share-log button.
+  ///
+  /// In en, this message translates to:
+  /// **'Share log'**
+  String get logShare;
+
+  /// Tooltip for the clear-log button.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear log'**
+  String get logClear;
+
+  /// Tooltip for the scroll-to-bottom FAB in the log screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Scroll to bottom'**
+  String get logScrollToBottom;
 }
 
 class _AppLocalizationsDelegate

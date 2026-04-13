@@ -225,6 +225,8 @@ class _HomePageState extends State<HomePage>
       await _syncManager.forceSyncCurrentServer();
       developer.log('HomePage: initial forced sync completed', name: 'HomePage');
     } catch (e) {
+      // Reset so the next trigger (e.g. server config change, app resume) can retry.
+      _initialSyncDone = false;
       developer.log('HomePage: initial forced sync failed: $e', name: 'HomePage');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -232,6 +234,17 @@ class _HomePageState extends State<HomePage>
         );
       }
     }
+  }
+
+  /// Called when a server is added or edited in AccountsScreen.
+  /// Resets the initial-sync gate so that the normal
+  /// loadServers → notifyListeners → _maybePerformInitialSync chain triggers
+  /// a fresh sync, regardless of whether startup sync already ran (or failed).
+  Future<void> _onServerConfigChanged() async {
+    // Reset BEFORE loadServers so that _onServerManagerChanged (fired by
+    // notifyListeners inside loadServers) picks this up and performs the sync.
+    _initialSyncDone = false;
+    await _serverManager.loadServers();
   }
 
   Future<void> _openServerAccountSelector() async {
@@ -315,7 +328,7 @@ class _HomePageState extends State<HomePage>
           await Navigator.of(context).push(MaterialPageRoute(
               builder: (c) => AccountsScreen(
                     storage: widget.settings.storage!,
-                    onServerChanged: _serverManager.loadServers,
+                    onServerChanged: _onServerConfigChanged,
                   )));
         } else {
           ScaffoldMessenger.of(context).showSnackBar(

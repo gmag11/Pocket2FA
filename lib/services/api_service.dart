@@ -4,6 +4,14 @@ import 'dart:typed_data';
 import 'dart:developer' as developer;
 import '../models/server_connection.dart';
 import '../models/account_entry.dart';
+import 'log_service.dart';
+
+// Convenience wrapper that writes to both developer log and LogService.
+void _log(String message,
+    {String name = 'ApiService', LogLevel level = LogLevel.info}) {
+  developer.log(message, name: name);
+  LogService.instance.log(message, name: name, level: level);
+}
 
 /// Centralized service for 2fauth API calls.
 ///
@@ -47,14 +55,10 @@ class ApiService {
         prev.url != server.url ||
         prev.apiKey != server.apiKey;
 
-    developer.log(
-        'ApiService: setServer() called - prev=${prev?.id ?? 'none'} new=${server.id} isDifferent=$isDifferent',
-        name: 'ApiService');
+    _log('setServer() called - prev=${prev?.id ?? 'none'} new=${server.id} isDifferent=$isDifferent');
 
     if (!isDifferent) {
-      developer.log(
-          'ApiService: same server selected, skipping reconfiguration',
-          name: 'ApiService');
+      _log('same server selected, skipping reconfiguration');
       // If the same server was selected, do not recreate the Dio instance.
       // This avoids losing existing interceptors or inflight requests.
       return;
@@ -63,8 +67,7 @@ class ApiService {
     // Close previous instance (we are switching to a different server)
     if (_dio != null) {
       try {
-        developer.log('ApiService: closing previous Dio instance',
-            name: 'ApiService');
+        _log('closing previous Dio instance');
         _dio!.close(force: true);
       } catch (_) {
         // ignore errors while closing
@@ -101,8 +104,11 @@ class ApiService {
         responseHeader: false,
         responseBody: false,
         error: true,
-        logPrint: (obj) =>
-            developer.log(obj.toString(), name: 'ApiService.Log'),
+        logPrint: (obj) {
+          final msg = obj.toString();
+          developer.log(msg, name: 'ApiService.Log');
+          LogService.instance.info(msg, name: 'ApiService');
+        },
       ));
       // Also attach an interceptor that logs masked request/response bodies
       // and error bodies. We avoid logging headers here to prevent token
@@ -111,8 +117,8 @@ class ApiService {
         onRequest: (options, handler) {
           try {
             final path = options.path;
-            developer.log(
-                'ApiService: request path=$path method=${options.method} body=${_maskSecretsIn(options.data)}',
+            _log(
+                'request path=$path method=${options.method} body=${_maskSecretsIn(options.data)}',
                 name: 'ApiService.Log');
           } catch (_) {}
           handler.next(options);
@@ -120,8 +126,8 @@ class ApiService {
         onResponse: (response, handler) {
           try {
             final path = response.requestOptions.path;
-            developer.log(
-                'ApiService: response path=$path status=${response.statusCode} body=${_maskSecretsIn(response.data)}',
+            _log(
+                'response path=$path status=${response.statusCode} body=${_maskSecretsIn(response.data)}',
                 name: 'ApiService.Log');
           } catch (_) {}
           handler.next(response);
@@ -129,9 +135,10 @@ class ApiService {
         onError: (err, handler) {
           try {
             final path = err.requestOptions.path;
-            developer.log(
-                'ApiService: error path=$path status=${err.response?.statusCode} data=${_maskSecretsIn(err.response?.data)}',
-                name: 'ApiService.Log');
+            _log(
+                'error path=$path status=${err.response?.statusCode} data=${_maskSecretsIn(err.response?.data)}',
+                name: 'ApiService.Log',
+                level: LogLevel.error);
           } catch (_) {}
           handler.next(err);
         },

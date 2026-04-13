@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../l10n/app_localizations.dart';
+import '../screens/log_screen.dart';
 import '../services/settings_service.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -185,6 +186,29 @@ class SettingsScreen extends StatelessWidget {
                   ],
                 ),
               ],
+
+              const SizedBox(height: 24),
+
+              // DIAGNOSTICS Section
+              _buildSectionHeader(l10n.settingsDiagnostics),
+              const SizedBox(height: 12),
+
+              // View diagnostic log
+              Builder(builder: (context) {
+                return _buildSettingTile(
+                  icon: Icons.bug_report_outlined,
+                  title: l10n.viewLog,
+                  subtitle: l10n.viewLogSubtitle,
+                  trailing: IconButton(
+                    icon: const Icon(Icons.chevron_right),
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => const LogScreen()),
+                    ),
+                  ),
+                );
+              }),
             ],
           );
         },

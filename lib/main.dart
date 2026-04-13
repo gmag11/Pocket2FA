@@ -1,14 +1,33 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'l10n/app_localizations.dart';
 import 'screens/home_screen.dart';
+import 'services/log_service.dart';
 import 'services/settings_service.dart';
 import 'services/settings_storage.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Capture Flutter framework errors.
+  FlutterError.onError = (FlutterErrorDetails details) {
+    LogService.instance.error(
+      '${details.exceptionAsString()}\n${details.stack ?? ''}',
+      name: 'FlutterError',
+    );
+    FlutterError.presentError(details);
+  };
+
+  // Capture Dart errors not caught by the Flutter framework.
+  PlatformDispatcher.instance.onError = (Object error, StackTrace stack) {
+    LogService.instance.error('$error\n$stack', name: 'Dart');
+    return false;
+  };
+
+  LogService.instance.info('App starting', name: 'main');
   // Allow normal and inverted portrait as well as both landscape orientations.
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,

@@ -630,5 +630,69 @@
   "minutesLabel": "minutos",
   "@minutesLabel": {
     "description": "Etiqueta corta para la palabra 'minutos'."
+  },
+  "settingsDiagnostics": "DIAGNÓSTICO",
+  "@settingsDiagnostics": {
+    "description": "Etiqueta de la sección de diagnóstico en ajustes."
+  },
+  "viewLog": "Ver registro de diagnóstico",
+  "@viewLog": {
+    "description": "Etiqueta del tile de ajustes para abrir el registro de diagnóstico."
+  },
+  "viewLogSubtitle": "Inspecciona y comparte los registros detallados",
+  "@viewLogSubtitle": {
+    "description": "Subtítulo del tile de ajustes para el registro."
+  },
+  "logTitle": "Registro de diagnóstico",
+  "@logTitle": {
+    "description": "Título de la pantalla de registro de diagnóstico."
+  },
+  "logEmpty": "No hay entradas de registro",
+  "@logEmpty": {
+    "description": "Mostrado cuando la lista de registros está vacía."
+  },
+  "logCopied": "Registro copiado al portapapeles",
+  "@logCopied": {
+    "description": "Mensaje snackbar tras copiar el registro."
+  },
+  "logExportFailed": "Error al exportar el registro",
+  "@logExportFailed": {
+    "description": "Mensaje snackbar cuando falla la exportación."
+  },
+  "logClearTitle": "Borrar registro",
+  "@logClearTitle": {
+    "description": "Título del diálogo de confirmación para borrar el registro."
+  },
+  "logClearConfirm": "¿Seguro que quieres borrar todas las entradas del registro?",
+  "@logClearConfirm": {
+    "description": "Cuerpo del diálogo de confirmación para borrar el registro."
+  },
+  "logClearAction": "Borrar",
+  "@logClearAction": {
+    "description": "Etiqueta del botón para confirmar el borrado."
+  },
+  "logFilter": "Filtrar por nivel",
+  "@logFilter": {
+    "description": "Tooltip del botón de filtrado del registro."
+  },
+  "logFilterAll": "Todos los niveles",
+  "@logFilterAll": {
+    "description": "Opción para mostrar todos los niveles de registro."
+  },
+  "logCopy": "Copiar al portapapeles",
+  "@logCopy": {
+    "description": "Tooltip del botón copiar registro."
+  },
+  "logShare": "Compartir registro",
+  "@logShare": {
+    "description": "Tooltip del botón compartir registro."
+  },
+  "logClear": "Borrar registro",
+  "@logClear": {
+    "description": "Tooltip del botón borrar registro."
+  },
+  "logScrollToBottom": "Ir al final",
+  "@logScrollToBottom": {
+    "description": "Tooltip del botón FAB para ir al final del registro."
   }
 }

@@ -28,6 +28,7 @@ dependencies:
   flutter_zxing: ^1.2.0
   image_picker: ^1.2.0
   image: ^4.5.4
+  share_plus: ^10.1.4
 
 dev_dependencies:
   flutter_lints: ^6.0.0

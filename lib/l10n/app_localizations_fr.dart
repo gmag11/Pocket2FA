@@ -489,4 +489,53 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get minutesLabel => 'minutes';
+
+  @override
+  String get settingsDiagnostics => 'DIAGNOSTICS';
+
+  @override
+  String get viewLog => 'Voir le journal de diagnostic';
+
+  @override
+  String get viewLogSubtitle => 'Inspecter et partager les journaux détaillés';
+
+  @override
+  String get logTitle => 'Journal de diagnostic';
+
+  @override
+  String get logEmpty => 'Aucune entrée dans le journal';
+
+  @override
+  String get logCopied => 'Journal copié dans le presse-papiers';
+
+  @override
+  String get logExportFailed => 'Échec de l\'exportation du journal';
+
+  @override
+  String get logClearTitle => 'Effacer le journal';
+
+  @override
+  String get logClearConfirm =>
+      'Voulez-vous vraiment effacer toutes les entrées du journal ?';
+
+  @override
+  String get logClearAction => 'Effacer';
+
+  @override
+  String get logFilter => 'Filtrer par niveau';
+
+  @override
+  String get logFilterAll => 'Tous les niveaux';
+
+  @override
+  String get logCopy => 'Copier dans le presse-papiers';
+
+  @override
+  String get logShare => 'Partager le journal';
+
+  @override
+  String get logClear => 'Effacer le journal';
+
+  @override
+  String get logScrollToBottom => 'Aller en bas';
 }

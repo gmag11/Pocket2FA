@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:developer' as developer;
+import '../services/log_service.dart';
 import '../services/sync_service.dart';
 import '../models/server_connection.dart';
 import 'home_server_manager.dart';
@@ -88,10 +89,11 @@ class HomeSyncManager extends ChangeNotifier {
           _suppressNextSyncSnack = false;
         }
       }
-    } catch (e) {
+    } catch (e, st) {
       serverManager.updateServerReachability(false);
-      developer.log('HomeSyncManager: forceSync failed: $e',
-          name: 'HomeSyncManager');
+      final msg = 'forceSync failed: $e\n$st';
+      developer.log('HomeSyncManager: $msg', name: 'HomeSyncManager');
+      LogService.instance.error(msg, name: 'HomeSyncManager');
     } finally {
       setSyncing(false);
     }

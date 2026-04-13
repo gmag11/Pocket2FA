@@ -484,4 +484,53 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get minutesLabel => 'minutes';
+
+  @override
+  String get settingsDiagnostics => 'DIAGNOSTICS';
+
+  @override
+  String get viewLog => 'View diagnostic log';
+
+  @override
+  String get viewLogSubtitle => 'Inspect and share detailed app logs';
+
+  @override
+  String get logTitle => 'Diagnostic Log';
+
+  @override
+  String get logEmpty => 'No log entries yet';
+
+  @override
+  String get logCopied => 'Log copied to clipboard';
+
+  @override
+  String get logExportFailed => 'Failed to export log';
+
+  @override
+  String get logClearTitle => 'Clear log';
+
+  @override
+  String get logClearConfirm =>
+      'Are you sure you want to clear all log entries?';
+
+  @override
+  String get logClearAction => 'Clear';
+
+  @override
+  String get logFilter => 'Filter by level';
+
+  @override
+  String get logFilterAll => 'All levels';
+
+  @override
+  String get logCopy => 'Copy to clipboard';
+
+  @override
+  String get logShare => 'Share log';
+
+  @override
+  String get logClear => 'Clear log';
+
+  @override
+  String get logScrollToBottom => 'Scroll to bottom';
 }

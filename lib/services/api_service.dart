@@ -13,6 +13,13 @@ void _log(String message,
   LogService.instance.log(message, name: name, level: level);
 }
 
+String _sanitizeLogMessage(String message) {
+  return message.replaceAllMapped(
+    RegExp(r'(uri:\s*https?://)([^/\s]+)(/[^\s]*)'),
+    (match) => '${match.group(1)}<host>${match.group(3)}',
+  );
+}
+
 /// Centralized service for 2fauth API calls.
 ///
 /// - Keeps a single active `Dio` instance.
@@ -105,7 +112,7 @@ class ApiService {
         responseBody: false,
         error: true,
         logPrint: (obj) {
-          final msg = obj.toString();
+          final msg = _sanitizeLogMessage(obj.toString());
           developer.log(msg, name: 'ApiService.Log');
           LogService.instance.info(msg, name: 'ApiService');
         },

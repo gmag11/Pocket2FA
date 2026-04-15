@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../l10n/app_localizations.dart';
@@ -87,6 +88,34 @@ class _LogScreenState extends State<LogScreen> {
       }
       return;
     }
+
+    if (Platform.isLinux || Platform.isWindows) {
+      // Share is not implemented on desktop: save file to Downloads folder.
+      try {
+        final downloadsDir = await getDownloadsDirectory();
+        final destDir = downloadsDir ?? await getApplicationDocumentsDirectory();
+        final fileName = file.uri.pathSegments.last;
+        final destPath = '${destDir.path}/$fileName';
+        await file.copy(destPath);
+        await file.delete();
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Log guardado en $destPath')),
+          );
+        }
+      } catch (_) {
+        try {
+          await file.delete();
+        } catch (_) {}
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(l10n.logExportFailed)),
+          );
+        }
+      }
+      return;
+    }
+
     if (context.mounted) {
       await Share.shareXFiles(
         [XFile(file.path, mimeType: 'text/plain')],

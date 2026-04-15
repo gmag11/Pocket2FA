@@ -372,7 +372,7 @@ class SyncService {
 
     for (final accIdx in pending) {
       final acc = localServer.accounts[accIdx];
-      _log('attempting upload for local acc index=$accIdx service=${acc.service} account=${acc.account} groupId=${acc.groupId}');
+      _log('attempting upload for local acc index=$accIdx service=***REDACTED*** account=***REDACTED*** groupId=${acc.groupId}');
       try {
         final resp = await ApiService.instance.createAccountFromEntry(acc,
             groupId: acc.groupId, cancelToken: cancelToken);
@@ -436,7 +436,7 @@ class SyncService {
             _log('DioException status=${e.response?.statusCode} data=${e.response?.data}');
           }
         } catch (_) {}
-        _log('failed to create account ${acc.service}/${acc.account}: $e');
+        _log('failed to create account service=***REDACTED*** account=***REDACTED***: $e');
         // continue with next pending account
       }
     }
@@ -550,7 +550,7 @@ class SyncService {
 
     for (final accIdx in pending) {
       final acc = localServer.accounts[accIdx];
-      _log('attempting update for local acc index=$accIdx service=${acc.service} account=${acc.account} id=${acc.id}');
+      _log('attempting update for local acc index=$accIdx service=***REDACTED*** account=***REDACTED*** id=${acc.id}');
       try {
         final resp = await ApiService.instance
             .updateAccountFromEntry(acc, cancelToken: cancelToken);

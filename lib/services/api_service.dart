@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:developer' as developer;
@@ -105,7 +106,7 @@ class ApiService {
       // here — we log masked bodies separately in our helpers. This prevents
       // accidental exposure of the Authorization header.
       _dio!.interceptors.add(LogInterceptor(
-        request: true,
+        request: kDebugMode,
         requestHeader: false,
         requestBody: false,
         responseHeader: false,
@@ -156,8 +157,9 @@ class ApiService {
 
     developer.log('ApiService: server configured',
         name: 'ApiService',
-        error:
-            'id=${server.id} name=${server.name} base=$base authorization=${server.apiKey.isNotEmpty ? 'present' : 'absent'}');
+        error: kDebugMode
+            ? 'id=${server.id} name=${server.name} base=$base authorization=${server.apiKey.isNotEmpty ? 'present' : 'absent'}'
+            : 'id=${server.id} base=${_redactHost(base)} authorization=${server.apiKey.isNotEmpty ? 'present' : 'absent'}');
   }
 
   /// Closes the active connection and clears state.
@@ -360,6 +362,17 @@ class ApiService {
     return out;
   }
 
+  // Replace the host/authority in a URL with '<host>' for privacy-safe logging.
+  String _redactHost(String url) {
+    try {
+      final uri = Uri.parse(url);
+      if (uri.host.isNotEmpty) {
+        return url.replaceFirst(uri.host, '<host>');
+      }
+    } catch (_) {}
+    return '<redacted>';
+  }
+
   String _normalizeRelativePath(String path) {
     var p = path.trim();
     // If the user passed an absolute URL, we should not allow it — always expect relative path.
@@ -437,7 +450,7 @@ class ApiService {
     // lightweight logging for validation (do not log sensitive values)
     // Validation uses a lightweight logger that must also avoid printing headers
     dio.interceptors.add(LogInterceptor(
-        request: true,
+        request: kDebugMode,
         requestHeader: false,
         requestBody: false,
         responseHeader: false,

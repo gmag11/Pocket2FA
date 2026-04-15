@@ -1,6 +1,7 @@
 import 'dart:developer' as developer;
 
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../l10n/app_localizations.dart';
@@ -541,7 +542,9 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
                           );
                     
                           developer.log(
-                              'AdvancedForm: updated entry service=${updatedEntry.service} account=${updatedEntry.account} id=${updatedEntry.id}',
+                              kDebugMode
+                                  ? 'AdvancedForm: updated entry service=${updatedEntry.service} account=${updatedEntry.account} id=${updatedEntry.id}'
+                                  : 'AdvancedForm: updated entry id=${updatedEntry.id}',
                               name: 'AdvancedForm');
                     
                           // Attempt immediate server update (silent on failure)
@@ -603,14 +606,18 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
                           );
                     
                           developer.log(
-                              'AdvancedForm: local entry created service=${entry.service} account=${entry.account} id=${entry.id} synchronized=${entry.synchronized}',
+                              kDebugMode
+                                  ? 'AdvancedForm: local entry created service=${entry.service} account=${entry.account} id=${entry.id} synchronized=${entry.synchronized}'
+                                  : 'AdvancedForm: local entry created id=${entry.id} synchronized=${entry.synchronized}',
                               name: 'AdvancedForm');
-                    
+
                           // Use our service to attempt server-side creation
                           developer.log(
-                              'AdvancedForm: attempting immediate server create for service=${entry.service} account=${entry.account}',
+                              kDebugMode
+                                  ? 'AdvancedForm: attempting immediate server create for service=${entry.service} account=${entry.account}'
+                                  : 'AdvancedForm: attempting immediate server create',
                               name: 'AdvancedForm');
-                    
+
                           try {
                             final serverEntry =
                                 await EntryCreationService.createEntryOnServer(
@@ -645,7 +652,9 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
                           }
                     
                           developer.log(
-                              'AdvancedForm: created local AccountEntry: ${entry.toMap()}',
+                              kDebugMode
+                                  ? 'AdvancedForm: created local AccountEntry: ${entry.toMap()}'
+                                  : 'AdvancedForm: created local AccountEntry id=${entry.id}',
                               name: 'AdvancedForm');
                           navigator.pop(entry);
                         }

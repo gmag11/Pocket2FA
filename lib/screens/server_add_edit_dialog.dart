@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../l10n/app_localizations.dart';
 import 'dart:developer' as developer;
@@ -55,7 +56,10 @@ Future<ServerConnection?> showServerAddEditDialog({
           try {
             final m = await ApiService.instance.validateServer(temp);
             try {
-              developer.log('AccountsScreen: /api/v1/user response -> $m',
+              developer.log(
+                  kDebugMode
+                      ? 'AccountsScreen: /api/v1/user response -> $m'
+                      : 'AccountsScreen: /api/v1/user response ok',
                   name: 'AccountsScreen');
             } catch (_) {}
 

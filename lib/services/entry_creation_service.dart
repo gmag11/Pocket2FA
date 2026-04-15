@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../models/account_entry.dart';
 import '../models/group_entry.dart';
@@ -37,7 +38,9 @@ class EntryCreationService {
         final masked = maskSecret(uri.toString());
         developer.log('$sourceTag: decoded URL: $masked', name: sourceTag);
         developer.log(
-            '$sourceTag: parsed query fields: issuer=${params['issuer']}, label_query=${params['label']}, algorithm=${params['algorithm']}, digits=${params['digits']}, period=${params['period']}, counter=${params['counter']}',
+            kDebugMode
+                ? '$sourceTag: parsed query fields: issuer=${params['issuer']}, label_query=${params['label']}, algorithm=${params['algorithm']}, digits=${params['digits']}, period=${params['period']}, counter=${params['counter']}'
+                : '$sourceTag: parsed query fields: algorithm=${params['algorithm']}, digits=${params['digits']}, period=${params['period']}, counter=${params['counter']}',
             name: sourceTag);
       } catch (_) {
         developer.log('$sourceTag: logging failed', name: sourceTag);
@@ -81,7 +84,9 @@ class EntryCreationService {
 
       // Log final parsed values
       developer.log(
-          '$sourceTag: final parsed - service="$service" account="$account" group="$group"',
+          kDebugMode
+              ? '$sourceTag: final parsed - service="$service" account="$account" group="$group"'
+              : '$sourceTag: final parsed - group="$group"',
           name: sourceTag);
 
       // Defaults and params
@@ -179,9 +184,13 @@ class EntryCreationService {
         payload['group_id'] = entry.groupId;
       }
       developer.log(
-          '$sourceTag: Attempting immediate create for ${entry.service} with type ${entry.otpType}',
+          kDebugMode
+              ? '$sourceTag: Attempting immediate create for ${entry.service} with type ${entry.otpType}'
+              : '$sourceTag: Attempting immediate create with type ${entry.otpType}',
           name: sourceTag);
-      developer.log('$sourceTag: API payload: $payload', name: sourceTag);
+      developer.log(
+          kDebugMode ? '$sourceTag: API payload: $payload' : '$sourceTag: API payload keys: ${payload.keys.toList()}',
+          name: sourceTag);
 
       // Call createAccount directly instead of createAccountFromEntry
       // to avoid the API always including period

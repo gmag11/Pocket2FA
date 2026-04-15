@@ -1,4 +1,5 @@
 import 'dart:developer' as developer;
+import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 // sync_service handles fetching remote groups/accounts and caching icons.
 import '../models/server_connection.dart';
@@ -372,7 +373,9 @@ class SyncService {
 
     for (final accIdx in pending) {
       final acc = localServer.accounts[accIdx];
-      _log('attempting upload for local acc index=$accIdx service=***REDACTED*** account=***REDACTED*** groupId=${acc.groupId}');
+      _log(kDebugMode
+          ? '_uploadPendingAccounts: attempting upload for local acc index=$accIdx service=${acc.service} account=${acc.account} groupId=${acc.groupId}'
+          : '_uploadPendingAccounts: attempting upload for local acc index=$accIdx groupId=${acc.groupId}');
       try {
         final resp = await ApiService.instance.createAccountFromEntry(acc,
             groupId: acc.groupId, cancelToken: cancelToken);
@@ -436,7 +439,9 @@ class SyncService {
             _log('DioException status=${e.response?.statusCode} data=${e.response?.data}');
           }
         } catch (_) {}
-        _log('failed to create account service=***REDACTED*** account=***REDACTED***: $e');
+        _log(kDebugMode
+            ? '_uploadPendingAccounts: failed to create account ${acc.service}/${acc.account} (local index=$accIdx): $e'
+            : '_uploadPendingAccounts: failed to create account (local index=$accIdx): $e');
         // continue with next pending account
       }
     }
@@ -550,7 +555,9 @@ class SyncService {
 
     for (final accIdx in pending) {
       final acc = localServer.accounts[accIdx];
-      _log('attempting update for local acc index=$accIdx service=***REDACTED*** account=***REDACTED*** id=${acc.id}');
+      _log(kDebugMode
+          ? '_updatePendingAccounts: attempting update for local acc index=$accIdx service=${acc.service} account=${acc.account} id=${acc.id}'
+          : '_updatePendingAccounts: attempting update for local acc index=$accIdx id=${acc.id}');
       try {
         final resp = await ApiService.instance
             .updateAccountFromEntry(acc, cancelToken: cancelToken);
@@ -621,7 +628,9 @@ class SyncService {
             _log('DioException status=${e.response?.statusCode} data=${e.response?.data}');
           }
         } catch (_) {}
-        _log('failed to update account ${acc.service}/${acc.account}: $e');
+        _log(kDebugMode
+            ? '_updatePendingAccounts: failed to update account ${acc.service}/${acc.account} (local index=$accIdx id=${acc.id}): $e'
+            : '_updatePendingAccounts: failed to update account (local index=$accIdx id=${acc.id}): $e');
         // continue with next pending account
       }
     }

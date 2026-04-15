@@ -15,6 +15,7 @@ void _log(String message,
 }
 
 String _sanitizeLogMessage(String message) {
+  if (kDebugMode) return message;
   return message.replaceAllMapped(
     RegExp(r'(uri:\s*https?://)([^/\s]+)(/[^\s]*)'),
     (match) => '${match.group(1)}<host>${match.group(3)}',
@@ -398,12 +399,13 @@ class ApiService {
         obj.forEach((k, v) {
           try {
             final key = k?.toString();
-            if (key == 'secret' ||
-                key == 'account' ||
-                key == 'service' ||
+            final alwaysRedact = key == 'secret' ||
                 key == 'seed' ||
                 key == 'apiKey' ||
-                key == 'Authorization') {
+                key == 'Authorization';
+            final releaseOnlyRedact = !kDebugMode &&
+                (key == 'account' || key == 'service');
+            if (alwaysRedact || releaseOnlyRedact) {
               out[k] = v == null ? null : '***REDACTED***';
             } else {
               out[k] = _maskSecretsIn(v);
@@ -593,7 +595,9 @@ class ApiService {
     payload.removeWhere((k, v) => v == null);
     try {
       developer.log(
-          'ApiService: createAccountFromEntry service=${entry.service} account=${entry.account} groupId=$groupId',
+          kDebugMode
+              ? 'ApiService: createAccountFromEntry service=${entry.service} account=${entry.account} groupId=$groupId'
+              : 'ApiService: createAccountFromEntry groupId=$groupId',
           name: 'ApiService');
       developer.log(
           'ApiService: createAccountFromEntry payload=${_maskSecretsIn(payload)}',

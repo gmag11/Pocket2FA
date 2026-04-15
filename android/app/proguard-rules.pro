@@ -1,11 +1,3 @@
-# Flutter wrapper
--keep class io.flutter.app.** { *; }
--keep class io.flutter.plugin.** { *; }
--keep class io.flutter.util.** { *; }
--keep class io.flutter.view.** { *; }
--keep class io.flutter.** { *; }
--keep class io.flutter.plugins.** { *; }
-
 # flutter_secure_storage — keep EncryptedSharedPreferences and its Jetpack Security dependencies.
 # EncryptedSharedPreferences uses Tink via reflection at runtime; without these rules R8 strips
 # the crypto classes and the first secure-storage call throws a ClassNotFoundException, which

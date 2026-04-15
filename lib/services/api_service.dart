@@ -379,6 +379,8 @@ class ApiService {
           try {
             final key = k?.toString();
             if (key == 'secret' ||
+                key == 'account' ||
+                key == 'service' ||
                 key == 'seed' ||
                 key == 'apiKey' ||
                 key == 'Authorization') {

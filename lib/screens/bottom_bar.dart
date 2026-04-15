@@ -1,6 +1,7 @@
 import 'dart:developer' as developer;
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -26,7 +27,12 @@ Future<void> launchExternal(Uri uri, ScaffoldMessengerState messenger) async {
       await launchUrl(uri);
     }
   } catch (e) {
-    developer.log('HomePage: cannot launch $uri: $e', name: 'HomePage');
+    final redacted = uri.host.isNotEmpty
+        ? uri.toString().replaceFirst(uri.host, '<host>')
+        : '<uri>';
+    developer.log(
+        'HomePage: cannot launch ${kDebugMode ? uri : redacted}: $e',
+        name: 'HomePage');
     if (messenger.mounted) {
       messenger.showSnackBar(SnackBar(
         content: Text('$couldNotOpen: $e'),

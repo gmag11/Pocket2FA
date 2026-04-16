@@ -40,10 +40,8 @@ jobs:
       - name: Patch flutter_zxing for reproducible builds
         shell: bash
         run: |
-          ZXING_CMAKE="$PUB_CACHE/hosted/pub.dev/flutter_zxing-1.9.1/src/CMakeLists.txt"
-          if ! grep -q "file-prefix-map" "$ZXING_CMAKE"; then
-            echo 'target_compile_options(ZXing PRIVATE -ffile-prefix-map=${CMAKE_SOURCE_DIR}=.)' >> "$ZXING_CMAKE"
-          fi
+          sed -i '1a add_link_options("LINKER:--build-id=none")' "$PUB_CACHE"/hosted/pub.dev/flutter_zxing-*/*/CMakeLists.txt
+          sed -i '1a add_compile_options("-ffile-prefix-map=${CMAKE_SOURCE_DIR}=.")' "$PUB_CACHE"/hosted/pub.dev/flutter_zxing-*/*/CMakeLists.txt
 
       - name: Detect KEYSTORE_BASE64 presence
         id: detect_keystore
@@ -80,12 +78,12 @@ jobs:
       - name: Build split-per-ABI APKs
         if: steps.detect_keystore.outputs.has_keystore == 'true'
         shell: bash
-        run: flutter build apk --release --split-per-abi --no-pub
+        run: flutter build apk --release --split-per-abi
 
       - name: Build universal APK (all ABIs in one)
         if: steps.detect_keystore.outputs.has_keystore == 'true'
         shell: bash
-        run: flutter build apk --release --no-pub
+        run: flutter build apk --release
 
       - name: Verify APKs were built
         if: steps.detect_keystore.outputs.has_keystore == 'true'

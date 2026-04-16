@@ -42,12 +42,7 @@ jobs:
         run: |
           ZXING_CMAKE="$PUB_CACHE/hosted/pub.dev/flutter_zxing-1.9.1/src/CMakeLists.txt"
           if ! grep -q "file-prefix-map" "$ZXING_CMAKE"; then
-            cat >> "$ZXING_CMAKE" <<'EOF'
-
-          target_compile_options(flutter_zxing PRIVATE
-            -ffile-prefix-map=${CMAKE_SOURCE_DIR}=.
-          )
-          EOF
+            echo 'target_compile_options(flutter_zxing PRIVATE -ffile-prefix-map=${CMAKE_SOURCE_DIR}=.)' >> "$ZXING_CMAKE"
           fi
 
       - name: Detect KEYSTORE_BASE64 presence
@@ -85,12 +80,12 @@ jobs:
       - name: Build split-per-ABI APKs
         if: steps.detect_keystore.outputs.has_keystore == 'true'
         shell: bash
-        run: flutter build apk --release --split-per-abi
+        run: flutter build apk --release --split-per-abi --no-pub
 
       - name: Build universal APK (all ABIs in one)
         if: steps.detect_keystore.outputs.has_keystore == 'true'
         shell: bash
-        run: flutter build apk --release
+        run: flutter build apk --release --no-pub
 
       - name: Verify APKs were built
         if: steps.detect_keystore.outputs.has_keystore == 'true'

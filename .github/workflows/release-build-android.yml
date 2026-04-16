@@ -39,21 +39,16 @@ jobs:
       - name: Flutter version
         run: flutter --version
 
+      - name: Fetch Flutter dependencies
+        run: flutter pub get
+
       - name: Patch flutter_zxing for reproducible builds
         shell: bash
         run: |
           ZXING_CMAKE="$PUB_CACHE/hosted/pub.dev/flutter_zxing-1.9.1/src/CMakeLists.txt"
           if ! grep -q "file-prefix-map" "$ZXING_CMAKE"; then
-            cat >> "$ZXING_CMAKE" <<'EOF'
-
-          target_compile_options(flutter_zxing PRIVATE
-            -ffile-prefix-map=${CMAKE_SOURCE_DIR}=.
-          )
-          EOF
+            echo 'target_compile_options(flutter_zxing PRIVATE -ffile-prefix-map=${CMAKE_SOURCE_DIR}=.)' >> "$ZXING_CMAKE"
           fi
-
-      - name: Fetch Flutter dependencies
-        run: flutter pub get
 
       - name: Detect KEYSTORE_BASE64 presence
         id: detect_keystore
@@ -90,7 +85,7 @@ jobs:
 
       - name: Build split-per-ABI APKs
         shell: bash
-        run: flutter build apk --release --split-per-abi
+        run: flutter build apk --release --split-per-abi --no-pub
 
       - name: Save split APKs before clean
         shell: bash
@@ -102,9 +97,17 @@ jobs:
         shell: bash
         run: flutter clean && flutter pub get
 
+      - name: Re-patch flutter_zxing after clean
+        shell: bash
+        run: |
+          ZXING_CMAKE="$PUB_CACHE/hosted/pub.dev/flutter_zxing-1.9.1/src/CMakeLists.txt"
+          if ! grep -q "file-prefix-map" "$ZXING_CMAKE"; then
+            echo 'target_compile_options(flutter_zxing PRIVATE -ffile-prefix-map=${CMAKE_SOURCE_DIR}=.)' >> "$ZXING_CMAKE"
+          fi
+
       - name: Build universal APK (all ABIs in one)
         shell: bash
-        run: flutter build apk --release
+        run: flutter build apk --release --no-pub
 
       - name: Restore split APKs to output directory
         shell: bash

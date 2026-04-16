@@ -42,7 +42,7 @@ jobs:
         run: |
           ZXING_CMAKE="$PUB_CACHE/hosted/pub.dev/flutter_zxing-1.9.1/src/CMakeLists.txt"
           if ! grep -q "file-prefix-map" "$ZXING_CMAKE"; then
-            echo 'target_compile_options(flutter_zxing PRIVATE -ffile-prefix-map=${CMAKE_SOURCE_DIR}=.)' >> "$ZXING_CMAKE"
+            echo 'target_compile_options(ZXing PRIVATE -ffile-prefix-map=${CMAKE_SOURCE_DIR}=.)' >> "$ZXING_CMAKE"
           fi
 
       - name: Detect KEYSTORE_BASE64 presence

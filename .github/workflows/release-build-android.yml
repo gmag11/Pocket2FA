@@ -39,6 +39,19 @@ jobs:
       - name: Flutter version
         run: flutter --version
 
+      - name: Patch flutter_zxing for reproducible builds
+        shell: bash
+        run: |
+          ZXING_CMAKE="$PUB_CACHE/hosted/pub.dev/flutter_zxing-1.9.1/src/CMakeLists.txt"
+          if ! grep -q "file-prefix-map" "$ZXING_CMAKE"; then
+            cat >> "$ZXING_CMAKE" <<'EOF'
+
+          target_compile_options(flutter_zxing PRIVATE
+            -ffile-prefix-map=${CMAKE_SOURCE_DIR}=.
+          )
+          EOF
+          fi
+
       - name: Fetch Flutter dependencies
         run: flutter pub get
 

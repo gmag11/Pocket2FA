@@ -12,21 +12,32 @@ class AccountTileUi {
   static Widget buildServiceAvatar(AccountEntry item, Color color) {
     const double radius = 14.0;
 
+    String getAvatarChar() {
+      final svc = item.service;
+      if (svc.isNotEmpty) {
+        return svc.characters.first;
+      }
+      final acct = item.account;
+      return acct.isNotEmpty ? acct.characters.first : '?';
+    }
+
     Widget fallbackAvatar() => CircleAvatar(
           radius: radius,
           backgroundColor: Color.fromRGBO(
-              (color.r * 255.0).round() & 0xff,
-              (color.g * 255.0).round() & 0xff,
-              (color.b * 255.0).round() & 0xff,
-              0.2),
+            (color.r * 255.0).round() & 0xff,
+            (color.g * 255.0).round() & 0xff,
+            (color.b * 255.0).round() & 0xff,
+            0.2,
+          ),
           child: Text(
-            item.service.characters.first,
+            getAvatarChar(),
             style: TextStyle(
               color: Color.fromRGBO(
-                  (color.r * 255.0).round() & 0xff,
-                  (color.g * 255.0).round() & 0xff,
-                  (color.b * 255.0).round() & 0xff,
-                  0.8),
+                (color.r * 255.0).round() & 0xff,
+                (color.g * 255.0).round() & 0xff,
+                (color.b * 255.0).round() & 0xff,
+                0.8,
+              ),
               fontWeight: FontWeight.bold,
               fontSize: 12,
             ),
@@ -66,13 +77,14 @@ class AccountTileUi {
 
   /// Builds the service info row
   static Widget buildServiceInfoRow(AccountEntry item, Color color) {
+    final display = item.service.isNotEmpty ? item.service : item.account;
     return Row(
       children: [
         buildServiceAvatar(item, color),
         const SizedBox(width: 8),
         Expanded(
           child: Text(
-            item.service,
+            display,
             style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w400),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -108,8 +120,9 @@ class AccountTileUi {
               onPressed: onPressed,
               style: ElevatedButton.styleFrom(minimumSize: const Size(0, 36)),
               child: Builder(
-                  builder: (context) =>
-                      Text(AppLocalizations.of(context)!.generate)),
+                builder: (context) =>
+                    Text(AppLocalizations.of(context)!.generate),
+              ),
             ),
           ),
         ),
@@ -146,9 +159,13 @@ class AccountTileUi {
                               onTap: onCopy,
                               child: Text(
                                 AccountTileUtils.formatCode(
-                                    hotpCode ?? '', settings),
+                                  hotpCode ?? '',
+                                  settings,
+                                ),
                                 style: const TextStyle(
-                                    fontSize: 24, fontWeight: FontWeight.w700),
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w700,
+                                ),
                               ),
                             );
                           },
@@ -158,7 +175,9 @@ class AccountTileUi {
                           child: Text(
                             AccountTileUtils.formatCode(hotpCode ?? '', null),
                             style: const TextStyle(
-                                fontSize: 24, fontWeight: FontWeight.w700),
+                              fontSize: 24,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                         ),
                 ),
@@ -169,11 +188,17 @@ class AccountTileUi {
                     child: Padding(
                       padding: const EdgeInsets.only(top: 2.0),
                       child: Builder(
-                          builder: (context) => Text(
-                              AppLocalizations.of(context)!
-                                  .hotpCounter(hotpCounter),
-                              style: TextStyle(
-                                  fontSize: 12, color: Colors.grey.shade500))),
+                        builder: (context) => Text(
+                          AppLocalizations.of(
+                            context,
+                          )!
+                              .hotpCounter(hotpCounter),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade500,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
               ],

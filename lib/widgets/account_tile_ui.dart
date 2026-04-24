@@ -36,29 +36,39 @@ class AccountTileUi {
     if (item.localIcon != null && item.localIcon!.isNotEmpty) {
       final file = File(item.localIcon!);
       final isSvg = item.localIcon!.toLowerCase().endsWith('.svg');
-      try {
-        if (isSvg) {
-          return CircleAvatar(
-            radius: radius,
-            backgroundColor: Colors.transparent,
-            child: SvgPicture.file(
-              file,
-              width: radius * 2,
-              height: radius * 2,
-              fit: BoxFit.contain,
-              placeholderBuilder: (ctx) => fallbackAvatar(),
-            ),
-          );
-        } else {
+      if (isSvg) {
+        return CircleAvatar(
+          radius: radius,
+          backgroundColor: Colors.transparent,
+          child: FutureBuilder<String>(
+            future: file.readAsString().then(_sanitizeSvg),
+            builder: (ctx, snapshot) {
+              if (snapshot.hasData) {
+                return SvgPicture.string(
+                  snapshot.data!,
+                  width: radius * 2,
+                  height: radius * 2,
+                  fit: BoxFit.contain,
+                  placeholderBuilder: (ctx) => fallbackAvatar(),
+                  errorBuilder: (ctx, error, stackTrace) => fallbackAvatar(),
+                );
+              }
+              if (snapshot.hasError) return fallbackAvatar();
+              return fallbackAvatar();
+            },
+          ),
+        );
+      } else {
+        try {
           return CircleAvatar(
             radius: radius,
             backgroundImage: FileImage(file),
             backgroundColor: Colors.transparent,
             onBackgroundImageError: (_, __) {},
           );
+        } catch (_) {
+          return fallbackAvatar();
         }
-      } catch (_) {
-        return fallbackAvatar();
       }
     }
     return fallbackAvatar();
@@ -233,6 +243,15 @@ class AccountTileUi {
           }),
         );
       },
+    );
+  }
+
+  /// Strips percentage units from SVG geometry values that vector_graphics_compiler
+  /// cannot parse (e.g. width="15%" inside <rect> elements).
+  static String _sanitizeSvg(String content) {
+    return content.replaceAllMapped(
+      RegExp(r'(\d+(?:\.\d+)?)%'),
+      (m) => m[1]!,
     );
   }
 }

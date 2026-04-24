@@ -17,3 +17,5 @@ Pocket2FA is a mobile companion for the <a href="https://github.com/Bubka/2FAuth
 <b>Requirements</b>
 
 A self-hosted instance of <a href="https://github.com/Bubka/2FAuth">2FAuth</a> is required. This app does not work as a standalone 2FA manager — it is a native client that extends 2FAuth.
+
+<b>Disclaimer</b>: Independent companion app. I am not the author of 2FAuth.

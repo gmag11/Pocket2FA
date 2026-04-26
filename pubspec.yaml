@@ -27,6 +27,7 @@ dependencies:
   url_launcher: ^6.3.2
   flutter_zxing: ^1.2.0
   image_picker: ^1.2.0
+  image_picker_android: ^0.8.13+1
   image: ^4.5.4
 
 dev_dependencies:

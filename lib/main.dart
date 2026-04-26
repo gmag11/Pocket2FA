@@ -1,6 +1,10 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:image_picker_android/image_picker_android.dart';
+import 'package:image_picker_platform_interface/image_picker_platform_interface.dart';
 
 import 'l10n/app_localizations.dart';
 import 'screens/home_screen.dart';
@@ -9,6 +13,15 @@ import 'services/settings_storage.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Use the Android Photo Picker (no READ_MEDIA_IMAGES permission needed).
+  if (Platform.isAndroid) {
+    final ImagePickerPlatform picker = ImagePickerPlatform.instance;
+    if (picker is ImagePickerAndroid) {
+      picker.useAndroidPhotoPicker = true;
+    }
+  }
+
   // Allow normal and inverted portrait as well as both landscape orientations.
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,

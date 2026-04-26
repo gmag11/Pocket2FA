@@ -156,7 +156,7 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
 
   @override
   Widget build(BuildContext context) {
-    final color = AccountTileUtils.getServiceColor(widget.item.service);
+    final color = AccountTileUtils.getServiceColor(widget.item.service, widget.item.account);
 
     // Debug flag: computed at runtime so analyzer doesn't treat branches as dead code.
     // Set this expression to `false` or change the condition to disable debug borders quickly.

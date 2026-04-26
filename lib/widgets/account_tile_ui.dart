@@ -10,15 +10,15 @@ import '../l10n/app_localizations.dart';
 class AccountTileUi {
   /// Builds the service avatar
   static Widget buildServiceAvatar(AccountEntry item, Color color) {
-    const double radius = 14.0;
+    const double radius = 18.0;
 
     String getAvatarChar() {
       final svc = item.service;
       if (svc.isNotEmpty) {
-        return svc.characters.first;
+        return svc.characters.first.toUpperCase();
       }
       final acct = item.account;
-      return acct.isNotEmpty ? acct.characters.first : '?';
+      return acct.isNotEmpty ? acct.characters.first.toUpperCase() : '?';
     }
 
     Widget fallbackAvatar() => CircleAvatar(
@@ -39,7 +39,7 @@ class AccountTileUi {
                 0.8,
               ),
               fontWeight: FontWeight.bold,
-              fontSize: 12,
+              fontSize: 20,
             ),
           ),
         );

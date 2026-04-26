@@ -42,6 +42,8 @@ class _HomePageState extends State<HomePage>
   Timer? _autoSyncTimer;
   bool _initialSyncDone = false;
   bool _wasInManageMode = false;
+  bool _fabVisible = true;
+  double _lastFabScrollOffset = 0.0;
 
   // Convenience getter for localized strings
   AppLocalizations get l10n => AppLocalizations.of(context)!;
@@ -60,6 +62,7 @@ class _HomePageState extends State<HomePage>
 
     // Initialize header animation
     _headerAnimation.initialize(this);
+    _headerAnimation.listScrollController.addListener(_onScrollForFab);
 
     // Add listeners
     _serverManager.addListener(_onServerManagerChanged);
@@ -71,6 +74,21 @@ class _HomePageState extends State<HomePage>
     developer.log('HomePage: initState - starting loadServersAndInitialize', name: 'HomePage');
     // Load servers and perform initial connectivity check
   _loadServersAndInitialize();
+  }
+
+  void _onScrollForFab() {
+    if (!_headerAnimation.listScrollController.hasClients) return;
+    final offset = _headerAnimation.listScrollController.offset;
+    final delta = offset - _lastFabScrollOffset;
+    const threshold = 6.0;
+    if (offset <= 0) {
+      if (!_fabVisible) setState(() => _fabVisible = true);
+    } else if (delta > threshold) {
+      if (_fabVisible) setState(() => _fabVisible = false);
+    } else if (delta < -threshold) {
+      if (!_fabVisible) setState(() => _fabVisible = true);
+    }
+    _lastFabScrollOffset = offset.clamp(0.0, double.infinity);
   }
 
   void _onServerManagerChanged() {
@@ -347,6 +365,7 @@ class _HomePageState extends State<HomePage>
 
   @override
   void dispose() {
+    _headerAnimation.listScrollController.removeListener(_onScrollForFab);
     _searchController.dispose();
     _searchFocus.dispose();
     _headerAnimation.dispose();
@@ -451,9 +470,16 @@ class _HomePageState extends State<HomePage>
         ),
       ),
       floatingActionButton: !_manageMode.isManageMode && _serverManager.servers.isNotEmpty
-          ? Padding(
-              padding: const EdgeInsets.only(bottom: 56.0),
-              child: FloatingActionButton(
+          ? AnimatedSlide(
+              offset: _fabVisible ? Offset.zero : const Offset(0, 2),
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+              child: AnimatedOpacity(
+                opacity: _fabVisible ? 1.0 : 0.0,
+                duration: const Duration(milliseconds: 300),
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 56.0),
+                  child: FloatingActionButton(
                 onPressed: () async {
                   final srv = _serverManager.selectedServerId != null
                       ? _serverManager.servers.firstWhere(
@@ -479,6 +505,8 @@ class _HomePageState extends State<HomePage>
                 },
                 backgroundColor: const Color(0xFF4F63E6),
                 child: const Icon(Icons.qr_code, color: Colors.white),
+              ),
+                ),
               ),
             )
           : null,

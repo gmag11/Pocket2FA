@@ -169,6 +169,7 @@ class _AccountListState extends State<AccountList> {
         child: ListView.separated(
           controller: widget.scrollController,
           physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.only(bottom: 96.0),
           itemCount: filtered.length,
           separatorBuilder: (context, index) => Divider(
             height: 1,
@@ -210,7 +211,7 @@ class _AccountListState extends State<AccountList> {
       child: GridView.builder(
         controller: widget.scrollController,
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+        padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 96.0),
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: columns,
           crossAxisSpacing: 16,

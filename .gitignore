@@ -45,4 +45,11 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# macOS
+macos/Flutter/GeneratedPluginRegistrant.swift
+macos/Flutter/ephemeral/
+macos/Pods/
+macos/Runner.xcworkspace/xcuserdata/
+macos/Runner.xcodeproj/xcuserdata/
 memvidagentmemory.instructions.md

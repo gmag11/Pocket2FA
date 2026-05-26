@@ -471,11 +471,11 @@ class _HomePageState extends State<HomePage>
       ),
       floatingActionButton: !_manageMode.isManageMode && _serverManager.servers.isNotEmpty
           ? AnimatedSlide(
-              offset: _fabVisible ? Offset.zero : const Offset(0, 2),
+              offset: (_fabVisible || _serverManager.currentItems.isEmpty) ? Offset.zero : const Offset(0, 2),
               duration: const Duration(milliseconds: 300),
               curve: Curves.easeInOut,
               child: AnimatedOpacity(
-                opacity: _fabVisible ? 1.0 : 0.0,
+                opacity: (_fabVisible || _serverManager.currentItems.isEmpty) ? 1.0 : 0.0,
                 duration: const Duration(milliseconds: 300),
                 child: Padding(
                   padding: const EdgeInsets.only(bottom: 56.0),
@@ -620,7 +620,7 @@ class _HomePageState extends State<HomePage>
 
   void _showAboutDialog() {
     // NOTE: appVersion is kept in sync manually with pubspec.yaml's version: field.
-    const appVersion = '0.9.11';
+    const appVersion = '0.9.12';
 
     showDialog<void>(
       context: context,

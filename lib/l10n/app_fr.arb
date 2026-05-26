@@ -629,6 +629,16 @@
     },
     "minutesLabel": "minutes",
     "@minutesLabel": {
-        "description": "Libellé court pour l'unité de minutes dans les paramètres."
-    }
+        "description": "Libellé court pour l'unité de minutes dans les paramètres."    },
+    "certErrorTitle": "Erreur de certificat",
+    "@certErrorTitle": {
+        "description": "Titre de la bo\u00eete de dialogue lorsque le certificat TLS ne peut pas \u00eatre v\u00e9rifi\u00e9."
+    },
+    "certErrorMessage": "Le certificat SSL du serveur n\u2019a pas pu \u00eatre v\u00e9rifi\u00e9. Il s\u2019agit peut-\u00eatre d\u2019un certificat auto-sign\u00e9. Se connecter \u00e0 un serveur avec un certificat non v\u00e9rifi\u00e9 peut pr\u00e9senter un risque de s\u00e9curit\u00e9. Voulez-vous vous connecter quand m\u00eame\u00a0?",
+    "@certErrorMessage": {
+        "description": "Corps du dialogue d\u2019avertissement concernant un certificat TLS non v\u00e9rifi\u00e9."
+    },
+    "connectAnyway": "Se connecter quand m\u00eame",
+    "@connectAnyway": {
+        "description": "\u00c9tiquette du bouton pour continuer malgr\u00e9 l\u2019avertissement de certificat."    }
 }

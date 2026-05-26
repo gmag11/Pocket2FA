@@ -1,7 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
 import '../l10n/app_localizations.dart';
 import 'dart:developer' as developer;
+import 'dart:io';
 import '../services/api_service.dart';
 import '../models/server_connection.dart';
 import '../models/user_preferences.dart';
@@ -51,52 +53,94 @@ Future<ServerConnection?> showServerAddEditDialog({
             apiKey: apiKeyText,
             accounts: initial?.accounts ?? [],
             userEmail: initial?.userEmail ?? '',
+            allowSelfSigned: initial?.allowSelfSigned ?? false,
           );
 
-          try {
-            final m = await ApiService.instance.validateServer(temp);
+          Future<void> doValidate(ServerConnection candidate) async {
             try {
-              developer.log(
-                  kDebugMode
-                      ? 'AccountsScreen: /api/v1/user response -> $m'
-                      : 'AccountsScreen: /api/v1/user response ok',
-                  name: 'AccountsScreen');
-            } catch (_) {}
+              final m = await ApiService.instance.validateServer(candidate);
+              try {
+                developer.log(
+                    kDebugMode
+                        ? 'AccountsScreen: /api/v1/user response -> $m'
+                        : 'AccountsScreen: /api/v1/user response ok',
+                    name: 'AccountsScreen');
+              } catch (_) {}
 
-            final sc = ServerConnection(
-              id: temp.id,
-              name: temp.name,
-              url: temp.url,
-              apiKey: temp.apiKey,
-              accounts: temp.accounts,
-              userId: m['id'] is int
-                  ? m['id'] as int
-                  : int.tryParse(m['id'].toString()),
-              userName: m['name'] as String?,
-              userEmail: m['email'] as String? ?? '',
-              oauthProvider: m['oauth_provider']?.toString(),
-              authenticatedByProxy: m['authenticated_by_proxy'] as bool?,
-              preferences: m['preferences'] != null
-                  ? UserPreferences.fromMap(
-                      Map<dynamic, dynamic>.from(m['preferences'] as Map))
-                  : null,
-              isAdmin: m['is_admin'] as bool?,
-            );
+              final sc = ServerConnection(
+                id: candidate.id,
+                name: candidate.name,
+                url: candidate.url,
+                apiKey: candidate.apiKey,
+                accounts: candidate.accounts,
+                userId: m['id'] is int
+                    ? m['id'] as int
+                    : int.tryParse(m['id'].toString()),
+                userName: m['name'] as String?,
+                userEmail: m['email'] as String? ?? '',
+                oauthProvider: m['oauth_provider']?.toString(),
+                authenticatedByProxy: m['authenticated_by_proxy'] as bool?,
+                preferences: m['preferences'] != null
+                    ? UserPreferences.fromMap(
+                        Map<dynamic, dynamic>.from(m['preferences'] as Map))
+                    : null,
+                isAdmin: m['is_admin'] as bool?,
+                allowSelfSigned: candidate.allowSelfSigned,
+              );
 
-            if (!context.mounted) return;
-            setStateSB(() {
-              loading = false;
-            });
-            Navigator.of(context).pop(sc);
-            return;
-          } catch (e) {
-            final msg = ApiService.instance.friendlyErrorMessage(e);
-            setStateSB(() {
-              errorText = msg;
-              loading = false;
-            });
-            return;
+              if (!context.mounted) return;
+              setStateSB(() {
+                loading = false;
+              });
+              Navigator.of(context).pop(sc);
+            } catch (e) {
+              if (!candidate.allowSelfSigned && _isCertificateError(e)) {
+                setStateSB(() {
+                  loading = false;
+                });
+                if (!c2.mounted) return;
+                final trust = await showDialog<bool>(
+                  context: c2,
+                  builder: (ctx) => AlertDialog(
+                    title: Text(l10n.certErrorTitle),
+                    content: Text(l10n.certErrorMessage),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(ctx).pop(false),
+                        child: Text(l10n.cancel),
+                      ),
+                      ElevatedButton(
+                        onPressed: () => Navigator.of(ctx).pop(true),
+                        child: Text(l10n.connectAnyway),
+                      ),
+                    ],
+                  ),
+                );
+                if (trust == true) {
+                  setStateSB(() {
+                    loading = true;
+                  });
+                  await doValidate(ServerConnection(
+                    id: candidate.id,
+                    name: candidate.name,
+                    url: candidate.url,
+                    apiKey: candidate.apiKey,
+                    accounts: candidate.accounts,
+                    userEmail: candidate.userEmail,
+                    allowSelfSigned: true,
+                  ));
+                }
+              } else {
+                final msg = ApiService.instance.friendlyErrorMessage(e);
+                setStateSB(() {
+                  errorText = msg;
+                  loading = false;
+                });
+              }
+            }
           }
+
+          await doValidate(temp);
         }
 
         Widget apiFieldLocal() {
@@ -168,4 +212,15 @@ Future<ServerConnection?> showServerAddEditDialog({
       },
     ),
   );
+}
+
+/// Returns true when [e] represents a TLS/certificate validation failure.
+bool _isCertificateError(dynamic e) {
+  if (e is! DioException) return false;
+  final inner = e.error;
+  if (inner is HandshakeException) return true;
+  final msg = '${e.message ?? ''}${inner ?? ''}'.toLowerCase();
+  return msg.contains('certificate') ||
+      msg.contains('handshake') ||
+      msg.contains('certificat');
 }

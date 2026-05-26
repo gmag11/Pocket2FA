@@ -975,6 +975,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'minutes'**
   String get minutesLabel;
+
+  /// Title of the dialog shown when a TLS certificate cannot be verified.
+  ///
+  /// In en, this message translates to:
+  /// **'Certificate error'**
+  String get certErrorTitle;
+
+  /// Body of the dialog warning about an unverified TLS certificate.
+  ///
+  /// In en, this message translates to:
+  /// **'The server’s SSL certificate could not be verified. It may be self-signed. Connecting to a server with an unverified certificate can be a security risk. Do you want to connect anyway?'**
+  String get certErrorMessage;
+
+  /// Button label to proceed despite a certificate warning.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect anyway'**
+  String get connectAnyway;
 }
 
 class _AppLocalizationsDelegate

@@ -487,4 +487,14 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get minutesLabel => 'minutos';
+
+  @override
+  String get certErrorTitle => 'Error de certificado';
+
+  @override
+  String get certErrorMessage =>
+      'El certificado SSL del servidor no se pudo verificar. Puede tratarse de un certificado autofirmado. Conectarse a un servidor con un certificado no verificado puede suponer un riesgo de seguridad. ¿Deseas conectarte de todas formas?';
+
+  @override
+  String get connectAnyway => 'Conectar de todas formas';
 }

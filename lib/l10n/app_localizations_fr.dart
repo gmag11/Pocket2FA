@@ -489,4 +489,14 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get minutesLabel => 'minutes';
+
+  @override
+  String get certErrorTitle => 'Erreur de certificat';
+
+  @override
+  String get certErrorMessage =>
+      'Le certificat SSL du serveur n’a pas pu être vérifié. Il s’agit peut-être d’un certificat auto-signé. Se connecter à un serveur avec un certificat non vérifié peut présenter un risque de sécurité. Voulez-vous vous connecter quand même ?';
+
+  @override
+  String get connectAnyway => 'Se connecter quand même';
 }

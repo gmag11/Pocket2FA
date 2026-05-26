@@ -630,5 +630,17 @@
   "minutesLabel": "minutes",
   "@minutesLabel": {
     "description": "Short label for minutes unit in settings."
+  },
+  "certErrorTitle": "Certificate error",
+  "@certErrorTitle": {
+    "description": "Title of the dialog shown when a TLS certificate cannot be verified."
+  },
+  "certErrorMessage": "The server\u2019s SSL certificate could not be verified. It may be self-signed. Connecting to a server with an unverified certificate can be a security risk. Do you want to connect anyway?",
+  "@certErrorMessage": {
+    "description": "Body of the dialog warning about an unverified TLS certificate."
+  },
+  "connectAnyway": "Connect anyway",
+  "@connectAnyway": {
+    "description": "Button label to proceed despite a certificate warning."
   }
 }

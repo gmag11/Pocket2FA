@@ -1,1 +1,1 @@
-Secure offline 2FA code client with 2FAuth server sync
+Secure 2FA code client of 2FAuth server that works offline

@@ -344,17 +344,24 @@ class SyncService {
           name: 'SyncService');
     }
 
+    final iconStatus = failed == 0
+        ? 'all_ok'
+        : (failed == iconEntries.length ? 'all_failed' : 'partial');
+    final message = failed == 0
+        ? 'Sync completed'
+        : 'Sync completed — $failed icon(s) unavailable';
+
     developer.log(
-        'SyncService: sync completed for ${server.id} (downloaded=$downloaded failed=$failed skipped=$skipped)',
+        'SyncService: sync completed for ${server.id} (downloaded=$downloaded failed=$failed skipped=$skipped iconStatus=$iconStatus)',
         name: 'SyncService');
     return {
       'skipped': false,
-      'success': failed == 0,
+      'success': true,
       'downloaded': downloaded,
       'failed': failed,
       'skipped_count': skipped,
-      'message':
-          (failed == 0 ? 'Sync completed' : 'Sync completed with failures')
+      'iconStatus': iconStatus,
+      'message': message,
     };
   }
 

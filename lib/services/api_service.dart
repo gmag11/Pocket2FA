@@ -2,7 +2,6 @@ import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 import 'package:flutter/foundation.dart';
 import 'dart:io';
-import 'dart:typed_data';
 import 'dart:developer' as developer;
 import '../models/server_connection.dart';
 import '../models/account_entry.dart';

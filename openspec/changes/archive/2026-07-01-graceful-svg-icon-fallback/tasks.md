@@ -19,8 +19,8 @@
 
 ## 4. Verification
 
-- [ ] 4.1 Manual test: Sync with a 2FAuth server that has an account with a known-bad SVG icon URL — verify sync reports success and the account shows a letter placeholder
-- [ ] 4.2 Manual test: Delete a cached SVG icon file from disk, then view the account — verify letter placeholder is shown without crash
-- [ ] 4.3 Manual test: Place a malformed SVG (e.g., truncated XML) in the icon cache — verify letter placeholder is shown without crash
-- [ ] 4.4 Manual test: Normal sync with all valid icons — verify sync still reports success and icons display correctly
+- [x] 4.1 Manual test: Sync with a 2FAuth server that has an account with a known-bad SVG icon URL — verify sync reports success and the account shows a letter placeholder
+- [x] 4.2 Manual test: Delete a cached SVG icon file from disk, then view the account — verify letter placeholder is shown without crash
+- [x] 4.3 Manual test: Place a malformed SVG (e.g., truncated XML) in the icon cache — verify letter placeholder is shown without crash
+- [x] 4.4 Manual test: Normal sync with all valid icons — verify sync still reports success and icons display correctly
 - [x] 4.5 Code review: Verify no other callers of `sync_service.dart` rely on the old `success == (failed == 0)` semantics

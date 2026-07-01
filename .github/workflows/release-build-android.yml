@@ -42,11 +42,12 @@ jobs:
       - name: Fetch Flutter dependencies
         run: flutter pub get
 
-      - name: Patch flutter_zxing for reproducible builds
+      - name: Patch Flutter plugins for reproducible builds
         shell: bash
         run: |
           sed -i '1a add_link_options("LINKER:--build-id=none")' "$PUB_CACHE"/hosted/pub.dev/flutter_zxing-*/*/CMakeLists.txt
           sed -i '1a add_compile_options("-ffile-prefix-map=${CMAKE_SOURCE_DIR}=.")' "$PUB_CACHE"/hosted/pub.dev/flutter_zxing-*/*/CMakeLists.txt
+          sed -i 's/-Wl,/-Wl,--build-id=none,/' "$PUB_CACHE"/hosted/pub.dev/jni-*/src/CMakeLists.txt
 
       - name: Detect KEYSTORE_BASE64 presence
         id: detect_keystore

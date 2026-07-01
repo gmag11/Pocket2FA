@@ -46,3 +46,6 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 memvidagentmemory.instructions.md
+
+.github/skills
+.github/prompts

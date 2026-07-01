@@ -272,11 +272,16 @@ class AccountTileUi {
   }
 
   /// Strips percentage units from SVG geometry values that vector_graphics_compiler
-  /// cannot parse (e.g. width="15%" inside <rect> elements).
+  /// cannot parse (e.g. `width="15%"` inside `rect` elements).
+  /// Returns the original content unchanged if sanitization fails for any reason.
   static String _sanitizeSvg(String content) {
-    return content.replaceAllMapped(
-      RegExp(r'(\d+(?:\.\d+)?)%'),
-      (m) => m[1]!,
-    );
+    try {
+      return content.replaceAllMapped(
+        RegExp(r'(\d+(?:\.\d+)?)%'),
+        (m) => m[1]!,
+      );
+    } catch (_) {
+      return content;
+    }
   }
 }

@@ -51,32 +51,34 @@ class SettingsStorage {
     // before reading the stored key and opening the box. If authentication
     // fails, do not open the box and leave the store locked; caller can
     // later call attemptUnlock() to prompt again.
-    final biometricFlag = await _secure.read(key: _biometricFlagKey);
-    if (biometricFlag == '1') {
-      final can = await _localAuth.canCheckBiometrics ||
-          await _localAuth.isDeviceSupported();
-      if (!can) {
-        // No biometrics available — fall back to leaving locked.
-        _unlocked = false;
-        return;
-      }
-
-      final ok = await _localAuth.authenticate(
-        localizedReason: 'Authenticate to unlock local data',
-        options: const AuthenticationOptions(biometricOnly: false),
-      );
-      if (!ok) {
-        _unlocked = false;
-        return;
-      }
-    }
-
-    // Try to read an existing key from secure storage, otherwise generate and save one.
-    // Wrapped in a try-catch so that a PlatformException from flutter_secure_storage
-    // (e.g. when release-mode R8 strips EncryptedSharedPreferences / Tink classes and
-    // no proguard-rules.pro keep rules are present) does not crash main() before
-    // runApp() is called, which would produce a blank screen.
+    //
+    // The entire init() body is wrapped in a try-catch so that a
+    // PlatformException from flutter_secure_storage or local_auth on any
+    // platform (especially Windows, where DPAPI or Windows Hello can fail
+    // for a variety of reasons) does not crash main() before runApp().
     try {
+      final biometricFlag = await _secure.read(key: _biometricFlagKey);
+      if (biometricFlag == '1') {
+        final can = await _localAuth.canCheckBiometrics ||
+            await _localAuth.isDeviceSupported();
+        if (!can) {
+          // No biometrics available — fall back to leaving locked.
+          _unlocked = false;
+          return;
+        }
+
+        final ok = await _localAuth.authenticate(
+          localizedReason: 'Authenticate to unlock local data',
+          options: const AuthenticationOptions(biometricOnly: false),
+        );
+        if (!ok) {
+          _unlocked = false;
+          return;
+        }
+      }
+
+      // Try to read an existing key from secure storage, otherwise generate
+      // and save one.
       String? encoded = await _secure.read(key: _keyName);
       Uint8List encryptionKey;
       if (encoded == null) {
@@ -93,7 +95,7 @@ class SettingsStorage {
           encryptionCipher: HiveAesCipher(encryptionKey));
       _unlocked = true;
     } catch (e) {
-      debugPrint('SettingsStorage.init: failed to open encrypted box: $e');
+      debugPrint('SettingsStorage.init: failed to initialise storage: $e');
       // Leave _unlocked = false; the app will show the unlock/retry UI.
     }
   }
@@ -103,29 +105,34 @@ class SettingsStorage {
 
   /// Attempt to unlock (prompt biometric) and open the box if successful.
   Future<bool> attemptUnlock() async {
-    final biometricFlag = await _secure.read(key: _biometricFlagKey);
-    if (biometricFlag != '1') return true; // not protected
+    try {
+      final biometricFlag = await _secure.read(key: _biometricFlagKey);
+      if (biometricFlag != '1') return true; // not protected
 
-    final can = await _localAuth.canCheckBiometrics ||
-        await _localAuth.isDeviceSupported();
-    if (!can) return false;
+      final can = await _localAuth.canCheckBiometrics ||
+          await _localAuth.isDeviceSupported();
+      if (!can) return false;
 
-    final ok = await _localAuth.authenticate(
-      localizedReason: 'Authenticate to unlock local data',
-      options: const AuthenticationOptions(biometricOnly: false),
-    );
-    if (!ok) return false;
+      final ok = await _localAuth.authenticate(
+        localizedReason: 'Authenticate to unlock local data',
+        options: const AuthenticationOptions(biometricOnly: false),
+      );
+      if (!ok) return false;
 
-    // Read key and open box
-    final encoded = await _secure.read(key: _keyName);
-    if (encoded == null) return false;
-    final encryptionKey = Uint8List.fromList(base64Decode(encoded));
-    if (!Hive.isBoxOpen(_hiveBox)) {
-      await Hive.openBox(_hiveBox,
-          encryptionCipher: HiveAesCipher(encryptionKey));
+      // Read key and open box
+      final encoded = await _secure.read(key: _keyName);
+      if (encoded == null) return false;
+      final encryptionKey = Uint8List.fromList(base64Decode(encoded));
+      if (!Hive.isBoxOpen(_hiveBox)) {
+        await Hive.openBox(_hiveBox,
+            encryptionCipher: HiveAesCipher(encryptionKey));
+      }
+      _unlocked = true;
+      return true;
+    } catch (e) {
+      debugPrint('SettingsStorage.attemptUnlock: failed: $e');
+      return false;
     }
-    _unlocked = true;
-    return true;
   }
 
   /// Safe accessor for the settings box.

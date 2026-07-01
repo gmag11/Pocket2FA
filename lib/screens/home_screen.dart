@@ -496,7 +496,7 @@ class _HomePageState extends State<HomePage>
                               groups: srv.groups)));
                   if (result is AccountEntry) {
                     await _serverManager.updateAccount(result);
-                    if (mounted) {
+                    if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(content: Text(l10n.accountUpdated)),
                       );

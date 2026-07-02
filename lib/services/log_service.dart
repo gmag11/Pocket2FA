@@ -5,8 +5,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:path_provider/path_provider.dart';
 
-import 'settings_service.dart';
-
 /// Severity level of a log entry.
 enum LogLevel { debug, info, warning, error }
 
@@ -65,19 +63,13 @@ class LogService {
   /// Notifier that fires whenever a new log entry is added.
   final ValueNotifier<int> entryCount = ValueNotifier<int>(0);
 
+  /// Whether logging capture is enabled. Controlled externally by SettingsService.
+  bool enabled = false;
+
   /// Returns an unmodifiable snapshot of current log entries (oldest first).
   List<LogEntry> get entries => List.unmodifiable(_entries);
 
-  /// Whether logging is currently enabled.
-  bool get _isEnabled {
-    try {
-      return SettingsService.instance.debugLoggingEnabled;
-    } catch (_) {
-      return false;
-    }
-  }
-
-  /// Records a new log entry. No-op when debug logging is disabled.
+  /// Records a new log entry. No-op when [enabled] is false.
   /// Always forwards to `developer.log` for IDE debugging regardless of the setting.
   void log(
     String message, {
@@ -87,7 +79,7 @@ class LogService {
     // Always output to developer.log for IDE debugging
     developer.log('$name: $message', name: name);
 
-    if (!_isEnabled) return;
+    if (!enabled) return;
 
     final entry = LogEntry(
       timestamp: DateTime.now(),

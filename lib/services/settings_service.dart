@@ -3,6 +3,7 @@ import 'package:flutter/material.dart' show ThemeMode;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'settings_storage.dart';
+import 'log_service.dart';
 
 enum CodeFormat { compact, spaced3, spaced2 }
 
@@ -183,6 +184,10 @@ class SettingsService extends ChangeNotifier {
 
   Future<void> setDebugLoggingEnabled(bool on) async {
     _debugLoggingEnabled = on;
+    LogService.instance.enabled = on;
+    if (!on) {
+      LogService.instance.clear();
+    }
     if (storage != null) {
       final box = storage!.box;
       await box.put(_debugLoggingEnabledKey, on);

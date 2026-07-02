@@ -24,7 +24,7 @@ class LogScreen extends StatefulWidget {
 
 class _LogScreenState extends State<LogScreen> {
   final LogService _logService = LogService.instance;
-  LogLevel? _filterLevel;
+  int _filterIndex = 0; // 0 = All, 1 = debug, 2 = info, 3 = warning, 4 = error
   final ScrollController _scrollController = ScrollController();
 
   @override
@@ -35,8 +35,9 @@ class _LogScreenState extends State<LogScreen> {
 
   List<LogEntry> get _filteredEntries {
     final all = _logService.entries;
-    if (_filterLevel == null) return all;
-    return all.where((e) => e.level == _filterLevel).toList();
+    if (_filterIndex == 0) return all;
+    final level = LogLevel.values[_filterIndex - 1];
+    return all.where((e) => e.level == level).toList();
   }
 
   Color _levelColor(LogLevel level, BuildContext context) {
@@ -160,35 +161,39 @@ class _LogScreenState extends State<LogScreen> {
       appBar: AppBar(
         title: Text(l10n.logViewerTitle),
         actions: [
-          // Filter chip menu
-          PopupMenuButton<LogLevel?>(
+          // Filter dropdown
+          PopupMenuButton<int>(
             icon: const Icon(Icons.filter_list),
             tooltip: l10n.logFilter,
-            onSelected: (level) => setState(() => _filterLevel = level),
+            initialValue: _filterIndex,
+            onSelected: (index) => setState(() => _filterIndex = index),
             itemBuilder: (_) => [
               PopupMenuItem(
-                value: null,
+                value: 0,
                 child: Row(
                   children: [
-                    if (_filterLevel == null)
-                      const Icon(Icons.check, size: 16),
+                    if (_filterIndex == 0)
+                      const Icon(Icons.check, size: 16)
+                    else
+                      const SizedBox(width: 16),
                     const SizedBox(width: 8),
                     Text(l10n.logFilterAll),
                   ],
                 ),
               ),
-              for (final level in LogLevel.values)
+              for (var i = 0; i < LogLevel.values.length; i++)
                 PopupMenuItem(
-                  value: level,
+                  value: i + 1,
                   child: Row(
                     children: [
-                      if (_filterLevel == level)
+                      if (_filterIndex == i + 1)
                         const Icon(Icons.check, size: 16)
                       else
                         const SizedBox(width: 16),
                       const SizedBox(width: 8),
-                      Text(_levelLabel(level),
-                          style: TextStyle(color: _levelColor(level, context))),
+                      Text(_levelLabel(LogLevel.values[i]),
+                          style: TextStyle(
+                              color: _levelColor(LogLevel.values[i], context))),
                     ],
                   ),
                 ),

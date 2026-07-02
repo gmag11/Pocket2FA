@@ -36,6 +36,7 @@ Future<void> main() async {
   await storage.init();
 
   final settings = SettingsService(storage: storage);
+  LogService.instance.enabled = settings.debugLoggingEnabled;
 
   PlatformDispatcher.instance.onError = (Object error, StackTrace stack) {
     LogService.instance.error('$error\n$stack', name: 'Dart');

@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
+import 'package:dio/io.dart';
 import 'package:flutter/foundation.dart';
 import 'dart:io';
-import 'dart:typed_data';
 import 'dart:developer' as developer;
 import '../models/server_connection.dart';
 import '../models/account_entry.dart';
@@ -101,6 +101,17 @@ class ApiService {
     );
 
     _dio = Dio(baseOptions);
+
+    if (server.allowSelfSigned) {
+      _dio!.httpClientAdapter = IOHttpClientAdapter(
+        createHttpClient: () {
+          final client = HttpClient();
+          client.badCertificateCallback = (cert, host, port) => true;
+          return client;
+        },
+      );
+    }
+
     // Attach a default logging interceptor (configurable).
     if (enableLogging) {
       // Use LogInterceptor but do NOT log request/response headers or bodies
@@ -449,6 +460,15 @@ class ApiService {
     );
 
     final dio = Dio(opts);
+    if (server.allowSelfSigned) {
+      dio.httpClientAdapter = IOHttpClientAdapter(
+        createHttpClient: () {
+          final client = HttpClient();
+          client.badCertificateCallback = (cert, host, port) => true;
+          return client;
+        },
+      );
+    }
     // lightweight logging for validation (do not log sensitive values)
     // Validation uses a lightweight logger that must also avoid printing headers
     dio.interceptors.add(LogInterceptor(

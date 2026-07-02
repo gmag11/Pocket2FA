@@ -17,6 +17,11 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    env:
+      # Keep PUB_CACHE inside the workspace so absolute paths embedded in the
+      # build match F-Droid's build (which sets PUB_CACHE=$(pwd)/.pub-cache).
+      # This is required for reproducible builds.
+      PUB_CACHE: ${{ github.workspace }}/.pub-cache
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -32,6 +37,7 @@ jobs:
       - name: Set up Flutter (stable)
         uses: subosito/flutter-action@v2
         with:
+          flutter-version: '3.41.8'
           channel: stable
           cache: true
 
@@ -40,6 +46,19 @@ jobs:
 
       - name: Fetch Flutter dependencies
         run: flutter pub get
+
+      - name: Patch native plugins for reproducible builds
+        shell: bash
+        run: |
+          # Strip the ELF build-id and normalize embedded source paths for every
+          # native plugin compiled with CMake, so the resulting .so files are
+          # byte-identical to the F-Droid build.
+          # flutter_zxing (libflutter_zxing.so / native zxing)
+          sed -i '1a add_link_options("LINKER:--build-id=none")' "$PUB_CACHE"/hosted/pub.dev/flutter_zxing-*/*/CMakeLists.txt
+          sed -i '1a add_compile_options("-ffile-prefix-map=${CMAKE_SOURCE_DIR}=.")' "$PUB_CACHE"/hosted/pub.dev/flutter_zxing-*/*/CMakeLists.txt
+          # jni (libdartjni.so)
+          sed -i '1a add_link_options("LINKER:--build-id=none")' "$PUB_CACHE"/hosted/pub.dev/jni-*/src/CMakeLists.txt
+          sed -i '1a add_compile_options("-ffile-prefix-map=${CMAKE_SOURCE_DIR}=.")' "$PUB_CACHE"/hosted/pub.dev/jni-*/src/CMakeLists.txt
 
       - name: Detect KEYSTORE_BASE64 presence
         id: detect_keystore
@@ -121,7 +140,7 @@ jobs:
 
       - name: Upload APKs to release
         if: github.event_name == 'release'
-        uses: softprops/action-gh-release@v2.6.1
+        uses: softprops/action-gh-release@v3
         with:
           files: |
             dist/app-arm64-v8a-release.apk

@@ -21,6 +21,7 @@ class ServerConnection {
   final UserPreferences? preferences;
   final bool? isAdmin;
   final List<GroupEntry>? groups;
+  final bool allowSelfSigned;
 
   ServerConnection({
     required this.id,
@@ -36,6 +37,7 @@ class ServerConnection {
     this.preferences,
     this.isAdmin,
     this.groups,
+    this.allowSelfSigned = false,
   });
 
   Map<String, dynamic> toMap() => {
@@ -54,6 +56,7 @@ class ServerConnection {
           'authenticated_by_proxy': authenticatedByProxy,
         if (preferences != null) 'preferences': preferences!.toMap(),
         if (isAdmin != null) 'is_admin': isAdmin,
+        if (allowSelfSigned) 'allow_self_signed': true,
       };
 
   factory ServerConnection.fromMap(Map<dynamic, dynamic> m) => ServerConnection(
@@ -86,5 +89,6 @@ class ServerConnection {
                 Map<dynamic, dynamic>.from(m['preferences'] as Map))
             : null,
         isAdmin: m.containsKey('is_admin') ? m['is_admin'] as bool? : null,
+        allowSelfSigned: (m['allow_self_signed'] as bool?) ?? false,
       );
 }

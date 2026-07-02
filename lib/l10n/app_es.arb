@@ -694,5 +694,17 @@
   "logScrollToBottom": "Ir al final",
   "@logScrollToBottom": {
     "description": "Tooltip del botón FAB para ir al final del registro."
+  },
+  "certErrorTitle": "Error de certificado",
+  "@certErrorTitle": {
+    "description": "T\u00edtulo del di\u00e1logo cuando el certificado TLS no se puede verificar."
+  },
+  "certErrorMessage": "El certificado SSL del servidor no se pudo verificar. Puede tratarse de un certificado autofirmado. Conectarse a un servidor con un certificado no verificado puede suponer un riesgo de seguridad. \u00bfDeseas conectarte de todas formas?",
+  "@certErrorMessage": {
+    "description": "Cuerpo del di\u00e1logo de aviso sobre un certificado TLS no verificado."
+  },
+  "connectAnyway": "Conectar de todas formas",
+  "@connectAnyway": {
+    "description": "Etiqueta del bot\u00f3n para continuar a pesar del aviso de certificado."
   }
 }

@@ -50,9 +50,11 @@ class AccountTileUtils {
     return parts.join(' ');
   }
 
-  /// Returns a color based on the service name
-  static Color getServiceColor(String serviceName) {
-    final index = serviceName.length % Colors.primaries.length;
+  /// Returns a color based on the service name, falling back to account name
+  static Color getServiceColor(String serviceName, [String account = '']) {
+    final name = serviceName.isNotEmpty ? serviceName : account;
+    if (name.isEmpty) return Colors.primaries[0];
+    final index = name.codeUnits.fold(0, (h, c) => h + c) % Colors.primaries.length;
     return Colors.primaries[index];
   }
 }

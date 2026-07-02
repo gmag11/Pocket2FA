@@ -20,8 +20,9 @@ class SettingsScreen extends StatelessWidget {
       body: AnimatedBuilder(
         animation: settings,
         builder: (context, _) {
+          final bottomPadding = MediaQuery.paddingOf(context).bottom;
           return ListView(
-            padding: const EdgeInsets.all(16.0),
+            padding: EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 16.0 + bottomPadding),
             children: [
               // GENERAL Section
               _buildSectionHeader(l10n.settingsGeneral),

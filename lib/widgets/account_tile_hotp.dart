@@ -141,7 +141,7 @@ class _AccountTileHOTPState extends State<AccountTileHOTP> {
 
   @override
   Widget build(BuildContext context) {
-    final color = AccountTileUtils.getServiceColor(widget.item.service);
+    final color = AccountTileUtils.getServiceColor(widget.item.service, widget.item.account);
 
     if (widget.isManageMode) {
       return _buildManageModeUI(context, color);

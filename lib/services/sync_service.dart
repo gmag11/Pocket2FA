@@ -324,15 +324,22 @@ class SyncService {
       _log('failed to persist servers: $e');
     }
 
-    _log('sync completed for ${server.id} (downloaded=$downloaded failed=$failed skipped=$skipped)');
+    final iconStatus = failed == 0
+        ? 'all_ok'
+        : (failed == iconEntries.length ? 'all_failed' : 'partial');
+    final message = failed == 0
+        ? 'Sync completed'
+        : 'Sync completed — $failed icon(s) unavailable';
+
+    _log('sync completed for ${server.id} (downloaded=$downloaded failed=$failed skipped=$skipped iconStatus=$iconStatus)');
     return {
       'skipped': false,
-      'success': failed == 0,
+      'success': true,
       'downloaded': downloaded,
       'failed': failed,
       'skipped_count': skipped,
-      'message':
-          (failed == 0 ? 'Sync completed' : 'Sync completed with failures')
+      'iconStatus': iconStatus,
+      'message': message,
     };
   }
 

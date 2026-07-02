@@ -413,10 +413,10 @@ class ApiService {
             final alwaysRedact = key == 'secret' ||
                 key == 'seed' ||
                 key == 'apiKey' ||
-                key == 'Authorization';
-            final releaseOnlyRedact = !kDebugMode &&
-                (key == 'account' || key == 'service');
-            if (alwaysRedact || releaseOnlyRedact) {
+                key == 'Authorization' ||
+                key == 'account' ||
+                key == 'service';
+            if (alwaysRedact) {
               out[k] = v == null ? null : '***REDACTED***';
             } else {
               out[k] = _maskSecretsIn(v);

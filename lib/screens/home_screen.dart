@@ -17,6 +17,7 @@ import 'home_manage_mode.dart';
 import 'home_server_manager.dart';
 import 'home_sync_manager.dart';
 import 'search_bar.dart';
+import 'log_screen.dart';
 import 'settings_screen.dart';
 
 class HomePage extends StatefulWidget {
@@ -402,9 +403,32 @@ class _HomePageState extends State<HomePage>
     final storage = widget.settings.storage;
 
     // If storage exists but is locked (biometric required and not yet satisfied),
-    // show a minimal screen with a single centered 'Retry' button
+    // show a minimal screen with a single centered 'Retry' button.
+    // The AppBar is kept so the user can still navigate to Settings (to disable
+    // biometric protection) or to the Debug Log.
     if (storage != null && !storage.isUnlocked) {
       return Scaffold(
+        appBar: AppBar(
+          title: Text(l10n.appTitle),
+          actions: [
+            IconButton(
+              tooltip: l10n.settingsLabel,
+              icon: const Icon(Icons.settings_outlined),
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (c) => SettingsScreen(settings: widget.settings),
+                ),
+              ),
+            ),
+            IconButton(
+              tooltip: l10n.debugLogging,
+              icon: const Icon(Icons.bug_report_outlined),
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const LogScreen()),
+              ),
+            ),
+          ],
+        ),
         body: SafeArea(
           child: Center(
             child: Column(
@@ -422,10 +446,11 @@ class _HomePageState extends State<HomePage>
                 ElevatedButton(
                   onPressed: () async {
                     final messenger = ScaffoldMessenger.of(context);
-                    // capture localized message before await to avoid context-after-await lint
+                    // capture localized message before await to avoid context-after-async lint
                     final authFailedMsg = l10n.authenticationFailed;
                     final ok = await storage.attemptUnlock();
                     if (ok) {
+                      await widget.settings.reloadFromStorage();
                       await _serverManager.loadServers();
                     } else {
                       messenger

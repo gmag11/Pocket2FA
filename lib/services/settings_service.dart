@@ -40,10 +40,20 @@ class SettingsService extends ChangeNotifier {
     _load();
   }
 
+  /// Reload settings from storage after a successful biometric unlock.
+  Future<void> reloadFromStorage() => _load();
+
   Future<void> _load() async {
     if (storage != null) {
       // Query support for biometrics once and cache the result for the UI
       _biometricsSupported = await storage!.supportsBiometrics();
+      // If storage is locked (biometric auth not yet satisfied), skip loading
+      // settings from the box and use defaults. Settings will be reloaded
+      // after a successful unlock via reloadFromStorage().
+      if (!storage!.isUnlocked) {
+        notifyListeners();
+        return;
+      }
       final box = storage!.box;
       final v = box.get(_key, defaultValue: 'spaced3') as String;
       _format = _fromString(v);

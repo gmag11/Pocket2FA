@@ -46,8 +46,8 @@
 
 ## 8. Verification
 
-- [ ] 8.1 Manual test: toggle setting ON, trigger a sync, verify entries appear in LogScreen
-- [ ] 8.2 Manual test: toggle setting OFF, trigger a sync, verify NO new entries appear
-- [ ] 8.3 Manual test: export log file and verify content format
-- [ ] 8.4 Manual test: filter chips show/hide entries correctly
-- [ ] 8.5 Manual test: clear button removes all entries
+- [x] 8.1 Manual test: toggle setting ON, trigger a sync, verify entries appear in LogScreen
+- [x] 8.2 Manual test: toggle setting OFF, trigger a sync, verify NO new entries appear
+- [x] 8.3 Manual test: export log file and verify content format
+- [x] 8.4 Manual test: filter chips show/hide entries correctly
+- [x] 8.5 Manual test: clear button removes all entries

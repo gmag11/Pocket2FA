@@ -450,6 +450,7 @@ class _HomePageState extends State<HomePage>
                     final authFailedMsg = l10n.authenticationFailed;
                     final ok = await storage.attemptUnlock();
                     if (ok) {
+                      await widget.settings.reloadFromStorage();
                       await _serverManager.loadServers();
                     } else {
                       messenger

@@ -15,8 +15,8 @@ if (-not $buildDir) {
 }
 $buildDir = $buildDir.Path
 
-$src = Join-Path $buildDir "pocket2fa.exe"
-# $dst = Join-Path $buildDir "pocket2fa.exe"
+$src = Join-Path $buildDir "Pocket2FA.exe"
+# $dst = Join-Path $buildDir "Pocket2FA.exe"
 
 if (-not (Test-Path $src)) {
   Write-Error "Source executable not found: $src"

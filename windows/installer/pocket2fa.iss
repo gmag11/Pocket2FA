@@ -21,8 +21,8 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Source: "..\\..\\build\\windows\\x64\\runner\\Release\\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
-Name: "{group}\\Pocket2FA"; Filename: "{app}\\pocket2fa.exe"; WorkingDir: "{app}"
-Name: "{autodesktop}\\Pocket2FA"; Filename: "{app}\\pocket2fa.exe"; Tasks: desktopicon
+Name: "{group}\\Pocket2FA"; Filename: "{app}\\Pocket2FA.exe"; WorkingDir: "{app}"
+Name: "{autodesktop}\\Pocket2FA"; Filename: "{app}\\Pocket2FA.exe"; Tasks: desktopicon
 
 [Tasks]
 Name: "desktopicon"; Description: "Create a &desktop icon"; GroupDescription: "Additional icons:"; Flags: unchecked
@@ -31,7 +31,7 @@ Name: "desktopicon"; Description: "Create a &desktop icon"; GroupDescription: "A
 Name: "{app}"; Permissions: users-full
 
 [Run]
-Filename: "{app}\\pocket2fa.exe"; Description: "Launch Pocket2FA"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\\Pocket2FA.exe"; Description: "Launch Pocket2FA"; Flags: nowait postinstall skipifsilent
 
 [Code]
 procedure InitializeWizard();

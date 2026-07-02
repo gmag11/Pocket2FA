@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../l10n/app_localizations.dart';
 import '../services/settings_service.dart';
+import 'log_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   final SettingsService settings;
@@ -184,6 +185,48 @@ class SettingsScreen extends StatelessWidget {
                     const SizedBox(width: 12),
                     Text(l10n.minutesLabel, style: const TextStyle(fontSize: 16)),
                   ],
+                ),
+              ],
+
+              const SizedBox(height: 24),
+
+              // DIAGNOSTICS Section
+              _buildSectionHeader(l10n.settingsDiagnostics),
+              const SizedBox(height: 12),
+
+              // Debug logging toggle
+              _buildSettingTile(
+                icon: Icons.bug_report,
+                title: l10n.debugLogging,
+                subtitle: l10n.debugLoggingDescription,
+                trailing: Switch(
+                  value: settings.debugLoggingEnabled,
+                  onChanged: (v) => settings.setDebugLoggingEnabled(v),
+                  activeThumbColor: _baseAccent,
+                ),
+              ),
+
+              // View diagnostic log button (only when logging is enabled)
+              if (settings.debugLoggingEnabled) ...[
+                const SizedBox(height: 4),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  child: OutlinedButton.icon(
+                    icon: const Icon(Icons.article_outlined, size: 20),
+                    label: Text(l10n.viewDiagnosticLog),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const LogScreen(),
+                        ),
+                      );
+                    },
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: _baseAccent,
+                      side: BorderSide(color: _baseAccent.withValues(alpha: 0.5)),
+                    ),
+                  ),
                 ),
               ],
             ],

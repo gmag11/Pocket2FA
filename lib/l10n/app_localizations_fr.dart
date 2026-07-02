@@ -499,4 +499,71 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get connectAnyway => 'Se connecter quand même';
+
+  @override
+  String get settingsDiagnostics => 'DIAGNOSTIC';
+
+  @override
+  String get debugLogging => 'Journal de débogage';
+
+  @override
+  String get debugLoggingDescription =>
+      'Capture les journaux de diagnostic pour le dépannage. Les journaux sont stockés en mémoire uniquement et effacés au redémarrage de l\'application.';
+
+  @override
+  String get viewDiagnosticLog => 'Voir le journal de diagnostic';
+
+  @override
+  String get logViewerTitle => 'Journal de diagnostic';
+
+  @override
+  String get logEmpty => 'Aucune entrée de journal pour le moment';
+
+  @override
+  String get logClear => 'Effacer';
+
+  @override
+  String get logClearTitle => 'Effacer le journal';
+
+  @override
+  String get logClearConfirm =>
+      'Supprimer toutes les entrées du journal ? Cette action est irréversible.';
+
+  @override
+  String get logClearAction => 'Tout effacer';
+
+  @override
+  String get logExport => 'Exporter le journal';
+
+  @override
+  String get logFilter => 'Filtrer';
+
+  @override
+  String get logFilterAll => 'Tous';
+
+  @override
+  String get logCopy => 'Copier dans le presse-papiers';
+
+  @override
+  String get logShare => 'Partager / Exporter';
+
+  @override
+  String get logScrollToBottom => 'Défiler vers le bas';
+
+  @override
+  String get logCopied => 'Journal copié dans le presse-papiers';
+
+  @override
+  String get logExportFailed => 'Échec de l\'exportation du journal';
+
+  @override
+  String get logExported => 'Journal exporté';
+
+  @override
+  String logSavedTo(Object path) {
+    return 'Journal enregistré dans $path';
+  }
+
+  @override
+  String get nothingToExport => 'Rien à exporter';
 }

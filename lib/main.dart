@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -8,6 +9,7 @@ import 'package:image_picker_platform_interface/image_picker_platform_interface.
 
 import 'l10n/app_localizations.dart';
 import 'screens/home_screen.dart';
+import 'services/log_service.dart';
 import 'services/settings_service.dart';
 import 'services/settings_storage.dart';
 
@@ -34,6 +36,14 @@ Future<void> main() async {
   await storage.init();
 
   final settings = SettingsService(storage: storage);
+
+  PlatformDispatcher.instance.onError = (Object error, StackTrace stack) {
+    LogService.instance.error('$error\n$stack', name: 'Dart');
+    return false;
+  };
+
+  LogService.instance.info('App starting', name: 'main');
+
   runApp(Pocket2FA(settings: settings));
 }
 

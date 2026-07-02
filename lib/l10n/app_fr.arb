@@ -638,7 +638,95 @@
     "@certErrorMessage": {
         "description": "Corps du dialogue d\u2019avertissement concernant un certificat TLS non v\u00e9rifi\u00e9."
     },
-    "connectAnyway": "Se connecter quand m\u00eame",
+    "connectAnyway": "Se connecter quand même",
     "@connectAnyway": {
-        "description": "\u00c9tiquette du bouton pour continuer malgr\u00e9 l\u2019avertissement de certificat."    }
+        "description": "Étiquette du bouton pour continuer malgré l'avertissement de certificat."
+    },
+    "settingsDiagnostics": "DIAGNOSTIC",
+    "@settingsDiagnostics": {
+        "description": "Étiquette de la section Diagnostic dans les paramètres."
+    },
+    "debugLogging": "Journal de débogage",
+    "@debugLogging": {
+        "description": "Étiquette de l'interrupteur de journal de débogage."
+    },
+    "debugLoggingDescription": "Capture les journaux de diagnostic pour le dépannage. Les journaux sont stockés en mémoire uniquement et effacés au redémarrage de l'application.",
+    "@debugLoggingDescription": {
+        "description": "Description affichée sous l'interrupteur de débogage."
+    },
+    "viewDiagnosticLog": "Voir le journal de diagnostic",
+    "@viewDiagnosticLog": {
+        "description": "Bouton pour ouvrir l'écran de visualisation du journal."
+    },
+    "logViewerTitle": "Journal de diagnostic",
+    "@logViewerTitle": {
+        "description": "Titre de l'écran de visualisation du journal."
+    },
+    "logEmpty": "Aucune entrée de journal pour le moment",
+    "@logEmpty": {
+        "description": "Affiché lorsque le tampon de journal est vide."
+    },
+    "logClear": "Effacer",
+    "@logClear": {
+        "description": "Bouton pour effacer toutes les entrées du journal."
+    },
+    "logClearTitle": "Effacer le journal",
+    "@logClearTitle": {
+        "description": "Titre de la boîte de dialogue de confirmation."
+    },
+    "logClearConfirm": "Supprimer toutes les entrées du journal ? Cette action est irréversible.",
+    "@logClearConfirm": {
+        "description": "Message de confirmation pour effacer le journal."
+    },
+    "logClearAction": "Tout effacer",
+    "@logClearAction": {
+        "description": "Bouton d'action dans la boîte de dialogue de confirmation."
+    },
+    "logExport": "Exporter le journal",
+    "@logExport": {
+        "description": "Bouton pour exporter les entrées du journal vers un fichier."
+    },
+    "logFilter": "Filtrer",
+    "@logFilter": {
+        "description": "Info-bulle du bouton de filtrage par niveau."
+    },
+    "logFilterAll": "Tous",
+    "@logFilterAll": {
+        "description": "Option de filtre pour afficher toutes les entrées."
+    },
+    "logCopy": "Copier dans le presse-papiers",
+    "@logCopy": {
+        "description": "Info-bulle du bouton de copie du journal."
+    },
+    "logShare": "Partager / Exporter",
+    "@logShare": {
+        "description": "Info-bulle du bouton de partage/export du journal."
+    },
+    "logScrollToBottom": "Défiler vers le bas",
+    "@logScrollToBottom": {
+        "description": "Info-bulle du bouton d'action flottant."
+    },
+    "logCopied": "Journal copié dans le presse-papiers",
+    "@logCopied": {
+        "description": "Message affiché après la copie du journal."
+    },
+    "logExportFailed": "Échec de l'exportation du journal",
+    "@logExportFailed": {
+        "description": "Message affiché lorsque l'exportation du journal échoue."
+    },
+    "logExported": "Journal exporté",
+    "@logExported": {
+        "description": "Message affiché après une exportation réussie."
+    },
+    "logSavedTo": "Journal enregistré dans {path}",
+    "@logSavedTo": {
+        "description": "Message affiché sur le bureau après l'enregistrement du journal, avec le chemin complet.",
+        "placeholders": {
+            "path": {}
+        }
+    },
+    "nothingToExport": "Rien à exporter",
+    "@nothingToExport": {
+        "description": "Message affiché lors d'une tentative d'exportation d'un journal vide."
+    }
 }

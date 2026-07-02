@@ -993,6 +993,132 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Connect anyway'**
   String get connectAnyway;
+
+  /// Label for the Diagnostics settings section.
+  ///
+  /// In en, this message translates to:
+  /// **'DIAGNOSTICS'**
+  String get settingsDiagnostics;
+
+  /// Label for the debug logging toggle switch.
+  ///
+  /// In en, this message translates to:
+  /// **'Debug Logging'**
+  String get debugLogging;
+
+  /// Description shown below the debug logging toggle.
+  ///
+  /// In en, this message translates to:
+  /// **'Capture diagnostic logs for troubleshooting. Logs are stored in memory only and cleared when the app restarts.'**
+  String get debugLoggingDescription;
+
+  /// Button label to open the log viewer screen.
+  ///
+  /// In en, this message translates to:
+  /// **'View Diagnostic Log'**
+  String get viewDiagnosticLog;
+
+  /// Title for the log viewer screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Diagnostic Log'**
+  String get logViewerTitle;
+
+  /// Shown when the log buffer is empty.
+  ///
+  /// In en, this message translates to:
+  /// **'No log entries yet'**
+  String get logEmpty;
+
+  /// Button label to clear all log entries.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get logClear;
+
+  /// Title of the confirmation dialog for clearing logs.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear Log'**
+  String get logClearTitle;
+
+  /// Confirmation message for clearing logs.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete all log entries? This cannot be undone.'**
+  String get logClearConfirm;
+
+  /// Action button label in the clear log confirmation dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear All'**
+  String get logClearAction;
+
+  /// Button label to export log entries to a file.
+  ///
+  /// In en, this message translates to:
+  /// **'Export Log'**
+  String get logExport;
+
+  /// Tooltip for the log level filter button.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter'**
+  String get logFilter;
+
+  /// Filter option to show all log entries.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get logFilterAll;
+
+  /// Tooltip for the copy log to clipboard button.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy to Clipboard'**
+  String get logCopy;
+
+  /// Tooltip for the share/export log button.
+  ///
+  /// In en, this message translates to:
+  /// **'Share / Export'**
+  String get logShare;
+
+  /// Tooltip for the scroll-to-bottom floating action button.
+  ///
+  /// In en, this message translates to:
+  /// **'Scroll to bottom'**
+  String get logScrollToBottom;
+
+  /// Snackbar message shown after copying log to clipboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Log copied to clipboard'**
+  String get logCopied;
+
+  /// Snackbar message shown when log export fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to export log'**
+  String get logExportFailed;
+
+  /// Snackbar message shown after successful log export.
+  ///
+  /// In en, this message translates to:
+  /// **'Log exported'**
+  String get logExported;
+
+  /// Snackbar message shown on desktop after log is saved to a file, with the full path.
+  ///
+  /// In en, this message translates to:
+  /// **'Log saved to {path}'**
+  String logSavedTo(Object path);
+
+  /// Snackbar message shown when trying to export an empty log.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing to export'**
+  String get nothingToExport;
 }
 
 class _AppLocalizationsDelegate

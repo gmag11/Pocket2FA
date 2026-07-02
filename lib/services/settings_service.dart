@@ -7,6 +7,12 @@ import 'settings_storage.dart';
 enum CodeFormat { compact, spaced3, spaced2 }
 
 class SettingsService extends ChangeNotifier {
+  static SettingsService? _instance;
+  static SettingsService get instance {
+    assert(_instance != null, 'SettingsService not initialized');
+    return _instance!;
+  }
+
   static const _key = 'otp_format';
   static const _enabledKey = 'otp_format_enabled';
   static const _biometricKey = 'biometric_protection_enabled';
@@ -16,6 +22,7 @@ class SettingsService extends ChangeNotifier {
   static const _autoSyncIntervalKey = 'auto_sync_interval_minutes';
   static const _darkModeKey = 'dark_mode_enabled'; // legacy, kept for migration
   static const _themeModeKey = 'theme_mode';
+  static const _debugLoggingEnabledKey = 'debug_logging_enabled';
 
   CodeFormat _format = CodeFormat.spaced3;
   CodeFormat get format => _format;
@@ -28,6 +35,7 @@ class SettingsService extends ChangeNotifier {
   bool get biometricsSupported => _biometricsSupported;
 
   SettingsService({this.storage}) {
+    _instance = this;
     _load();
   }
 
@@ -44,6 +52,7 @@ class SettingsService extends ChangeNotifier {
       _syncOnOpen = box.get(_syncOnOpenKey, defaultValue: true) as bool;
       _autoSyncEnabled = box.get(_autoSyncEnabledKey, defaultValue: false) as bool;
       _autoSyncIntervalMinutes = box.get(_autoSyncIntervalKey, defaultValue: 30) as int;
+      _debugLoggingEnabled = box.get(_debugLoggingEnabledKey, defaultValue: false) as bool;
       final storedTheme = box.get(_themeModeKey) as String?;
       if (storedTheme != null) {
         _themeMode = _themeModeFromString(storedTheme);
@@ -64,6 +73,7 @@ class SettingsService extends ChangeNotifier {
     _syncOnOpen = prefs.getBool(_syncOnOpenKey) ?? true;
     _autoSyncEnabled = prefs.getBool(_autoSyncEnabledKey) ?? false;
     _autoSyncIntervalMinutes = prefs.getInt(_autoSyncIntervalKey) ?? 30;
+    _debugLoggingEnabled = prefs.getBool(_debugLoggingEnabledKey) ?? false;
     final storedTheme = prefs.getString(_themeModeKey);
     if (storedTheme != null) {
       _themeMode = _themeModeFromString(storedTheme);
@@ -171,11 +181,28 @@ class SettingsService extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> setDebugLoggingEnabled(bool on) async {
+    _debugLoggingEnabled = on;
+    if (storage != null) {
+      final box = storage!.box;
+      await box.put(_debugLoggingEnabledKey, on);
+      notifyListeners();
+      return;
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_debugLoggingEnabledKey, on);
+    notifyListeners();
+  }
+
   bool _biometricEnabled = false;
   bool get biometricEnabled => _biometricEnabled;
 
   bool _hideOtps = false;
   bool get hideOtps => _hideOtps;
+
+  bool _debugLoggingEnabled = false;
+  bool get debugLoggingEnabled => _debugLoggingEnabled;
 
   ThemeMode _themeMode = ThemeMode.system;
   ThemeMode get themeMode => _themeMode;

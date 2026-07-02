@@ -641,6 +641,91 @@
   },
   "connectAnyway": "Conectar de todas formas",
   "@connectAnyway": {
-    "description": "Etiqueta del bot\u00f3n para continuar a pesar del aviso de certificado."
-  }
+    "description": "Etiqueta del bot\u00f3n para continuar a pesar del aviso de certificado."  },
+  "settingsDiagnostics": "DIAGNÓSTICO",
+  "@settingsDiagnostics": {
+    "description": "Etiqueta de la sección de diagnóstico en ajustes."
+  },
+  "debugLogging": "Registro de depuración",
+  "@debugLogging": {
+    "description": "Etiqueta del interruptor de registro de depuración."
+  },
+  "debugLoggingDescription": "Captura registros de diagnóstico para resolver problemas. Los registros se guardan solo en memoria y se borran al reiniciar la app.",
+  "@debugLoggingDescription": {
+    "description": "Descripción mostrada debajo del interruptor de depuración."
+  },
+  "viewDiagnosticLog": "Ver registro de diagnóstico",
+  "@viewDiagnosticLog": {
+    "description": "Botón para abrir la pantalla de visualización de registros."
+  },
+  "logViewerTitle": "Registro de diagnóstico",
+  "@logViewerTitle": {
+    "description": "Título de la pantalla de visualización de registros."
+  },
+  "logEmpty": "No hay entradas de registro todavía",
+  "@logEmpty": {
+    "description": "Se muestra cuando el buffer de registros está vacío."
+  },
+  "logClear": "Limpiar",
+  "@logClear": {
+    "description": "Botón para limpiar todas las entradas de registro."
+  },
+  "logClearTitle": "Limpiar registro",
+  "@logClearTitle": {
+    "description": "Título del diálogo de confirmación para limpiar registros."
+  },
+  "logClearConfirm": "¿Eliminar todas las entradas de registro? Esto no se puede deshacer.",
+  "@logClearConfirm": {
+    "description": "Mensaje de confirmación para limpiar registros."
+  },
+  "logClearAction": "Limpiar todo",
+  "@logClearAction": {
+    "description": "Botón de acción en el diálogo de confirmación."
+  },
+  "logExport": "Exportar registro",
+  "@logExport": {
+    "description": "Botón para exportar entradas de registro a un archivo."
+  },
+  "logFilter": "Filtrar",
+  "@logFilter": {
+    "description": "Tooltip del botón de filtro de nivel de registro."
+  },
+  "logFilterAll": "Todos",
+  "@logFilterAll": {
+    "description": "Opción de filtro para mostrar todas las entradas."
+  },
+  "logCopy": "Copiar al portapapeles",
+  "@logCopy": {
+    "description": "Tooltip del botón de copiar registro al portapapeles."
+  },
+  "logShare": "Compartir / Exportar",
+  "@logShare": {
+    "description": "Tooltip del botón de compartir/exportar registro."
+  },
+  "logScrollToBottom": "Ir al final",
+  "@logScrollToBottom": {
+    "description": "Tooltip del botón flotante para ir al final."
+  },
+  "logCopied": "Registro copiado al portapapeles",
+  "@logCopied": {
+    "description": "Mensaje mostrado tras copiar el registro."
+  },
+  "logExportFailed": "Error al exportar el registro",
+  "@logExportFailed": {
+    "description": "Mensaje mostrado cuando falla la exportación del registro."
+  },
+  "logExported": "Registro exportado",
+  "@logExported": {
+    "description": "Mensaje mostrado tras una exportación exitosa."
+  },
+  "logSavedTo": "Registro guardado en {path}",
+  "@logSavedTo": {
+    "description": "Mensaje mostrado en escritorio tras guardar el registro, con la ruta completa.",
+    "placeholders": {
+      "path": {}
+    }
+  },
+  "nothingToExport": "Nada para exportar",
+  "@nothingToExport": {
+    "description": "Mensaje mostrado al intentar exportar un registro vacío."  }
 }

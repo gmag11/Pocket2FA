@@ -494,4 +494,71 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get connectAnyway => 'Connect anyway';
+
+  @override
+  String get settingsDiagnostics => 'DIAGNOSTICS';
+
+  @override
+  String get debugLogging => 'Debug Logging';
+
+  @override
+  String get debugLoggingDescription =>
+      'Capture diagnostic logs for troubleshooting. Logs are stored in memory only and cleared when the app restarts.';
+
+  @override
+  String get viewDiagnosticLog => 'View Diagnostic Log';
+
+  @override
+  String get logViewerTitle => 'Diagnostic Log';
+
+  @override
+  String get logEmpty => 'No log entries yet';
+
+  @override
+  String get logClear => 'Clear';
+
+  @override
+  String get logClearTitle => 'Clear Log';
+
+  @override
+  String get logClearConfirm =>
+      'Delete all log entries? This cannot be undone.';
+
+  @override
+  String get logClearAction => 'Clear All';
+
+  @override
+  String get logExport => 'Export Log';
+
+  @override
+  String get logFilter => 'Filter';
+
+  @override
+  String get logFilterAll => 'All';
+
+  @override
+  String get logCopy => 'Copy to Clipboard';
+
+  @override
+  String get logShare => 'Share / Export';
+
+  @override
+  String get logScrollToBottom => 'Scroll to bottom';
+
+  @override
+  String get logCopied => 'Log copied to clipboard';
+
+  @override
+  String get logExportFailed => 'Failed to export log';
+
+  @override
+  String get logExported => 'Log exported';
+
+  @override
+  String logSavedTo(Object path) {
+    return 'Log saved to $path';
+  }
+
+  @override
+  String get nothingToExport => 'Nothing to export';
 }

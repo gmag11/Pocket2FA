@@ -1071,6 +1071,7 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Scroll to bottom'**
   String get logScrollToBottom;
+
   /// Title of the dialog shown when a TLS certificate cannot be verified.
   ///
   /// In en, this message translates to:

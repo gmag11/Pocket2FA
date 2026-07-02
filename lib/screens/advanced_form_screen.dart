@@ -1,4 +1,4 @@
-import 'dart:developer' as developer;
+import '../services/log_service.dart';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
@@ -541,7 +541,7 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
                             synchronized: false, // mark as unsynced by default
                           );
                     
-                          developer.log(
+                          LogService.instance.log(
                               kDebugMode
                                   ? 'AdvancedForm: updated entry service=${updatedEntry.service} account=${updatedEntry.account} id=${updatedEntry.id}'
                                   : 'AdvancedForm: updated entry id=${updatedEntry.id}',
@@ -561,25 +561,25 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
                                 synchronized: true,
                                 localIcon: widget.existingEntry?.localIcon,
                               );
-                              developer.log(
+                              LogService.instance.log(
                                   'AdvancedForm: updated on server id=${serverEntry.id}',
                                   name: 'AdvancedForm');
                               navigator.pop(serverEntry);
                               return;
                             } else {
-                              developer.log(
+                              LogService.instance.log(
                                   'AdvancedForm: server update returned unexpected payload, returning local unsynced entry',
                                   name: 'AdvancedForm');
                             }
                           } catch (e) {
                             try {
                               if (e is DioException) {
-                                developer.log(
+                                LogService.instance.log(
                                     'AdvancedForm: server update DioException status=${e.response?.statusCode} data=${e.response?.data}',
                                     name: 'AdvancedForm');
                               }
                             } catch (_) {}
-                            developer.log(
+                            LogService.instance.log(
                                 'AdvancedForm: server update failed (ignored): $e',
                                 name: 'AdvancedForm');
                           }
@@ -605,14 +605,14 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
                                     (_otpType == 'TOTP' ? 30 : 0),
                           );
                     
-                          developer.log(
+                          LogService.instance.log(
                               kDebugMode
                                   ? 'AdvancedForm: local entry created service=${entry.service} account=${entry.account} id=${entry.id} synchronized=${entry.synchronized}'
                                   : 'AdvancedForm: local entry created id=${entry.id} synchronized=${entry.synchronized}',
                               name: 'AdvancedForm');
 
                           // Use our service to attempt server-side creation
-                          developer.log(
+                          LogService.instance.log(
                               kDebugMode
                                   ? 'AdvancedForm: attempting immediate server create for service=${entry.service} account=${entry.account}'
                                   : 'AdvancedForm: attempting immediate server create',
@@ -628,30 +628,30 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
                                     sourceTag: 'AdvancedForm');
                     
                             if (serverEntry != null && serverEntry.synchronized) {
-                              developer.log(
+                              LogService.instance.log(
                                   'AdvancedForm: created on server id=${serverEntry.id}',
                                   name: 'AdvancedForm');
                               navigator.pop(serverEntry);
                               return;
                             } else {
-                              developer.log(
+                              LogService.instance.log(
                                   'AdvancedForm: server create returned no id, returning local entry',
                                   name: 'AdvancedForm');
                             }
                           } catch (e) {
                             try {
                               if (e is DioException) {
-                                developer.log(
+                                LogService.instance.log(
                                     'AdvancedForm: server create DioException status=${e.response?.statusCode} data=${e.response?.data}',
                                     name: 'AdvancedForm');
                               }
                             } catch (_) {}
-                            developer.log(
+                            LogService.instance.log(
                                 'AdvancedForm: server create failed (ignored): $e',
                                 name: 'AdvancedForm');
                           }
                     
-                          developer.log(
+                          LogService.instance.log(
                               kDebugMode
                                   ? 'AdvancedForm: created local AccountEntry: ${entry.toMap()}'
                                   : 'AdvancedForm: created local AccountEntry id=${entry.id}',

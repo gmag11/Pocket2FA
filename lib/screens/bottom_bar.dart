@@ -1,4 +1,4 @@
-import 'dart:developer' as developer;
+import '../services/log_service.dart';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -30,7 +30,7 @@ Future<void> launchExternal(Uri uri, ScaffoldMessengerState messenger) async {
     final redacted = uri.host.isNotEmpty
         ? uri.toString().replaceFirst(uri.host, '<host>')
         : '<uri>';
-    developer.log(
+    LogService.instance.log(
         'HomePage: cannot launch ${kDebugMode ? uri : redacted}: $e',
         name: 'HomePage');
     if (messenger.mounted) {

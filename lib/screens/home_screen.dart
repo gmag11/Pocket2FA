@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'dart:developer' as developer;
+import '../services/log_service.dart';
 
 import 'package:flutter/material.dart';
 import 'package:pocket2fa/screens/new_code_screen.dart';
@@ -71,7 +71,7 @@ class _HomePageState extends State<HomePage>
   widget.settings.addListener(_onSettingsChanged);
   WidgetsBinding.instance.addObserver(this);
 
-    developer.log('HomePage: initState - starting loadServersAndInitialize', name: 'HomePage');
+    LogService.instance.log('HomePage: initState - starting loadServersAndInitialize', name: 'HomePage');
     // Load servers and perform initial connectivity check
   _loadServersAndInitialize();
   }
@@ -98,7 +98,7 @@ class _HomePageState extends State<HomePage>
         _selectedGroup = 'All';
       });
   // If servers became available after load, attempt initial sync if needed
-  developer.log('HomePage: server manager changed; servers=${_serverManager.servers.length}', name: 'HomePage');
+  LogService.instance.log('HomePage: server manager changed; servers=${_serverManager.servers.length}', name: 'HomePage');
   _maybePerformInitialSync();
     }
   }
@@ -117,10 +117,10 @@ class _HomePageState extends State<HomePage>
       _setupAutoSync();
       // If we just exited manage mode (was true, now false), trigger a forced sync
       if (was && !_manageMode.isManageMode) {
-        developer.log('HomePage: exited manage mode - performing forced sync', name: 'HomePage');
+        LogService.instance.log('HomePage: exited manage mode - performing forced sync', name: 'HomePage');
         if (_serverManager.servers.isNotEmpty) {
           _syncManager.forceSyncCurrentServer().catchError((e) {
-            developer.log('HomePage: forced sync after manage exit failed: $e', name: 'HomePage');
+            LogService.instance.log('HomePage: forced sync after manage exit failed: $e', name: 'HomePage');
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(content: Text(l10n.cannotSync)),
@@ -137,7 +137,7 @@ class _HomePageState extends State<HomePage>
     // Settings changed (auto-sync toggle/interval or sync-on-open). Reconfigure auto-sync.
     if (mounted) {
       setState(() {});
-    developer.log('HomePage: settings changed; syncOnOpen=${widget.settings.syncOnOpen} autoSyncEnabled=${widget.settings.autoSyncEnabled} interval=${widget.settings.autoSyncIntervalMinutes}',
+    LogService.instance.log('HomePage: settings changed; syncOnOpen=${widget.settings.syncOnOpen} autoSyncEnabled=${widget.settings.autoSyncEnabled} interval=${widget.settings.autoSyncIntervalMinutes}',
       name: 'HomePage');
     _setupAutoSync();
   // If the user enabled syncOnOpen after settings loaded, attempt initial sync
@@ -148,7 +148,7 @@ class _HomePageState extends State<HomePage>
   void _setupAutoSync() {
     // Cancel any existing timer
     if (_autoSyncTimer != null) {
-      developer.log('HomePage: cancelling existing autoSync timer', name: 'HomePage');
+      LogService.instance.log('HomePage: cancelling existing autoSync timer', name: 'HomePage');
       _autoSyncTimer?.cancel();
     }
 
@@ -162,18 +162,18 @@ class _HomePageState extends State<HomePage>
     // Guard against invalid values
     final interval = Duration(minutes: mins > 0 ? mins : 30);
 
-    developer.log('HomePage: starting autoSync timer interval=${interval.inMinutes}min', name: 'HomePage');
+    LogService.instance.log('HomePage: starting autoSync timer interval=${interval.inMinutes}min', name: 'HomePage');
     // Start periodic timer
     _autoSyncTimer = Timer.periodic(interval, (_) async {
       // Respect manage mode at execution time as well
       if (_manageMode.isManageMode) return;
       if (_serverManager.servers.isEmpty) return;
-      developer.log('HomePage: autoSync timer fired - attempting forced sync', name: 'HomePage');
+      LogService.instance.log('HomePage: autoSync timer fired - attempting forced sync', name: 'HomePage');
       try {
         await _syncManager.forceSyncCurrentServer();
-        developer.log('HomePage: autoSync forced sync completed', name: 'HomePage');
+        LogService.instance.log('HomePage: autoSync forced sync completed', name: 'HomePage');
       } catch (e) {
-        developer.log('HomePage: autoSync forced sync error: $e', name: 'HomePage');
+        LogService.instance.log('HomePage: autoSync forced sync error: $e', name: 'HomePage');
         _serverManager.updateServerReachability(false);
       }
     });
@@ -222,28 +222,28 @@ class _HomePageState extends State<HomePage>
   void _maybePerformInitialSync() async {
     // Only attempt once per HomePage lifecycle
     if (_initialSyncDone) {
-      developer.log('HomePage: skipping initial sync - already done', name: 'HomePage');
+      LogService.instance.log('HomePage: skipping initial sync - already done', name: 'HomePage');
       return;
     }
     // Do not attempt while in manage mode
     if (_manageMode.isManageMode) return;
     // Ensure settings wants sync on open and servers exist
     if (!widget.settings.syncOnOpen) {
-      developer.log('HomePage: syncOnOpen disabled - not performing initial sync', name: 'HomePage');
+      LogService.instance.log('HomePage: syncOnOpen disabled - not performing initial sync', name: 'HomePage');
       return;
     }
     if (_serverManager.servers.isEmpty) {
-      developer.log('HomePage: no servers available - not performing initial sync', name: 'HomePage');
+      LogService.instance.log('HomePage: no servers available - not performing initial sync', name: 'HomePage');
       return;
     }
 
-    developer.log('HomePage: conditions met - performing initial forced sync', name: 'HomePage');
+    LogService.instance.log('HomePage: conditions met - performing initial forced sync', name: 'HomePage');
     _initialSyncDone = true;
     try {
       await _syncManager.forceSyncCurrentServer();
-      developer.log('HomePage: initial forced sync completed', name: 'HomePage');
+      LogService.instance.log('HomePage: initial forced sync completed', name: 'HomePage');
     } catch (e) {
-      developer.log('HomePage: initial forced sync failed: $e', name: 'HomePage');
+      LogService.instance.log('HomePage: initial forced sync failed: $e', name: 'HomePage');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(l10n.cannotSync)),
@@ -353,7 +353,7 @@ class _HomePageState extends State<HomePage>
         if (success) {
           // Trigger sync for newly selected server
           try {
-        developer.log('HomePage: server selected - performing throttled sync', name: 'HomePage');
+        LogService.instance.log('HomePage: server selected - performing throttled sync', name: 'HomePage');
         await _syncManager.performThrottledSync();
           } catch (_) {
             // Ignore sync errors on server selection

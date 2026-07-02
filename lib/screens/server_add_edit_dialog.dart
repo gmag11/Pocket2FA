@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import '../l10n/app_localizations.dart';
-import 'dart:developer' as developer;
+import '../services/log_service.dart';
 import 'dart:io';
 import '../services/api_service.dart';
 import '../models/server_connection.dart';
@@ -60,7 +60,7 @@ Future<ServerConnection?> showServerAddEditDialog({
             try {
               final m = await ApiService.instance.validateServer(candidate);
               try {
-                developer.log(
+                LogService.instance.log(
                     kDebugMode
                         ? 'AccountsScreen: /api/v1/user response -> $m'
                         : 'AccountsScreen: /api/v1/user response ok',

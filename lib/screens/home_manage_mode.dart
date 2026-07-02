@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../l10n/app_localizations.dart';
-import 'dart:developer' as developer;
+import '../services/log_service.dart';
 import '../services/api_service.dart';
 import '../models/server_connection.dart';
 import '../models/account_entry.dart';
@@ -176,7 +176,7 @@ class HomeManageMode extends ChangeNotifier {
       await serverManager.persistServersToStorage();
     } catch (e) {
       // Silent fail: log only, keep marked deleted for sync retry
-      developer.log(
+      LogService.instance.log(
           'HomeManageMode: API delete failed (will retry in sync): $e',
           name: 'HomeManageMode');
       // Set reachability to false to indicate connectivity issue

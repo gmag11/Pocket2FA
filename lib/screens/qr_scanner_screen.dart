@@ -4,7 +4,7 @@ import '../l10n/app_localizations.dart';
 import '../models/group_entry.dart';
 import '../models/account_entry.dart';
 import '../services/entry_creation_service.dart';
-import 'dart:developer' as developer;
+import '../services/log_service.dart';
 
 class QrScannerScreen extends StatefulWidget {
   final String userEmail;
@@ -28,7 +28,7 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
 
   // Parse otpauth URL and build AccountEntry using the service
   Future<AccountEntry?> _parseAndCreateEntry(String qrContent) async {
-    developer.log('QrScannerScreen: Processing QR content',
+    LogService.instance.log('QrScannerScreen: Processing QR content',
         name: 'QrScannerScreen');
 
     // Parse QR content to create entry
@@ -36,19 +36,19 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
         sourceTag: 'QrScannerScreen');
 
     if (entry == null) {
-      developer.log('QrScannerScreen: Failed to parse QR content',
+      LogService.instance.log('QrScannerScreen: Failed to parse QR content',
           name: 'QrScannerScreen');
       return null;
     }
 
-    developer.log(
+    LogService.instance.log(
         'QrScannerScreen: Entry created from QR: ${entry.service}/${entry.account}',
         name: 'QrScannerScreen');
 
     // Attempt immediate upload if server host present
     if (widget.serverHost.isNotEmpty && mounted) {
       try {
-        developer.log('QrScannerScreen: Attempting server upload',
+        LogService.instance.log('QrScannerScreen: Attempting server upload',
             name: 'QrScannerScreen');
         final serverEntry = await EntryCreationService.createEntryOnServer(
             entry,
@@ -58,21 +58,21 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
             sourceTag: 'QrScannerScreen');
 
         if (serverEntry != null && serverEntry.synchronized) {
-          developer.log(
+          LogService.instance.log(
               'QrScannerScreen: Server upload successful, returning entry',
               name: 'QrScannerScreen');
           return serverEntry;
         } else {
-          developer.log(
+          LogService.instance.log(
               'QrScannerScreen: Server upload returned null or unsynchronized entry',
               name: 'QrScannerScreen');
         }
       } catch (e) {
-        developer.log('QrScannerScreen: Error during server upload: $e',
+        LogService.instance.log('QrScannerScreen: Error during server upload: $e',
             name: 'QrScannerScreen');
       }
     } else {
-      developer.log(
+      LogService.instance.log(
           'QrScannerScreen: Skipping server upload (no server or not mounted)',
           name: 'QrScannerScreen');
     }
@@ -91,17 +91,17 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
     final qrErrorMsg = l10n.qrScannerError;
 
     try {
-      developer.log('QrScannerScreen: QR detected, processing...',
+      LogService.instance.log('QrScannerScreen: QR detected, processing...',
           name: 'QrScannerScreen');
       final entry = await _parseAndCreateEntry(result.text!);
 
       if (entry != null && mounted) {
-        developer.log('QrScannerScreen: Returning with entry',
+        LogService.instance.log('QrScannerScreen: Returning with entry',
             name: 'QrScannerScreen');
         Navigator.of(context).pop(entry);
       }
     } catch (e) {
-      developer.log('QrScannerScreen: Error in QR detection: $e',
+      LogService.instance.log('QrScannerScreen: Error in QR detection: $e',
           name: 'QrScannerScreen');
       if (mounted) {
         messenger.showSnackBar(SnackBar(

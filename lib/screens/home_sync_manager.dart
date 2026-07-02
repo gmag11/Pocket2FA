@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'dart:developer' as developer;
+import '../services/log_service.dart';
 import '../services/sync_service.dart';
 import '../models/server_connection.dart';
 import 'home_server_manager.dart';
@@ -73,7 +73,7 @@ class HomeSyncManager extends ChangeNotifier {
 
       if (result['network_failed'] == true) {
         serverManager.updateServerReachability(false);
-        developer.log(
+        LogService.instance.log(
             'HomeSyncManager: cannot sync (network failure) for server ${srv.id}',
             name: 'HomeSyncManager');
         _suppressNextSyncSnack = false;
@@ -81,7 +81,7 @@ class HomeSyncManager extends ChangeNotifier {
         if (!_suppressNextSyncSnack) {
           // Only log when an actual network sync ran (not when skipped)
           if (result['skipped'] != true) {
-            developer.log('HomeSyncManager: sync finished for server ${srv.id}',
+            LogService.instance.log('HomeSyncManager: sync finished for server ${srv.id}',
                 name: 'HomeSyncManager');
           }
         } else {
@@ -90,7 +90,7 @@ class HomeSyncManager extends ChangeNotifier {
       }
     } catch (e) {
       serverManager.updateServerReachability(false);
-      developer.log('HomeSyncManager: forceSync failed: $e',
+      LogService.instance.log('HomeSyncManager: forceSync failed: $e',
           name: 'HomeSyncManager');
     } finally {
       setSyncing(false);
@@ -119,7 +119,7 @@ class HomeSyncManager extends ChangeNotifier {
         // consume the flag and skip the automatic throttled sync because
         // a forceSync just ran and already refreshed server state.
         _skipSyncOnLoad = false;
-        developer.log(
+        LogService.instance.log(
             'HomeSyncManager: skipping syncIfNeeded because a recent forced sync ran',
             name: 'HomeSyncManager');
         result = {
@@ -157,7 +157,7 @@ class HomeSyncManager extends ChangeNotifier {
 
       if (result['network_failed'] == true) {
         serverManager.updateServerReachability(false);
-        developer.log(
+        LogService.instance.log(
             'HomeSyncManager: cannot sync (network failure) for server ${srv.id}',
             name: 'HomeSyncManager');
         _suppressNextSyncSnack = false;
@@ -165,7 +165,7 @@ class HomeSyncManager extends ChangeNotifier {
         if (!_suppressNextSyncSnack) {
           // Only log when an actual network sync ran
           if (result['skipped'] != true) {
-            developer.log('HomeSyncManager: sync finished for server ${srv.id}',
+            LogService.instance.log('HomeSyncManager: sync finished for server ${srv.id}',
                 name: 'HomeSyncManager');
           }
         } else {

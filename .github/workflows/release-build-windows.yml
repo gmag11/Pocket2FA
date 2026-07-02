@@ -70,7 +70,7 @@ jobs:
           Write-Host "Installer found: $($installer.Path)"
 
       - name: Upload installer to release
-        uses: softprops/action-gh-release@v2.6.1
+        uses: softprops/action-gh-release@v3
         with:
           files: windows/installer/Output/Pocket2FA_Installer_Windows_x64.exe
           token: ${{ secrets.TOKEN }}

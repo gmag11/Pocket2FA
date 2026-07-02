@@ -6,6 +6,15 @@ import '../models/server_connection.dart';
 import '../models/account_entry.dart';
 import 'log_service.dart';
 
+/// Replace any URL host in [s] with `<host>` to avoid leaking the server hostname
+/// in diagnostic logs (Dio's LogInterceptor prints full URLs).
+String _maskUrl(String s) {
+  return s.replaceAllMapped(
+    RegExp(r'https?://[^/\s]+'),
+    (m) => '${m.group(0)!.substring(0, m.group(0)!.indexOf('://') + 3)}<host>',
+  );
+}
+
 /// Centralized service for 2fauth API calls.
 ///
 /// - Keeps a single active `Dio` instance.
@@ -109,7 +118,7 @@ class ApiService {
         responseBody: false,
         error: true,
         logPrint: (obj) =>
-            LogService.instance.debug(obj.toString(), name: 'ApiService'),
+            LogService.instance.debug(_maskUrl(obj.toString()), name: 'ApiService'),
       ));
       // Also attach an interceptor that logs masked request/response bodies
       // and error bodies. We avoid logging headers here to prevent token
@@ -423,7 +432,7 @@ class ApiService {
         responseBody: false,
         error: true,
         logPrint: (o) =>
-            LogService.instance.log(o.toString(), name: 'ApiService.validate')));
+            LogService.instance.log(_maskUrl(o.toString()), name: 'ApiService.validate')));
 
     final resp = await dio.get('user');
     if (resp.statusCode == 200 && resp.data is Map) {

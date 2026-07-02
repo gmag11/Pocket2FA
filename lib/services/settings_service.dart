@@ -64,6 +64,7 @@ class SettingsService extends ChangeNotifier {
       _autoSyncEnabled = box.get(_autoSyncEnabledKey, defaultValue: false) as bool;
       _autoSyncIntervalMinutes = box.get(_autoSyncIntervalKey, defaultValue: 30) as int;
       _debugLoggingEnabled = box.get(_debugLoggingEnabledKey, defaultValue: false) as bool;
+      LogService.instance.enabled = _debugLoggingEnabled;
       final storedTheme = box.get(_themeModeKey) as String?;
       if (storedTheme != null) {
         _themeMode = _themeModeFromString(storedTheme);
@@ -85,6 +86,7 @@ class SettingsService extends ChangeNotifier {
     _autoSyncEnabled = prefs.getBool(_autoSyncEnabledKey) ?? false;
     _autoSyncIntervalMinutes = prefs.getInt(_autoSyncIntervalKey) ?? 30;
     _debugLoggingEnabled = prefs.getBool(_debugLoggingEnabledKey) ?? false;
+    LogService.instance.enabled = _debugLoggingEnabled;
     final storedTheme = prefs.getString(_themeModeKey);
     if (storedTheme != null) {
       _themeMode = _themeModeFromString(storedTheme);

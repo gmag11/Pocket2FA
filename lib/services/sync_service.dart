@@ -289,6 +289,7 @@ class SyncService {
       authenticatedByProxy: server.authenticatedByProxy,
       preferences: server.preferences,
       isAdmin: server.isAdmin,
+      allowSelfSigned: server.allowSelfSigned,
     );
 
     try {
@@ -421,6 +422,7 @@ class SyncService {
             authenticatedByProxy: localServer.authenticatedByProxy,
             preferences: localServer.preferences,
             isAdmin: localServer.isAdmin,
+            allowSelfSigned: localServer.allowSelfSigned,
           );
           // Persist updated server in list
           list[idx] = updatedServer.toMap();
@@ -507,6 +509,7 @@ class SyncService {
           authenticatedByProxy: localServer.authenticatedByProxy,
           preferences: localServer.preferences,
           isAdmin: localServer.isAdmin,
+          allowSelfSigned: localServer.allowSelfSigned,
         );
         list[idx] = updatedServer.toMap();
         await box.put('servers', list);
@@ -613,6 +616,7 @@ class SyncService {
             authenticatedByProxy: localServer.authenticatedByProxy,
             preferences: localServer.preferences,
             isAdmin: localServer.isAdmin,
+            allowSelfSigned: localServer.allowSelfSigned,
           );
           // Persist updated server in list
           list[idx] = updatedServer.toMap();

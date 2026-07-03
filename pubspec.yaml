@@ -31,6 +31,8 @@ dependencies:
   image_picker_android: '>=0.8.13+5 <0.8.13+18'
   image_picker_platform_interface: ^2.11.1
   image: ^4.5.4
+  window_manager: ^0.5.1
+  screen_retriever: ^0.2.1
 
 dev_dependencies:
   flutter_lints: ^6.0.0

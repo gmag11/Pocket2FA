@@ -12,9 +12,14 @@ import 'screens/home_screen.dart';
 import 'services/log_service.dart';
 import 'services/settings_service.dart';
 import 'services/settings_storage.dart';
+import 'services/window_geometry_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Restore/persist window position and size on desktop (Windows/Linux).
+  // No-op on Android/iOS/web.
+  await WindowGeometryService.instance.init();
 
   // Use the Android Photo Picker (no READ_MEDIA_IMAGES permission needed).
   if (Platform.isAndroid) {

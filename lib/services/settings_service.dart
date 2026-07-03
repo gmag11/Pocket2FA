@@ -101,8 +101,9 @@ class SettingsService extends ChangeNotifier {
   Future<void> setFormat(CodeFormat f) async {
     _format = f;
     if (storage != null) {
-      final box = storage!.box;
-      await box.put(_key, _toString(f));
+      if (storage!.isUnlocked) {
+        await storage!.box.put(_key, _toString(f));
+      }
       notifyListeners();
       return;
     }
@@ -115,8 +116,9 @@ class SettingsService extends ChangeNotifier {
   Future<void> setEnabled(bool on) async {
     _enabled = on;
     if (storage != null) {
-      final box = storage!.box;
-      await box.put(_enabledKey, on);
+      if (storage!.isUnlocked) {
+        await storage!.box.put(_enabledKey, on);
+      }
       notifyListeners();
       return;
     }
@@ -129,8 +131,9 @@ class SettingsService extends ChangeNotifier {
   Future<void> setHideOtps(bool on) async {
     _hideOtps = on;
     if (storage != null) {
-      final box = storage!.box;
-      await box.put(_hideOtpsKey, on);
+      if (storage!.isUnlocked) {
+        await storage!.box.put(_hideOtpsKey, on);
+      }
       notifyListeners();
       return;
     }
@@ -147,8 +150,9 @@ class SettingsService extends ChangeNotifier {
   Future<void> setSyncOnOpen(bool on) async {
     _syncOnOpen = on;
     if (storage != null) {
-      final box = storage!.box;
-      await box.put(_syncOnOpenKey, on);
+      if (storage!.isUnlocked) {
+        await storage!.box.put(_syncOnOpenKey, on);
+      }
       notifyListeners();
       return;
     }
@@ -168,8 +172,9 @@ class SettingsService extends ChangeNotifier {
   Future<void> setAutoSyncEnabled(bool on) async {
     _autoSyncEnabled = on;
     if (storage != null) {
-      final box = storage!.box;
-      await box.put(_autoSyncEnabledKey, on);
+      if (storage!.isUnlocked) {
+        await storage!.box.put(_autoSyncEnabledKey, on);
+      }
       notifyListeners();
       return;
     }
@@ -183,8 +188,9 @@ class SettingsService extends ChangeNotifier {
     if (mins <= 0) return;
     _autoSyncIntervalMinutes = mins;
     if (storage != null) {
-      final box = storage!.box;
-      await box.put(_autoSyncIntervalKey, mins);
+      if (storage!.isUnlocked) {
+        await storage!.box.put(_autoSyncIntervalKey, mins);
+      }
       notifyListeners();
       return;
     }
@@ -201,8 +207,9 @@ class SettingsService extends ChangeNotifier {
       LogService.instance.clear();
     }
     if (storage != null) {
-      final box = storage!.box;
-      await box.put(_debugLoggingEnabledKey, on);
+      if (storage!.isUnlocked) {
+        await storage!.box.put(_debugLoggingEnabledKey, on);
+      }
       notifyListeners();
       return;
     }
@@ -228,8 +235,9 @@ class SettingsService extends ChangeNotifier {
     _themeMode = mode;
     final modeString = _themeModeToString(mode);
     if (storage != null) {
-      final box = storage!.box;
-      await box.put(_themeModeKey, modeString);
+      if (storage!.isUnlocked) {
+        await storage!.box.put(_themeModeKey, modeString);
+      }
       notifyListeners();
       return;
     }
@@ -274,7 +282,9 @@ class SettingsService extends ChangeNotifier {
     }
     if (ok) {
       _biometricEnabled = on;
-      await s.box.put(_biometricKey, on);
+      if (s.isUnlocked) {
+        await s.box.put(_biometricKey, on);
+      }
       notifyListeners();
       return true;
     } else {

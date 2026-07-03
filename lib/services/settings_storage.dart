@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'dart:io' show Platform;
+import 'dart:io' show Platform, File, Directory;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -38,11 +38,18 @@ class SettingsStorage {
 
   /// Initialise Hive and the encrypted box. Call this early (before runApp)
   Future<void> init() async {
-    // On Linux, Hive.initFlutter() defaults to ~/Documents via
-    // getApplicationDocumentsDirectory(). Use getApplicationSupportDirectory()
-    // instead so data lands in ~/.local/share/pocket2fa/ (XDG_DATA_HOME).
-    if (!kIsWeb && Platform.isLinux) {
+    // Store the Hive data in a per-app, always-writable location instead of the
+    // user's Documents folder. On desktop, Hive.initFlutter() would default to
+    // getApplicationDocumentsDirectory(), which can be redirected to a network
+    // share (e.g. an SMB-mapped drive) that the process cannot write to,
+    // producing "Access is denied" errors. getApplicationSupportDirectory()
+    // resolves to %APPDATA%\<app> on Windows and ~/.local/share/<app> on Linux.
+    if (!kIsWeb && (Platform.isLinux || Platform.isWindows || Platform.isMacOS)) {
       final supportDir = await getApplicationSupportDirectory();
+      // One-time migration: if a box already exists in the legacy Documents
+      // location (used by previous versions on Windows/macOS), copy it over so
+      // existing users don't lose their servers and settings.
+      await _migrateLegacyBoxIfNeeded(supportDir);
       Hive.init(supportDir.path);
     } else {
       await Hive.initFlutter();
@@ -97,6 +104,30 @@ class SettingsStorage {
     } catch (e) {
       debugPrint('SettingsStorage.init: failed to initialise storage: $e');
       // Leave _unlocked = false; the app will show the unlock/retry UI.
+    }
+  }
+
+  /// Copy an existing Hive box from the legacy Documents-based location into
+  /// [supportDir] when no box exists there yet. This preserves data for users
+  /// upgrading from versions that stored the box in the Documents folder.
+  /// Any failure (e.g. the legacy location is on an unreadable network share)
+  /// is ignored so the app can continue with a fresh box.
+  Future<void> _migrateLegacyBoxIfNeeded(Directory supportDir) async {
+    try {
+      final sep = Platform.pathSeparator;
+      final newBox = File('${supportDir.path}$sep$_hiveBox.hive');
+      if (await newBox.exists()) return; // already migrated or already in use
+
+      final docsDir = await getApplicationDocumentsDirectory();
+      final oldBox = File('${docsDir.path}$sep$_hiveBox.hive');
+      if (!await oldBox.exists()) return; // nothing to migrate
+
+      await supportDir.create(recursive: true);
+      await oldBox.copy(newBox.path);
+      debugPrint(
+          'SettingsStorage.init: migrated legacy box from ${oldBox.path} to ${newBox.path}');
+    } catch (e) {
+      debugPrint('SettingsStorage.init: legacy box migration skipped: $e');
     }
   }
 

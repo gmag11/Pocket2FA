@@ -432,6 +432,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.6.7"
+  json_annotation:
+    dependency: transitive
+    description:
+      name: json_annotation
+      sha256: "2a743920d81b7910627f68ee2c9ac1fc0bfee32b9fc3403587d7c6791ca12f80"
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.12.0"
   lints:
     dependency: transitive
     description:
@@ -640,6 +648,46 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.6.0"
+  screen_retriever:
+    dependency: "direct main"
+    description:
+      name: screen_retriever
+      sha256: "42cc3b402a0f67d2455a0d067553d0f13453f6a008d98eababf8b63958d506bd"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.2.1"
+  screen_retriever_linux:
+    dependency: transitive
+    description:
+      name: screen_retriever_linux
+      sha256: "2a476f1a5538065bc5badf376cfdc83d6ecf07d77eb2391b9c2bff5a76970048"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.2.1"
+  screen_retriever_macos:
+    dependency: transitive
+    description:
+      name: screen_retriever_macos
+      sha256: b5abb900fcb86614ff10b738b34e37b9e1d03b0447280668e2bc8a98bdc7bd59
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.2.1"
+  screen_retriever_platform_interface:
+    dependency: transitive
+    description:
+      name: screen_retriever_platform_interface
+      sha256: "3af22d926bedf20c2caa308eea376776451a3af125919ce072e56525fded8901"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.2.1"
+  screen_retriever_windows:
+    dependency: transitive
+    description:
+      name: screen_retriever_windows
+      sha256: c44b38a4c4bab34af259180a70a4eee1e29384e7b82e627c9faa68afcdab2e73
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.2.1"
   share_plus:
     dependency: "direct main"
     description:
@@ -877,6 +925,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "5.15.0"
+  window_manager:
+    dependency: "direct main"
+    description:
+      name: window_manager
+      sha256: "7eb6d6c4164ec08e1bf978d6e733f3cebe792e2a23fb07cbca25c2872bfdbdcd"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.5.1"
   xdg_directories:
     dependency: transitive
     description:

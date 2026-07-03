@@ -8,6 +8,7 @@ plugins {
 import java.util.Properties
 import java.io.FileInputStream
 import com.android.build.gradle.internal.api.ApkVariantOutputImpl
+import com.android.build.gradle.LibraryExtension
 
 android {
     namespace = "net.gmartin.pocket2fa"
@@ -153,6 +154,27 @@ android.applicationVariants.configureEach {
         val abiVersionCode = abiCodes[output.filters.find { it.filterType == "ABI" }?.identifier]
         if (abiVersionCode != null) {
             (output as ApkVariantOutputImpl).versionCodeOverride = flutter.versionCode!! * 10 + abiVersionCode
+        }
+    }
+}
+
+// Reproducible builds: disable NDK build-id generation for native CMake-based
+// dependencies (flutter_zxing, jni) instead of patching their vendored
+// CMakeLists.txt from the F-Droid build recipe.
+// See https://f-droid.org/docs/Reproducible_Builds/#cmake
+val nativeLibraryModulesWithBuildId = setOf("flutter_zxing", "jni")
+subprojects {
+    plugins.withId("com.android.library") {
+        if (name in nativeLibraryModulesWithBuildId) {
+            extensions.configure<LibraryExtension>("android") {
+                defaultConfig {
+                    externalNativeBuild {
+                        cmake {
+                            arguments += "-DCMAKE_SHARED_LINKER_FLAGS=-Wl,--build-id=none"
+                        }
+                    }
+                }
+            }
         }
     }
 }

@@ -50,14 +50,15 @@ jobs:
       - name: Patch native plugins for reproducible builds
         shell: bash
         run: |
-          # Strip the ELF build-id and normalize embedded source paths for every
-          # native plugin compiled with CMake, so the resulting .so files are
-          # byte-identical to the F-Droid build.
+          # Normalize embedded source paths for every native plugin compiled
+          # with CMake, so the resulting .so files are byte-identical to the
+          # F-Droid build. The ELF build-id is disabled via the Gradle
+          # subprojects block in android/app/build.gradle.kts instead of
+          # patching CMakeLists.txt here, so both this workflow and the
+          # F-Droid recipe use the exact same mechanism.
           # flutter_zxing (libflutter_zxing.so / native zxing)
-          sed -i '1a add_link_options("LINKER:--build-id=none")' "$PUB_CACHE"/hosted/pub.dev/flutter_zxing-*/*/CMakeLists.txt
           sed -i '1a add_compile_options("-ffile-prefix-map=${CMAKE_SOURCE_DIR}=.")' "$PUB_CACHE"/hosted/pub.dev/flutter_zxing-*/*/CMakeLists.txt
           # jni (libdartjni.so)
-          sed -i '1a add_link_options("LINKER:--build-id=none")' "$PUB_CACHE"/hosted/pub.dev/jni-*/src/CMakeLists.txt
           sed -i '1a add_compile_options("-ffile-prefix-map=${CMAKE_SOURCE_DIR}=.")' "$PUB_CACHE"/hosted/pub.dev/jni-*/src/CMakeLists.txt
 
       - name: Detect KEYSTORE_BASE64 presence

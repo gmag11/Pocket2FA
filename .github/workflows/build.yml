@@ -40,7 +40,6 @@ jobs:
       - name: Patch flutter_zxing for reproducible builds
         shell: bash
         run: |
-          sed -i '1a add_link_options("LINKER:--build-id=none")' "$PUB_CACHE"/hosted/pub.dev/flutter_zxing-*/*/CMakeLists.txt
           sed -i '1a add_compile_options("-ffile-prefix-map=${CMAKE_SOURCE_DIR}=.")' "$PUB_CACHE"/hosted/pub.dev/flutter_zxing-*/*/CMakeLists.txt
 
       - name: Detect KEYSTORE_BASE64 presence

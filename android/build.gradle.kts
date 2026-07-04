@@ -19,9 +19,13 @@ subprojects {
     project.evaluationDependsOn(":app")
 }
 
-// Reproducible builds: disable NDK build-id generation for native CMake-based
-// dependencies (flutter_zxing, jni) instead of patching their vendored
-// CMakeLists.txt from the F-Droid build recipe.
+// Reproducible builds for native CMake-based dependencies (flutter_zxing, jni).
+// - Disable NDK build-id generation (--build-id=none).
+// - Normalize embedded source paths (-ffile-prefix-map) so compiled .so files
+//   are byte-identical regardless of the build machine's absolute paths.
+// Both flags are applied here in Gradle so that local builds, CI builds, and
+// the F-Droid recipe all use the same mechanism without patching vendored
+// CMakeLists.txt.
 // See https://f-droid.org/docs/Reproducible_Builds/#cmake
 //
 // NB: this must live in the root build.gradle.kts (not android/app/build.gradle.kts)
@@ -36,6 +40,8 @@ subprojects {
                     externalNativeBuild {
                         cmake {
                             arguments += "-DCMAKE_SHARED_LINKER_FLAGS=-Wl,--build-id=none"
+                            arguments += "-DCMAKE_C_FLAGS=-ffile-prefix-map=\${CMAKE_SOURCE_DIR}=."
+                            arguments += "-DCMAKE_CXX_FLAGS=-ffile-prefix-map=\${CMAKE_SOURCE_DIR}=."
                         }
                     }
                 }

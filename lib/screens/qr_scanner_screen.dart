@@ -24,6 +24,7 @@ class QrScannerScreen extends StatefulWidget {
 
 class _QrScannerScreenState extends State<QrScannerScreen> {
   bool _isProcessing = false;
+  bool _didPop = false;
   AppLocalizations get l10n => AppLocalizations.of(context)!;
 
   // Parse otpauth URL and build AccountEntry using the service
@@ -82,7 +83,9 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
   }
 
   void _onScan(Code result) async {
-    if (_isProcessing || !result.isValid || result.text == null) return;
+    if (_isProcessing || _didPop || !result.isValid || result.text == null) {
+      return;
+    }
 
     setState(() {
       _isProcessing = true;
@@ -98,6 +101,7 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
       if (entry != null && mounted) {
         LogService.instance.log('QrScannerScreen: Returning with entry',
             name: 'QrScannerScreen');
+        _didPop = true;
         Navigator.of(context).pop(entry);
       }
     } catch (e) {
@@ -108,7 +112,7 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
             content: Text('$qrErrorMsg: $e'), backgroundColor: Colors.red));
       }
     } finally {
-      if (mounted) {
+      if (mounted && !_didPop) {
         setState(() {
           _isProcessing = false;
         });
@@ -127,6 +131,14 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
           ReaderWidget(
             onScan: _onScan,
             showFlashlight: true,
+            cropPercent: 0.0,
+            resolution: ResolutionPreset.max,
+            scanDelay: const Duration(milliseconds: 500),
+            scanDelaySuccess: const Duration(milliseconds: 2000),
+            tryHarder: true,
+            tryInverted: true,
+            tryRotate: true,
+            tryDownscale: true,
           ),
           if (_isProcessing)
             const Center(child: CircularProgressIndicator()),

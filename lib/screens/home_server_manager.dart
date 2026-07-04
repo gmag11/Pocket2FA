@@ -33,6 +33,7 @@ class HomeServerManager extends ChangeNotifier {
   }
 
   Future<void> loadServers() async {
+    final stopwatch = Stopwatch()..start();
     final storage = settings.storage;
     List<ServerConnection> servers = [];
     // Keep a copy of the currently displayed servers so we can fall back to them
@@ -132,6 +133,10 @@ class HomeServerManager extends ChangeNotifier {
       } catch (_) {}
     }
 
+    LogService.instance.info(
+        'HomeServerManager.loadServers: took ${stopwatch.elapsedMilliseconds}ms '
+        '(${_servers.length} server(s))',
+        name: 'HomeServerManager');
     notifyListeners();
   }
 

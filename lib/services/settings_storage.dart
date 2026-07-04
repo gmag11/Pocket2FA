@@ -7,6 +7,8 @@ import 'package:local_auth/local_auth.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:path_provider/path_provider.dart';
 
+import 'log_service.dart';
+
 /// Simple storage wrapper that initialises Hive and provides an encrypted box
 /// using a key stored in the platform secure storage (keystore/keychain).
 class SettingsStorage {
@@ -64,7 +66,18 @@ class SettingsStorage {
     // platform (especially Windows, where DPAPI or Windows Hello can fail
     // for a variety of reasons) does not crash main() before runApp().
     try {
-      final biometricFlag = await _secure.read(key: _biometricFlagKey);
+      // Read both the biometric flag and the encryption key in a single
+      // platform-channel round trip instead of two sequential reads. Each
+      // flutter_secure_storage call has fixed overhead on Android
+      // (EncryptedSharedPreferences / Keystore cipher init), so halving the
+      // number of calls measurably helps cold-start latency there.
+      final secureStopwatch = Stopwatch()..start();
+      final secureValues = await _secure.readAll();
+      LogService.instance.info(
+          'SettingsStorage.init: secure storage readAll took '
+          '${secureStopwatch.elapsedMilliseconds}ms',
+          name: 'SettingsStorage');
+      final biometricFlag = secureValues[_biometricFlagKey];
       if (biometricFlag == '1') {
         final can = await _localAuth.canCheckBiometrics ||
             await _localAuth.isDeviceSupported();
@@ -86,7 +99,7 @@ class SettingsStorage {
 
       // Try to read an existing key from secure storage, otherwise generate
       // and save one.
-      String? encoded = await _secure.read(key: _keyName);
+      String? encoded = secureValues[_keyName];
       Uint8List encryptionKey;
       if (encoded == null) {
         // Create a new 256-bit key
@@ -98,8 +111,13 @@ class SettingsStorage {
       }
 
       // Open the encrypted box (will be created if missing)
+      final boxStopwatch = Stopwatch()..start();
       await Hive.openBox(_hiveBox,
           encryptionCipher: HiveAesCipher(encryptionKey));
+      LogService.instance.info(
+          'SettingsStorage.init: Hive.openBox took '
+          '${boxStopwatch.elapsedMilliseconds}ms',
+          name: 'SettingsStorage');
       _unlocked = true;
     } catch (e) {
       debugPrint('SettingsStorage.init: failed to initialise storage: $e');

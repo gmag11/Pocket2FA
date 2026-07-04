@@ -18,9 +18,8 @@ jobs:
     permissions:
       contents: write
     env:
-      # Keep PUB_CACHE inside the workspace so absolute paths embedded in the
-      # build match F-Droid's build (which sets PUB_CACHE=$(pwd)/.pub-cache).
-      # This is required for reproducible builds.
+      # Keep PUB_CACHE inside the workspace so it benefits from the runner's
+      # cache and avoids re-downloading packages on every run.
       PUB_CACHE: ${{ github.workspace }}/.pub-cache
     steps:
       - name: Checkout
@@ -46,20 +45,6 @@ jobs:
 
       - name: Fetch Flutter dependencies
         run: flutter pub get
-
-      - name: Patch native plugins for reproducible builds
-        shell: bash
-        run: |
-          # Normalize embedded source paths for every native plugin compiled
-          # with CMake, so the resulting .so files are byte-identical to the
-          # F-Droid build. The ELF build-id is disabled via the Gradle
-          # subprojects block in android/app/build.gradle.kts instead of
-          # patching CMakeLists.txt here, so both this workflow and the
-          # F-Droid recipe use the exact same mechanism.
-          # flutter_zxing (libflutter_zxing.so / native zxing)
-          sed -i '1a add_compile_options("-ffile-prefix-map=${CMAKE_SOURCE_DIR}=.")' "$PUB_CACHE"/hosted/pub.dev/flutter_zxing-*/*/CMakeLists.txt
-          # jni (libdartjni.so)
-          sed -i '1a add_compile_options("-ffile-prefix-map=${CMAKE_SOURCE_DIR}=.")' "$PUB_CACHE"/hosted/pub.dev/jni-*/src/CMakeLists.txt
 
       - name: Detect KEYSTORE_BASE64 presence
         id: detect_keystore

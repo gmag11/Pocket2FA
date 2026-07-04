@@ -83,7 +83,14 @@ class _ImageQrScannerScreenState extends State<ImageQrScannerScreen> {
 
       // Decode QR code from processed image
       final codeResult = await zx.readBarcodeImagePathString(
-          processedImagePath, DecodeParams(tryHarder: true));
+          processedImagePath,
+          DecodeParams(
+            tryHarder: true,
+            tryInverted: true,
+            tryRotate: true,
+            tryDownscale: true,
+            maxSize: 3000, // preserve full preprocessed resolution
+          ));
 
       if (codeResult.isValid &&
           codeResult.text != null &&

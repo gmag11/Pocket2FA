@@ -526,6 +526,13 @@ class _HomePageState extends State<HomePage>
                         SnackBar(content: Text(l10n.accountUpdated)),
                       );
                     }
+                    // Trigger a background sync so the new account appears
+                    // in the list without the user having to force it manually.
+                    _syncManager.forceSyncCurrentServer().catchError((e) {
+                      LogService.instance.log(
+                          'HomePage: post-scan sync failed: $e',
+                          name: 'HomePage');
+                    });
                   }
                 },
                 backgroundColor: const Color(0xFF4F63E6),

@@ -342,6 +342,10 @@ class AppLocalizationsFr extends AppLocalizations {
       'Cet appareil n\'a pas de caméra disponible. Utilisez l\'option de sélection d\'image ou le formulaire avancé.';
 
   @override
+  String get cameraNotSupportedMessage =>
+      'La numérisation par caméra n\'est pas prise en charge sur cette plateforme. Utilisez l\'option de sélection d\'image ou le formulaire avancé.';
+
+  @override
   String get addServerTitle => 'Ajouter un serveur';
 
   @override

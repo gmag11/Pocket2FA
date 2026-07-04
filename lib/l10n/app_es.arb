@@ -433,6 +433,10 @@
   "@noCameraMessage": {
     "description": "Mensaje explicativo cuando no hay cámara en el dispositivo."
   },
+  "cameraNotSupportedMessage": "El escaneo por cámara no es compatible con este sistema. Usa la opción de seleccionar imagen o el formulario avanzado.",
+  "@cameraNotSupportedMessage": {
+    "description": "Mensaje explicativo cuando el escaneo por cámara no está soportado en la plataforma de escritorio actual."
+  },
   "addServerTitle": "Añadir servidor",
   "@addServerTitle": {
     "description": "Título del diálogo para añadir una nueva conexión de servidor."

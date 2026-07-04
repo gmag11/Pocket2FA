@@ -433,6 +433,10 @@
     "@noCameraMessage": {
         "description": "Message explicatif lorsqu'il n'y a pas de caméra sur l'appareil."
     },
+    "cameraNotSupportedMessage": "La numérisation par caméra n'est pas prise en charge sur cette plateforme. Utilisez l'option de sélection d'image ou le formulaire avancé.",
+    "@cameraNotSupportedMessage": {
+        "description": "Message explicatif lorsque la numérisation par caméra n'est pas prise en charge sur la plateforme de bureau actuelle."
+    },
     "addServerTitle": "Ajouter un serveur",
     "@addServerTitle": {
         "description": "Titre de la boîte de dialogue lors de l'ajout d'une nouvelle connexion serveur."

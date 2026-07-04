@@ -338,6 +338,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'This device doesn\'t have a camera available. Use the select image option or the advanced form.';
 
   @override
+  String get cameraNotSupportedMessage =>
+      'Camera scanning isn\'t supported on this platform. Use the select image option or the advanced form.';
+
+  @override
   String get addServerTitle => 'Add server';
 
   @override

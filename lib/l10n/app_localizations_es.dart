@@ -341,6 +341,10 @@ class AppLocalizationsEs extends AppLocalizations {
       'Este dispositivo no tiene cámara disponible. Usa la opción de seleccionar imagen o el formulario avanzado.';
 
   @override
+  String get cameraNotSupportedMessage =>
+      'El escaneo por cámara no es compatible con este sistema. Usa la opción de seleccionar imagen o el formulario avanzado.';
+
+  @override
   String get addServerTitle => 'Añadir servidor';
 
   @override

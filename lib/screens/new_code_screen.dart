@@ -52,7 +52,7 @@ class NewCodeScreen extends StatelessWidget {
                     // Platform doesn't support camera scanning
                     messenger.showSnackBar(
                       SnackBar(
-                        content: Text(l10n.noCameraMessage),
+                        content: Text(l10n.cameraNotSupportedMessage),
                         backgroundColor: Colors.orange,
                         duration: const Duration(seconds: 4),
                       ),

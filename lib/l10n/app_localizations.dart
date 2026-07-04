@@ -718,6 +718,12 @@ abstract class AppLocalizations {
   /// **'This device doesn\'t have a camera available. Use the select image option or the advanced form.'**
   String get noCameraMessage;
 
+  /// Explanatory message when camera scanning is not supported on the current desktop platform.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera scanning isn\'t supported on this platform. Use the select image option or the advanced form.'**
+  String get cameraNotSupportedMessage;
+
   /// Dialog title when adding a new server connection.
   ///
   /// In en, this message translates to:

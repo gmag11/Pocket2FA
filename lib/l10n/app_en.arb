@@ -433,6 +433,10 @@
   "@noCameraMessage": {
     "description": "Explanatory message when there's no camera on the device."
   },
+  "cameraNotSupportedMessage": "Camera scanning isn't supported on this platform. Use the select image option or the advanced form.",
+  "@cameraNotSupportedMessage": {
+    "description": "Explanatory message when camera scanning is not supported on the current desktop platform."
+  },
   "addServerTitle": "Add server",
   "@addServerTitle": {
     "description": "Dialog title when adding a new server connection."

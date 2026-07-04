@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
 
@@ -17,10 +18,6 @@ import 'services/window_geometry_service.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Restore/persist window position and size on desktop (Windows/Linux).
-  // No-op on Android/iOS/web.
-  await WindowGeometryService.instance.init();
-
   // Use the Android Photo Picker (no READ_MEDIA_IMAGES permission needed).
   if (Platform.isAndroid) {
     final ImagePickerPlatform picker = ImagePickerPlatform.instance;
@@ -30,18 +27,17 @@ Future<void> main() async {
   }
 
   // Allow normal and inverted portrait as well as both landscape orientations.
-  await SystemChrome.setPreferredOrientations([
+  // Fire-and-forget: awaiting this platform-channel call before runApp()
+  // would delay the very first frame (this is especially noticeable on
+  // Android, where the channel can still be warming up right after engine
+  // attach). The orientation lock is applied as soon as the engine
+  // processes it and doesn't need to gate rendering.
+  unawaited(SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
     DeviceOrientation.landscapeLeft,
     DeviceOrientation.landscapeRight,
-  ]);
-
-  final storage = SettingsStorage();
-  await storage.init();
-
-  final settings = SettingsService(storage: storage);
-  LogService.instance.enabled = settings.debugLoggingEnabled;
+  ]));
 
   PlatformDispatcher.instance.onError = (Object error, StackTrace stack) {
     LogService.instance.error('$error\n$stack', name: 'Dart');
@@ -50,7 +46,80 @@ Future<void> main() async {
 
   LogService.instance.info('App starting', name: 'main');
 
-  runApp(Pocket2FA(settings: settings));
+  // Render the first frame immediately instead of blocking it behind window
+  // geometry restoration and encrypted-storage initialization (opening the
+  // Hive box can take a noticeable amount of time, and on desktop the
+  // window is only made visible after these complete). `_Bootstrap` shows a
+  // lightweight placeholder right away and swaps in the real app as soon as
+  // those background tasks finish.
+  runApp(const _Bootstrap());
+}
+
+/// Runs the (potentially slow) startup work — desktop window geometry
+/// restoration and opening the encrypted settings/servers storage — after
+/// the first Flutter frame is already on screen, then swaps in the real app.
+class _Bootstrap extends StatefulWidget {
+  const _Bootstrap();
+
+  @override
+  State<_Bootstrap> createState() => _BootstrapState();
+}
+
+class _BootstrapState extends State<_Bootstrap> {
+  SettingsService? _settings;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _init());
+  }
+
+  Future<void> _init() async {
+    final stopwatch = Stopwatch()..start();
+    final storage = SettingsStorage();
+
+    // Window geometry restoration and encrypted storage init are
+    // independent of each other; run them concurrently rather than in
+    // sequence to minimize total startup latency.
+    await Future.wait([
+      WindowGeometryService.instance.init(),
+      storage.init(),
+    ]);
+    // Timing is always logged (developer.log), regardless of the in-app
+    // debug-logging setting, so it can be captured (e.g. via logcat) to
+    // pinpoint the real cause of a slow startup on a given device.
+    LogService.instance.info(
+        'Bootstrap: storage+window init took ${stopwatch.elapsedMilliseconds}ms',
+        name: 'main');
+
+    final settings = SettingsService(storage: storage);
+    LogService.instance.enabled = settings.debugLoggingEnabled;
+
+    if (mounted) {
+      setState(() => _settings = settings);
+    }
+
+    // Reveal the desktop window only now that real content is about to be
+    // painted, so users never see a blank/black window.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      WindowGeometryService.instance.showWindow();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final settings = _settings;
+    if (settings == null) {
+      // Minimal placeholder shown for the brief moment before storage is
+      // ready. Avoids an empty/black window while keeping startup work off
+      // the critical path of the first frame.
+      return const MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: Scaffold(body: Center(child: CircularProgressIndicator())),
+      );
+    }
+    return Pocket2FA(settings: settings);
+  }
 }
 
 class Pocket2FA extends StatelessWidget {

@@ -49,12 +49,18 @@ class WindowGeometryService with WindowListener {
   /// platform-channel round trip.
   SharedPreferences? _prefs;
 
-  /// Initializes `window_manager`, restores the previous session's window
-  /// geometry (clamped to the currently available screen space), and shows
-  /// the window.
+  /// Initializes `window_manager` and restores the previous session's window
+  /// geometry (clamped to the currently available screen space), but does
+  /// NOT make the window visible yet — call [showWindow] for that once the
+  /// first Flutter frame has actually been painted.
   ///
-  /// Must be called once, after `WidgetsFlutterBinding.ensureInitialized()`
-  /// and before `runApp`. Does nothing on non-desktop platforms.
+  /// Splitting "restore geometry" from "show" avoids a brief blank/black
+  /// native window: the window stays hidden (as configured in the native
+  /// runner, see `windows/runner/flutter_window.cpp`) while Dart-side
+  /// startup work (e.g. opening encrypted storage) is still in flight.
+  ///
+  /// Must be called once, after `WidgetsFlutterBinding.ensureInitialized()`.
+  /// Does nothing on non-desktop platforms.
   Future<void> init() async {
     if (!isSupportedPlatform) return;
 
@@ -73,9 +79,17 @@ class WindowGeometryService with WindowListener {
       if (maximized) {
         await windowManager.maximize();
       }
-      await windowManager.show();
-      await windowManager.focus();
     });
+  }
+
+  /// Reveals the window. Safe to call multiple times; no-op on non-desktop
+  /// platforms. Should be called after the first Flutter frame has been
+  /// rendered (e.g. via `WidgetsBinding.instance.addPostFrameCallback`) so
+  /// the window never appears blank.
+  Future<void> showWindow() async {
+    if (!isSupportedPlatform) return;
+    await windowManager.show();
+    await windowManager.focus();
   }
 
   Future<Rect> _resolveStartupBounds(SharedPreferences prefs) async {

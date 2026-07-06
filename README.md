@@ -1,16 +1,22 @@
-# 2FAuth Flutter Client
+# 2FAuth Client
 
-A mobile client application for managing two-factor authentication (2FA) codes, designed to work with the [2FAuth web application](https://github.com/Bubka/2FAuth). This Flutter-based client provides a native mobile experience while securely synchronizing with your self-hosted 2FAuth instance.
+A desktop and mobile client application for managing two-factor authentication (2FA) codes, designed to work with the [2FAuth web application](https://github.com/Bubka/2FAuth). This Flutter-based client provides a native mobile experience while securely synchronizing with your self-hosted 2FAuth instance.
 
 [![Latest Release](https://img.shields.io/github/v/release/gmag11/2fauthApp?color=blue&label=latest%20release)](https://github.com/gmag11/2fauthApp/releases/latest)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/gmag11/2fauthApp/release-build-android.yml )
 
+<a href="https://f-droid.org/packages/net.gmartin.pocket2fa">
+    <img src="https://f-droid.org/badge/get-it-on.png"
+    alt="Get it on F-Droid"
+    height="80">
+</a>
+
 ## Purpose
 
 This project complements the official 2FAuth web application by offering:
 
-- Native mobile experience for accessing your 2FA codes on the go
+- Native and seamless desktop and mobile experience for accessing your 2FA codes on the go
 - Secure local generation of TOTP and STEAM codes
 - Synchronization with your self-hosted 2FAuth server
 - Offline access to your authentication codes
@@ -59,11 +65,12 @@ This project complements the official 2FAuth web application by offering:
 
 ### For Developers
 
-- Flutter SDK (version 3.35.1 or compatible)
+- Flutter SDK (version 3.44.4 or compatible)
 - Android Studio or VS Code with Flutter extension
 - Platform-specific development tools:
   - Android: Android SDK and emulator/device
   - Windows: Visual Studio with C++ development tools
+  - Linux: Build-essential and GTK development libraries
 
 ## Installation
 

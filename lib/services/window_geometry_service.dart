@@ -42,12 +42,35 @@ class WindowGeometryService with WindowListener {
   static bool get isSupportedPlatform =>
       !kIsWeb && (Platform.isWindows || Platform.isLinux);
 
+  /// On Wayland, the compositor controls window position. Clients cannot
+  /// query absolute position (`gtk_window_get_position` always returns
+  /// 0,0) nor set it (`gtk_window_move` is a no-op). Only size and
+  /// maximized state are saveable/restorable.
+  static bool get _isWayland =>
+      Platform.isLinux &&
+      (Platform.environment['WAYLAND_DISPLAY'] != null ||
+          Platform.environment['XDG_SESSION_TYPE'] == 'wayland');
+
   Timer? _debounce;
 
   /// Cached after the first load in [init]; reused on every save so closing
   /// the window never has to await a fresh `SharedPreferences.getInstance()`
   /// platform-channel round trip.
   SharedPreferences? _prefs;
+
+  /// Saved during [init] so [showWindow] can re-apply them after the window
+  /// is mapped. On Wayland, `gtk_window_resize`/`gtk_window_move` called
+  /// before the window is mapped can be silently overridden by the
+  /// compositor when it assigns the initial configure event.
+  Rect? _savedBounds;
+  bool _savedMaximized = false;
+
+  /// Guards against saving spurious geometry events that fire while the
+  /// window is being shown and re-positioned during startup. Without this,
+  /// the compositor's initial configure event (which may have a different
+  /// size/position than the saved bounds) would overwrite the correct
+  /// saved values in SharedPreferences.
+  bool _initializing = true;
 
   /// Initializes `window_manager` and restores the previous session's window
   /// geometry (clamped to the currently available screen space), but does
@@ -71,10 +94,17 @@ class WindowGeometryService with WindowListener {
     final bounds = await _resolveStartupBounds(prefs);
     final maximized = prefs.getBool(_maximizedKey) ?? false;
 
+    _savedBounds = bounds;
+    _savedMaximized = maximized;
+
     windowManager.addListener(this);
     await windowManager.setPreventClose(true);
 
     await windowManager.waitUntilReadyToShow(null, () async {
+      // Set bounds before showing on all platforms. On Windows this works
+      // reliably (SetWindowPos operates on hidden windows). On X11 this
+      // usually works too. On Wayland the compositor may override the
+      // pre-map size, so [showWindow] re-applies bounds after mapping.
       await windowManager.setBounds(bounds);
       if (maximized) {
         await windowManager.maximize();
@@ -89,25 +119,82 @@ class WindowGeometryService with WindowListener {
   Future<void> showWindow() async {
     if (!isSupportedPlatform) return;
     await windowManager.show();
+
+    // On Linux — especially Wayland — the compositor may override the
+    // window geometry when it maps the window, ignoring the pre-map
+    // `gtk_window_resize`/`gtk_window_move` calls from [init]. Re-apply
+    // the saved bounds (or re-maximize) after the window is visible so
+    // the compositor's initial configure event doesn't win.
+    //
+    // On X11 this is a harmless no-op (same bounds, already applied).
+    if (Platform.isLinux) {
+      if (_savedMaximized) {
+        await windowManager.maximize();
+      } else if (_savedBounds != null) {
+        // On Wayland, only the size portion of setBounds has any effect;
+        // gtk_window_move is a no-op. On X11, both position and size work.
+        await windowManager.setBounds(_savedBounds!);
+      }
+    }
+
+    // Startup is complete: allow future geometry saves and discard any
+    // spurious save that was scheduled during the show/re-apply sequence.
+    _initializing = false;
+    _debounce?.cancel();
+
     await windowManager.focus();
   }
 
   Future<Rect> _resolveStartupBounds(SharedPreferences prefs) async {
-    final x = prefs.getDouble(_xKey);
-    final y = prefs.getDouble(_yKey);
     final width = prefs.getDouble(_widthKey);
     final height = prefs.getDouble(_heightKey);
-    if (x == null ||
-        y == null ||
-        width == null ||
+    if (width == null ||
         height == null ||
         width < _minWindowDimension ||
         height < _minWindowDimension) {
       return _defaultBounds;
     }
 
+    // On Wayland, position is controlled by the compositor and cannot be
+    // saved or restored. Use (0,0) as a placeholder; only the size matters.
+    if (_isWayland) {
+      return _clampSizeToDisplays(Rect.fromLTWH(0, 0, width, height));
+    }
+
+    final x = prefs.getDouble(_xKey);
+    final y = prefs.getDouble(_yKey);
+    if (x == null || y == null) {
+      return _defaultBounds;
+    }
+
     final saved = Rect.fromLTWH(x, y, width, height);
     return _clampToAvailableDisplays(saved);
+  }
+
+  /// Clamps the size of [saved] to the largest connected display, ignoring
+  /// position. Used on Wayland where only size is restorable.
+  Future<Rect> _clampSizeToDisplays(Rect saved) async {
+    List<Display> displays;
+    try {
+      displays = await screenRetriever.getAllDisplays();
+    } catch (e) {
+      LogService.instance.warning(
+        'Could not read displays, using saved size as-is: $e',
+        name: 'WindowGeometryService',
+      );
+      return saved;
+    }
+    if (displays.isEmpty) return saved;
+
+    final maxDisplay = displays.map((d) {
+      final size = d.visibleSize ?? d.size;
+      return Size(size.width, size.height);
+    }).reduce((a, b) => (a.width * a.height) >= (b.width * b.height) ? a : b);
+
+    final width = saved.width.clamp(_minWindowDimension, maxDisplay.width);
+    final height = saved.height.clamp(_minWindowDimension, maxDisplay.height);
+
+    return Rect.fromLTWH(saved.left, saved.top, width, height);
   }
 
   /// Clamps [saved] bounds so the window remains reachable on the currently
@@ -166,6 +253,13 @@ class WindowGeometryService with WindowListener {
   }
 
   void _scheduleSave() {
+    // Ignore geometry events that fire while the window is being shown
+    // and re-positioned during startup. On Wayland, the compositor's
+    // initial configure event carries a size/position that may differ
+    // from the saved bounds; saving it would overwrite the correct
+    // values in SharedPreferences.
+    if (_initializing) return;
+
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 500), _saveCurrentBounds);
   }
@@ -177,10 +271,15 @@ class WindowGeometryService with WindowListener {
       _prefs = prefs;
       if (!maximized) {
         final bounds = await windowManager.getBounds();
-        await prefs.setDouble(_xKey, bounds.left);
-        await prefs.setDouble(_yKey, bounds.top);
         await prefs.setDouble(_widthKey, bounds.width);
         await prefs.setDouble(_heightKey, bounds.height);
+        // On Wayland, position is always (0,0) — gtk_window_get_position
+        // returns origin because the compositor controls placement.
+        // Don't save it; it would overwrite valid saved values with zeros.
+        if (!_isWayland) {
+          await prefs.setDouble(_xKey, bounds.left);
+          await prefs.setDouble(_yKey, bounds.top);
+        }
       }
       await prefs.setBool(_maximizedKey, maximized);
     } catch (e) {

@@ -55,7 +55,8 @@ class ApiService {
     final bool isDifferent = prev == null ||
         prev.id != server.id ||
         prev.url != server.url ||
-        prev.apiKey != server.apiKey;
+        prev.apiKey != server.apiKey ||
+        prev.allowSelfSigned != server.allowSelfSigned;
 
     LogService.instance.log('setServer() called - prev=${prev?.id ?? 'none'} new=${server.id} isDifferent=$isDifferent', name: 'ApiService');
 

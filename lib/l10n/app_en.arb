@@ -647,6 +647,14 @@
   "@connectAnyway": {
     "description": "Button label to proceed despite a certificate warning."
   },
+  "allowSelfSignedLabel": "Accept self-signed certificates",
+  "@allowSelfSignedLabel": {
+    "description": "Label for the checkbox that allows connecting to servers with self-signed SSL certificates."
+  },
+  "allowSelfSignedHint": "Enable if your server uses a self-signed SSL certificate",
+  "@allowSelfSignedHint": {
+    "description": "Hint text shown below the self-signed certificate acceptance checkbox."
+  },
   "settingsDiagnostics": "DIAGNOSTICS",
   "@settingsDiagnostics": {
     "description": "Label for the Diagnostics settings section."

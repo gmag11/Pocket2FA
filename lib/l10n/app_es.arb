@@ -646,6 +646,14 @@
   "connectAnyway": "Conectar de todas formas",
   "@connectAnyway": {
     "description": "Etiqueta del bot\u00f3n para continuar a pesar del aviso de certificado."  },
+  "allowSelfSignedLabel": "Aceptar certificados autofirmados",
+  "@allowSelfSignedLabel": {
+    "description": "Etiqueta para la casilla que permite conectarse a servidores con certificados SSL autofirmados."
+  },
+  "allowSelfSignedHint": "Activar si tu servidor usa un certificado SSL autofirmado",
+  "@allowSelfSignedHint": {
+    "description": "Texto de ayuda debajo de la casilla de aceptación de certificados autofirmados."
+  },
   "settingsDiagnostics": "DIAGNÓSTICO",
   "@settingsDiagnostics": {
     "description": "Etiqueta de la sección de diagnóstico en ajustes."

@@ -24,6 +24,8 @@ Future<ServerConnection?> showServerAddEditDialog({
   bool cleared = !isEdit;
   final apiFocus = FocusNode();
 
+  bool allowSelfSigned = initial?.allowSelfSigned ?? false;
+
   bool loading = false;
   String? errorText;
 
@@ -53,7 +55,7 @@ Future<ServerConnection?> showServerAddEditDialog({
             apiKey: apiKeyText,
             accounts: initial?.accounts ?? [],
             userEmail: initial?.userEmail ?? '',
-            allowSelfSigned: initial?.allowSelfSigned ?? false,
+            allowSelfSigned: allowSelfSigned,
           );
 
           Future<void> doValidate(ServerConnection candidate) async {
@@ -184,6 +186,18 @@ Future<ServerConnection?> showServerAddEditDialog({
                   controller: urlCtrl,
                   decoration: InputDecoration(labelText: l10n.urlLabel)),
               apiFieldLocal(),
+              const SizedBox(height: 8),
+              SwitchListTile(
+                title: Text(l10n.allowSelfSignedLabel),
+                subtitle: Text(
+                  l10n.allowSelfSignedHint,
+                  style: const TextStyle(fontSize: 12),
+                ),
+                value: allowSelfSigned,
+                onChanged: (v) => setStateSB(() => allowSelfSigned = v),
+                contentPadding: EdgeInsets.zero,
+                dense: true,
+              ),
               if (errorText != null) ...[
                 const SizedBox(height: 8),
                 Text(errorText!, style: const TextStyle(color: Colors.red)),

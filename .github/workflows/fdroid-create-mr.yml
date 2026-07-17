@@ -1,0 +1,172 @@
+name: F-Droid Create MR
+
+# ── Trigger ───────────────────────────────────────────────────────────────
+# Runs automatically when the metadata update workflow completes successfully,
+# or manually via workflow_dispatch (requires versionName input).
+on:
+  workflow_run:
+    workflows: ["F-Droid Update Metadata"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      versionName:
+        description: 'Version name (e.g. 0.9.17)'
+        required: true
+        type: string
+
+jobs:
+  create-mr:
+    name: Create GitLab MR against fdroid/fdroiddata
+    runs-on: ubuntu-latest
+    # Only run on metadata push success OR manual dispatch (skip failures).
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+
+    env:
+      # ── Secrets ──────────────────────────────────────────────────────────
+      # FDROID_DATA_PAT — GitLab Personal Access Token with 'api' scope
+      # ── Hardcoded constants ──────────────────────────────────────────────
+      FDROID_FDROIDDATA_PROJECT_ID: "36528"        # fdroid/fdroiddata GitLab project ID
+      FDROID_APP_ID: "net.gmartin.pocket2fa"       # F-Droid application ID
+      FDROID_BRANCH: "net.gmartin.pocket2fa"
+
+    steps:
+      # ──────────────────────────────────────────────────────────────────────
+      # 1. Download version artifact from the metadata workflow
+      # ──────────────────────────────────────────────────────────────────────
+      - name: Download version artifact
+        if: github.event_name == 'workflow_run'
+        uses: actions/download-artifact@v5
+        with:
+          name: fdroid-version-info
+          path: /tmp/fdroid-artifact
+          github-token: ${{ github.token }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+      - name: Read version info from artifact (workflow_run)
+        if: github.event_name == 'workflow_run'
+        id: version-artifact
+        shell: bash
+        run: |
+          cat /tmp/fdroid-artifact/version-info.json
+          VERSION_NAME=$(python3 -c "import json; print(json.load(open('/tmp/fdroid-artifact/version-info.json'))['versionName'])")
+          COMMIT_SHA=$(python3 -c "import json; print(json.load(open('/tmp/fdroid-artifact/version-info.json'))['commitSha'])")
+          echo "versionName=${VERSION_NAME}" >> "$GITHUB_OUTPUT"
+          echo "commitSha=${COMMIT_SHA}" >> "$GITHUB_OUTPUT"
+          echo "✅ Version: ${VERSION_NAME} — Commit: ${COMMIT_SHA:0:10}"
+
+      - name: Set version from manual dispatch
+        if: github.event_name == 'workflow_dispatch'
+        id: version-manual
+        shell: bash
+        run: |
+          echo "versionName=${{ inputs.versionName }}" >> "$GITHUB_OUTPUT"
+          echo "commitSha=manual" >> "$GITHUB_OUTPUT"
+
+      # ──────────────────────────────────────────────────────────────────────
+      # 2. Create GitLab Merge Request against fdroid/fdroiddata
+      # ──────────────────────────────────────────────────────────────────────
+      - name: Create GitLab Merge Request
+        id: mr
+        shell: bash
+        env:
+          GITLAB_PAT: ${{ secrets.FDROID_DATA_PAT }}
+        run: |
+          VERSION_NAME="${{ steps.version-artifact.outputs.versionName || steps.version-manual.outputs.versionName }}"
+          COMMIT_SHA="${{ steps.version-artifact.outputs.commitSha || steps.version-manual.outputs.commitSha }}"
+          TARGET_PROJECT="$FDROID_FDROIDDATA_PROJECT_ID"
+
+          if [[ -z "$VERSION_NAME" ]]; then
+            echo "❌ No versionName available — aborting."
+            exit 1
+          fi
+
+          # Construct the MR description
+          read -r -d '' MR_DESCRIPTION << 'TEMPLATE_EOF' || true
+          ## Required
+          <!--Please ensure that your MR meet following requirements-->
+
+          * [x] The app complies with the [inclusion criteria](https://f-droid.org/docs/Inclusion_Policy)
+          * [x] All related [fdroiddata](https://gitlab.com/fdroid/fdroiddata/issues) and [RFP issues](https://gitlab.com/fdroid/rfp/issues) have been referenced in this merge request
+          * [x] Builds with `fdroid build`
+
+          ## Strongly Recommended
+          <!--We highly encourage you doing these thing.-->
+
+          * [x] The upstream app source code repo contains the app metadata _(summary/description/images/changelog/etc)_ in a [Fastlane](https://gitlab.com/snippets/1895688) or [Triple-T](https://gitlab.com/snippets/1901490) folder structure
+          * [x] Releases are tagged
+
+          ## Suggested
+          <!--These suggestions may be difficult to apply on your app. Please have a try.-->
+
+          * [x] External repos are added as git submodules instead of srclibs
+          * [x] Multiple apks for native code
+          TEMPLATE_EOF
+
+          # Append version-specific info
+          MR_DESCRIPTION="${MR_DESCRIPTION}
+
+          ---
+          🤖 *This MR was automatically created by the Pocket2FA release workflow.
+          **App:** ${FDROID_APP_ID}
+          **Version:** ${VERSION_NAME}
+          **Commit:** ${COMMIT_SHA}*"
+
+          # Escape JSON values for curl
+          MR_TITLE="Pocket2FA v${VERSION_NAME} update"
+          MR_TITLE_ESCAPED=$(echo "$MR_TITLE" | python3 -c "import sys,json; print(json.dumps(sys.stdin.read().strip()))")
+          MR_BODY_ESCAPED=$(echo "$MR_DESCRIPTION" | python3 -c "import sys,json; print(json.dumps(sys.stdin.read()))")
+
+          RESPONSE=$(curl -s -w "\n%{http_code}" \
+            --request POST \
+            --header "PRIVATE-TOKEN: ${GITLAB_PAT}" \
+            --header "Content-Type: application/json" \
+            --data "{
+              \"source_branch\": \"${FDROID_BRANCH}\",
+              \"target_branch\": \"master\",
+              \"target_project_id\": ${TARGET_PROJECT},
+              \"title\": ${MR_TITLE_ESCAPED},
+              \"description\": ${MR_BODY_ESCAPED},
+              \"remove_source_branch\": false
+            }" \
+            "https://gitlab.com/api/v4/projects/${TARGET_PROJECT}/merge_requests")
+
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+
+          if [[ "$HTTP_CODE" == "201" ]]; then
+            MR_URL=$(echo "$BODY" | python3 -c "import sys,json; print(json.load(sys.stdin)['web_url'])")
+            echo "mr_url=${MR_URL}" >> "$GITHUB_OUTPUT"
+            echo "✅ MR created: ${MR_URL}"
+          elif [[ "$HTTP_CODE" == "409" ]]; then
+            echo "⚠️  An MR for branch '${FDROID_BRANCH}' already exists — skipping."
+            echo "mr_url=EXISTING" >> "$GITHUB_OUTPUT"
+          else
+            echo "❌ MR creation failed (HTTP ${HTTP_CODE}):"
+            echo "$BODY"
+            exit 1
+          fi
+
+      # ──────────────────────────────────────────────────────────────────────
+      # 3. Workflow summary
+      # ──────────────────────────────────────────────────────────────────────
+      - name: Summary
+        if: always()
+        shell: bash
+        run: |
+          VERSION_NAME="${{ steps.version-artifact.outputs.versionName || steps.version-manual.outputs.versionName }}"
+
+          echo "### F-Droid MR Creation — v${VERSION_NAME}" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+
+          MR_URL="${{ steps.mr.outputs.mr_url }}"
+          if [[ -n "$MR_URL" && "$MR_URL" != "EXISTING" ]]; then
+            echo "| MR | [${MR_URL}](${MR_URL}) |" >> "$GITHUB_STEP_SUMMARY"
+            echo "✅ MR opened successfully" >> "$GITHUB_STEP_SUMMARY"
+          elif [[ "$MR_URL" == "EXISTING" ]]; then
+            echo "| MR | ⚠️ Already exists for branch \`${FDROID_BRANCH}\` |" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "| Status | ❌ MR creation did not complete |" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Metadata file:** [metadata/${FDROID_APP_ID}.yml](https://gitlab.com/gmag11/fdroiddata/-/blob/${FDROID_BRANCH}/metadata/${FDROID_APP_ID}.yml)" >> "$GITHUB_STEP_SUMMARY"

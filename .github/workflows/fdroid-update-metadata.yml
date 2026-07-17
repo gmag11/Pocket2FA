@@ -1,0 +1,456 @@
+name: F-Droid Metadata Update
+
+# ── Trigger ───────────────────────────────────────────────────────────────
+# Runs automatically when the Android release build completes successfully,
+# or manually via workflow_dispatch.
+on:
+  workflow_run:
+    workflows: ["Build Android and Upload Release APKs"]
+    types: [completed]
+  workflow_dispatch:
+
+# Prevent parallel pushes to fdroiddata from racing each other.
+concurrency: fdroid-metadata-push
+
+jobs:
+  update-fdroid:
+    name: Update F-Droid metadata and create MR
+    runs-on: ubuntu-latest
+    # Only run on build success OR manual dispatch (skip failures).
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    permissions:
+      contents: read
+      actions: read
+
+    env:
+      # ── Secrets the user must configure before first run ──────────────────
+      # FDROID_DATA_SSH_KEY  — private SSH deploy key for git@gitlab.com:gmag11/fdroiddata.git
+      # FDROID_DATA_PAT      — GitLab Personal Access Token with 'api' scope (for MR creation)
+      # ── Hardcoded constants ──────────────────────────────────────────────
+      FDROID_FDROIDDATA_PROJECT_ID: "36528"        # fdroid/fdroiddata GitLab project ID
+      FDROID_APP_ID: "net.gmartin.pocket2fa"       # F-Droid application ID
+      FDROID_FORK_REPO: "git@gitlab.com:gmag11/fdroiddata.git"
+      FDROID_BRANCH: "net.gmartin.pocket2fa"
+      NDK_VERSION: "28.2.13676358"
+
+    steps:
+      # ──────────────────────────────────────────────────────────────────────
+      # 1. Checkout the Pocket2FA source repo
+      # ──────────────────────────────────────────────────────────────────────
+      - name: Checkout Pocket2FA source
+        uses: actions/checkout@v6
+
+      # ──────────────────────────────────────────────────────────────────────
+      # 2. Extract version information from pubspec.yaml
+      # ──────────────────────────────────────────────────────────────────────
+      - name: Extract version information
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # versionName: "X.Y.Z" from "version: X.Y.Z+CODE"
+          VERSION_NAME=$(sed -n -E 's/^version: ([0-9.]+)\+[0-9]+$/\1/p' pubspec.yaml)
+          # versionCode: "CODE" from "version: X.Y.Z+CODE"
+          VERSION_CODE=$(sed -n -E 's/^version: [0-9.]+\+([0-9]+)$/\1/p' pubspec.yaml)
+
+          if [[ -z "$VERSION_NAME" || -z "$VERSION_CODE" ]]; then
+            echo "❌ Failed to extract version from pubspec.yaml"
+            exit 1
+          fi
+
+          echo "versionName=${VERSION_NAME}" >> "$GITHUB_OUTPUT"
+          echo "versionCode=${VERSION_CODE}" >> "$GITHUB_OUTPUT"
+          echo "✅ Version: ${VERSION_NAME}+${VERSION_CODE}"
+
+      # ──────────────────────────────────────────────────────────────────────
+      # 3. Capture commit SHA
+      # ──────────────────────────────────────────────────────────────────────
+      - name: Capture commit SHA
+        id: commit
+        shell: bash
+        run: |
+          COMMIT_SHA="${{ github.sha }}"
+          echo "sha=${COMMIT_SHA}" >> "$GITHUB_OUTPUT"
+          echo "✅ Commit: ${COMMIT_SHA:0:10}"
+
+      # ──────────────────────────────────────────────────────────────────────
+      # 4. Compute per-ABI version codes
+      #    armeabi-v7a = base × 10 + 1
+      #    arm64-v8a   = base × 10 + 2
+      #    x86_64      = base × 10 + 3
+      # ──────────────────────────────────────────────────────────────────────
+      - name: Compute per-ABI version codes
+        id: abi-codes
+        shell: bash
+        run: |
+          BASE="${{ steps.version.outputs.versionCode }}"
+          echo "armv7=$(( BASE * 10 + 1 ))" >> "$GITHUB_OUTPUT"
+          echo "arm64=$(( BASE * 10 + 2 ))" >> "$GITHUB_OUTPUT"
+          echo "x86_64=$(( BASE * 10 + 3 ))" >> "$GITHUB_OUTPUT"
+
+      # ──────────────────────────────────────────────────────────────────────
+      # 5. Extract Flutter version from the CI workflow
+      #    Same approach the F-Droid build server recipe uses.
+      # ──────────────────────────────────────────────────────────────────────
+      - name: Extract Flutter version from CI workflow
+        id: flutter
+        shell: bash
+        run: |
+          FLUTTER_VERSION=$(sed -n -E "s/.*flutter-version: '(.*)'/\1/p" .github/workflows/release-build-android.yml)
+          if [[ -z "$FLUTTER_VERSION" ]]; then
+            echo "❌ Failed to extract Flutter version from release-build-android.yml"
+            exit 1
+          fi
+          echo "version=${FLUTTER_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "✅ Flutter: ${FLUTTER_VERSION}"
+
+      # ──────────────────────────────────────────────────────────────────────
+      # 6. Set up SSH for GitLab fdroiddata push
+      # ──────────────────────────────────────────────────────────────────────
+      - name: Set up SSH for GitLab
+        uses: webfactory/ssh-agent@v0.9.1
+        with:
+          ssh-private-key: ${{ secrets.FDROID_DATA_SSH_KEY }}
+
+      - name: Verify SSH connectivity to GitLab
+        shell: bash
+        run: |
+          ssh -T -o StrictHostKeyChecking=accept-new git@gitlab.com 2>&1 || true
+          echo "✅ SSH connectivity to GitLab verified"
+
+      # ──────────────────────────────────────────────────────────────────────
+      # 7. Clone the fdroiddata fork
+      # ──────────────────────────────────────────────────────────────────────
+      - name: Clone fdroiddata fork
+        shell: bash
+        run: |
+          git clone \
+            --depth 5 \
+            --branch "$FDROID_BRANCH" \
+            "$FDROID_FORK_REPO" \
+            /tmp/fdroiddata
+          echo "✅ Cloned fdroiddata fork (branch: ${FDROID_BRANCH})"
+
+      # ──────────────────────────────────────────────────────────────────────
+      # 8. Check if build entries for this version already exist
+      # ──────────────────────────────────────────────────────────────────────
+      - name: Check for existing build entries
+        id: check-existing
+        shell: bash
+        run: |
+          VERSION_NAME="${{ steps.version.outputs.versionName }}"
+          METADATA_FILE="/tmp/fdroiddata/metadata/${FDROID_APP_ID}.yml"
+
+          if grep -q "versionName: ${VERSION_NAME}" "$METADATA_FILE" 2>/dev/null; then
+            echo "⚠️  Build entries for v${VERSION_NAME} already exist — nothing to do."
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "✅ No existing entries for v${VERSION_NAME} — will generate."
+          fi
+
+      # ──────────────────────────────────────────────────────────────────────
+      # 9. Generate and append new build entries
+      # ──────────────────────────────────────────────────────────────────────
+      - name: Generate build entries
+        if: steps.check-existing.outputs.exists != 'true'
+        id: generate
+        shell: bash
+        run: |
+          VERSION_NAME="${{ steps.version.outputs.versionName }}"
+          VERSION_CODE="${{ steps.version.outputs.versionCode }}"
+          COMMIT_SHA="${{ steps.commit.outputs.sha }}"
+          FLUTTER_VERSION="${{ steps.flutter.outputs.version }}"
+          METADATA_FILE="/tmp/fdroiddata/metadata/${FDROID_APP_ID}.yml"
+
+          ARM_V7_CODE="${{ steps.abi-codes.outputs.armv7 }}"
+          ARM64_CODE="${{ steps.abi-codes.outputs.arm64 }}"
+          X86_64_CODE="${{ steps.abi-codes.outputs.x86_64 }}"
+
+          BINARY_BASE="https://github.com/gmag11/Pocket2FA/releases/download/${VERSION_NAME}"
+
+          cat >> "$METADATA_FILE" << YAML_ENTRIES
+
+            - versionName: ${VERSION_NAME}
+              versionCode: ${ARM_V7_CODE}
+              commit: ${COMMIT_SHA}
+              sudo:
+                - mkdir -p /home/runner/work/Pocket2FA/Pocket2FA/
+                - chown vagrant /home/runner/work/Pocket2FA/Pocket2FA/
+              output: build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk
+              binary: ${BINARY_BASE}/app-armeabi-v7a-release.apk
+              srclibs:
+                - flutter@stable
+              prebuild:
+                - flutterVersion=\$(sed -n -E "s/.*flutter-version: '(.*)'/\\1/p" .github/workflows/release-build-android.yml)
+                - '[[ \$flutterVersion ]]'
+                - git -C \$\$flutter\$\$ checkout -f \$flutterVersion
+                - export repo=/home/runner/work/Pocket2FA/Pocket2FA
+                - cd ..
+                - mv net.gmartin.pocket2fa \$repo
+                - pushd \$repo
+                - export PUB_CACHE=\$(pwd)/.pub-cache
+                - \$\$flutter\$\$/bin/flutter config --no-analytics
+                - \$\$flutter\$\$/bin/flutter pub get --enforce-lockfile
+                - popd
+                - mv \$repo net.gmartin.pocket2fa
+              scanignore:
+                - .pub-cache
+              build:
+                - export repo=/home/runner/work/Pocket2FA/Pocket2FA
+                - cd ..
+                - mv net.gmartin.pocket2fa \$repo
+                - pushd \$repo
+                - export PUB_CACHE=\$(pwd)/.pub-cache
+                - \$\$flutter\$\$/bin/flutter build apk --release --split-per-abi --target-platform=android-arm
+                - popd
+                - mv \$repo net.gmartin.pocket2fa
+              ndk: ${NDK_VERSION}
+
+            - versionName: ${VERSION_NAME}
+              versionCode: ${ARM64_CODE}
+              commit: ${COMMIT_SHA}
+              sudo:
+                - mkdir -p /home/runner/work/Pocket2FA/Pocket2FA/
+                - chown vagrant /home/runner/work/Pocket2FA/Pocket2FA/
+              output: build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
+              binary: ${BINARY_BASE}/app-arm64-v8a-release.apk
+              srclibs:
+                - flutter@stable
+              prebuild:
+                - flutterVersion=\$(sed -n -E "s/.*flutter-version: '(.*)'/\\1/p" .github/workflows/release-build-android.yml)
+                - '[[ \$flutterVersion ]]'
+                - git -C \$\$flutter\$\$ checkout -f \$flutterVersion
+                - export repo=/home/runner/work/Pocket2FA/Pocket2FA
+                - cd ..
+                - mv net.gmartin.pocket2fa \$repo
+                - pushd \$repo
+                - export PUB_CACHE=\$(pwd)/.pub-cache
+                - \$\$flutter\$\$/bin/flutter config --no-analytics
+                - \$\$flutter\$\$/bin/flutter pub get --enforce-lockfile
+                - popd
+                - mv \$repo net.gmartin.pocket2fa
+              scanignore:
+                - .pub-cache
+              build:
+                - export repo=/home/runner/work/Pocket2FA/Pocket2FA
+                - cd ..
+                - mv net.gmartin.pocket2fa \$repo
+                - pushd \$repo
+                - export PUB_CACHE=\$(pwd)/.pub-cache
+                - \$\$flutter\$\$/bin/flutter build apk --release --split-per-abi --target-platform=android-arm64
+                - popd
+                - mv \$repo net.gmartin.pocket2fa
+              ndk: ${NDK_VERSION}
+
+            - versionName: ${VERSION_NAME}
+              versionCode: ${X86_64_CODE}
+              commit: ${COMMIT_SHA}
+              sudo:
+                - mkdir -p /home/runner/work/Pocket2FA/Pocket2FA/
+                - chown vagrant /home/runner/work/Pocket2FA/Pocket2FA/
+              output: build/app/outputs/flutter-apk/app-x86_64-release.apk
+              binary: ${BINARY_BASE}/app-x86_64-release.apk
+              srclibs:
+                - flutter@stable
+              prebuild:
+                - flutterVersion=\$(sed -n -E "s/.*flutter-version: '(.*)'/\\1/p" .github/workflows/release-build-android.yml)
+                - '[[ \$flutterVersion ]]'
+                - git -C \$\$flutter\$\$ checkout -f \$flutterVersion
+                - export repo=/home/runner/work/Pocket2FA/Pocket2FA
+                - cd ..
+                - mv net.gmartin.pocket2fa \$repo
+                - pushd \$repo
+                - export PUB_CACHE=\$(pwd)/.pub-cache
+                - \$\$flutter\$\$/bin/flutter config --no-analytics
+                - \$\$flutter\$\$/bin/flutter pub get --enforce-lockfile
+                - popd
+                - mv \$repo net.gmartin.pocket2fa
+              scanignore:
+                - .pub-cache
+              build:
+                - export repo=/home/runner/work/Pocket2FA/Pocket2FA
+                - cd ..
+                - mv net.gmartin.pocket2fa \$repo
+                - pushd \$repo
+                - export PUB_CACHE=\$(pwd)/.pub-cache
+                - \$\$flutter\$\$/bin/flutter build apk --release --split-per-abi --target-platform=android-x64
+                - popd
+                - mv \$repo net.gmartin.pocket2fa
+              ndk: ${NDK_VERSION}
+          YAML_ENTRIES
+
+          echo "✅ Generated 3 build entries for v${VERSION_NAME}"
+
+      # ──────────────────────────────────────────────────────────────────────
+      # 10. Commit and push to fdroiddata fork
+      # ──────────────────────────────────────────────────────────────────────
+      - name: Commit and push to fdroiddata
+        if: steps.check-existing.outputs.exists != 'true'
+        id: push
+        shell: bash
+        run: |
+          VERSION_NAME="${{ steps.version.outputs.versionName }}"
+          cd /tmp/fdroiddata
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add "metadata/${FDROID_APP_ID}.yml"
+          git commit -m "feat: add build entries for v${VERSION_NAME}" || {
+            echo "⚠️  Nothing to commit (file unchanged)"
+            echo "pushed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          }
+
+          git push origin "$FDROID_BRANCH"
+          echo "pushed=true" >> "$GITHUB_OUTPUT"
+
+          COMMIT_URL="https://gitlab.com/gmag11/fdroiddata/-/commit/$(git rev-parse HEAD)"
+          echo "commit_url=${COMMIT_URL}" >> "$GITHUB_OUTPUT"
+          echo "✅ Pushed to fdroiddata: ${COMMIT_URL}"
+
+      # ──────────────────────────────────────────────────────────────────────
+      # 11. Verify the push (quick sanity check)
+      # ──────────────────────────────────────────────────────────────────────
+      - name: Verify metadata after push
+        if: steps.push.outputs.pushed == 'true'
+        shell: bash
+        run: |
+          VERSION_NAME="${{ steps.version.outputs.versionName }}"
+          # Quick clone to verify the new entries are there
+          rm -rf /tmp/fdroiddata-verify
+          git clone --depth 5 --branch "$FDROID_BRANCH" "$FDROID_FORK_REPO" /tmp/fdroiddata-verify
+          if grep -q "versionName: ${VERSION_NAME}" "/tmp/fdroiddata-verify/metadata/${FDROID_APP_ID}.yml"; then
+            echo "✅ Verified: build entries for v${VERSION_NAME} are in the remote"
+          else
+            echo "❌ Verification failed: entries not found in remote"
+            exit 1
+          fi
+
+      # ──────────────────────────────────────────────────────────────────────
+      # 12. Create GitLab Merge Request against fdroid/fdroiddata
+      # ──────────────────────────────────────────────────────────────────────
+      - name: Create GitLab Merge Request
+        if: steps.push.outputs.pushed == 'true'
+        id: mr
+        shell: bash
+        env:
+          GITLAB_PAT: ${{ secrets.FDROID_DATA_PAT }}
+        run: |
+          VERSION_NAME="${{ steps.version.outputs.versionName }}"
+          TARGET_PROJECT="$FDROID_FDROIDDATA_PROJECT_ID"
+
+          # Construct the "App Update" MR description
+          read -r -d '' MR_DESCRIPTION << 'TEMPLATE_EOF' || true
+          **The title of this merge request should start with the app name.**
+
+          **Please make sure your repo is public and your branch is not protected. See <https://docs.gitlab.com/user/project/repository/branches/protected/>. We enable fast-forward merges by default. If your branch is protected, we can't rebase it before merge it.**
+
+          **Please read [the guide](https://gitlab.com/fdroid/fdroiddata/-/blob/master/CONTRIBUTING.md) first if this is your first contribution. Please make sure your metadata follows the best practice in [our templates](https://gitlab.com/fdroid/fdroiddata/tree/master/templates).**
+
+          **F-Droid CI runners are under Gitlab's FOSS program, so there's no need for you to pay for any CI time. If Gitlab starts asking for phone numbers or credit cards don't submit anything, just leave a note in the MR so we know we need to trigger the CI.**
+
+          **Please remove above lines!**
+
+          ## Required
+
+          * [x] The app complies with the [inclusion criteria](https://f-droid.org/docs/Inclusion_Policy)
+          * [ ] All related [fdroiddata](https://gitlab.com/fdroid/fdroiddata/issues) and [RFP issues](https://gitlab.com/fdroid/rfp/issues) have been referenced in this merge request
+          * [ ] Builds with `fdroid build`
+
+          ## Strongly Recommended
+
+          * [ ] The upstream app source code repo contains the app metadata _(summary/description/images/changelog/etc)_ in a [Fastlane](https://gitlab.com/snippets/1895688) or [Triple-T](https://gitlab.com/snippets/1901490) folder structure
+          * [x] Releases are tagged
+
+          ## Suggested
+
+          * [ ] External repos are added as git submodules instead of srclibs
+          * [x] Multiple apks for native code
+
+          ---------------------
+
+          <!-- If there is a tracking issue for this app update, reference it below -->
+          <!-- Closes fdroiddata#<issue number> -->
+          TEMPLATE_EOF
+
+          # Append version-specific info
+          MR_DESCRIPTION="${MR_DESCRIPTION}
+
+          ---
+          🤖 *This MR was automatically created by the Pocket2FA release workflow.
+          **App:** net.gmartin.pocket2fa
+          **Version:** ${VERSION_NAME}
+          **Commit:** ${{ steps.commit.outputs.sha }}*"
+
+          # Escape JSON for curl
+          MR_TITLE="net.gmartin.pocket2fa: update to v${VERSION_NAME}"
+          MR_BODY_ESCAPED=$(echo "$MR_DESCRIPTION" | python3 -c "import sys,json; print(json.dumps(sys.stdin.read()))")
+
+          RESPONSE=$(curl -s -w "\n%{http_code}" \
+            --request POST \
+            --header "PRIVATE-TOKEN: ${GITLAB_PAT}" \
+            --header "Content-Type: application/json" \
+            --data "{
+              \"source_branch\": \"${FDROID_BRANCH}\",
+              \"target_branch\": \"master\",
+              \"target_project_id\": ${TARGET_PROJECT},
+              \"title\": ${MR_TITLE},
+              \"description\": ${MR_BODY_ESCAPED},
+              \"remove_source_branch\": false
+            }" \
+            "https://gitlab.com/api/v4/projects/${TARGET_PROJECT}/merge_requests")
+
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+
+          if [[ "$HTTP_CODE" == "201" ]]; then
+            MR_URL=$(echo "$BODY" | python3 -c "import sys,json; print(json.load(sys.stdin)['web_url'])")
+            echo "mr_url=${MR_URL}" >> "$GITHUB_OUTPUT"
+            echo "✅ MR created: ${MR_URL}"
+          elif [[ "$HTTP_CODE" == "409" ]]; then
+            echo "⚠️  An MR for branch '${FDROID_BRANCH}' already exists — skipping."
+            echo "mr_url=EXISTING" >> "$GITHUB_OUTPUT"
+          else
+            echo "❌ MR creation failed (HTTP ${HTTP_CODE}):"
+            echo "$BODY"
+            exit 1
+          fi
+
+      # ──────────────────────────────────────────────────────────────────────
+      # 13. Workflow summary
+      # ──────────────────────────────────────────────────────────────────────
+      - name: Summary
+        if: always()
+        shell: bash
+        run: |
+          VERSION_NAME="${{ steps.version.outputs.versionName }}"
+          VERSION_CODE="${{ steps.version.outputs.versionCode }}"
+          COMMIT_SHA="${{ steps.commit.outputs.sha }}"
+
+          echo "### F-Droid Metadata Update — v${VERSION_NAME}" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Field | Value |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|-------|-------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Version | ${VERSION_NAME}+${VERSION_CODE} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Commit | \`${COMMIT_SHA:0:10}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Flutter | ${{ steps.flutter.outputs.version }} |" >> "$GITHUB_STEP_SUMMARY"
+
+          if [[ "${{ steps.check-existing.outputs.exists }}" == "true" ]]; then
+            echo "| Status | ⚠️ Build entries already exist — nothing to do |" >> "$GITHUB_STEP_SUMMARY"
+          elif [[ "${{ steps.push.outputs.pushed }}" == "true" ]]; then
+            echo "| Push | [${{ steps.push.outputs.commit_url }}](${{ steps.push.outputs.commit_url }}) |" >> "$GITHUB_STEP_SUMMARY"
+            MR_URL="${{ steps.mr.outputs.mr_url }}"
+            if [[ -n "$MR_URL" && "$MR_URL" != "EXISTING" ]]; then
+              echo "| MR | [${MR_URL}](${MR_URL}) |" >> "$GITHUB_STEP_SUMMARY"
+            elif [[ "$MR_URL" == "EXISTING" ]]; then
+              echo "| MR | ⚠️ Already exists |" >> "$GITHUB_STEP_SUMMARY"
+            fi
+          else
+            echo "| Status | ⚠️ No changes to push |" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Metadata file:** [metadata/${FDROID_APP_ID}.yml](https://gitlab.com/gmag11/fdroiddata/-/blob/${FDROID_BRANCH}/metadata/${FDROID_APP_ID}.yml)" >> "$GITHUB_STEP_SUMMARY"

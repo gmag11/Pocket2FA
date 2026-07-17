@@ -3,6 +3,7 @@ name: Build Windows and Create Installer
 on:
   release:
     types: [published]
+  workflow_dispatch:
 
 jobs:
   windows:
@@ -82,6 +83,7 @@ jobs:
           Write-Host "Installer found: $($installer.Path)"
 
       - name: Upload installer to release
+        if: github.event_name == 'release'
         uses: softprops/action-gh-release@v3
         with:
           files: windows/installer/Output/Pocket2FA_Installer_Windows_x64.exe

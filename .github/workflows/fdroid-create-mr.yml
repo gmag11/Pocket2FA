@@ -47,9 +47,9 @@ jobs:
         id: version-artifact
         shell: bash
         run: |
-          cat /tmp/fdroid-artifact/version-info.json
-          VERSION_NAME=$(python3 -c "import json; print(json.load(open('/tmp/fdroid-artifact/version-info.json'))['versionName'])")
-          COMMIT_SHA=$(python3 -c "import json; print(json.load(open('/tmp/fdroid-artifact/version-info.json'))['commitSha'])")
+          cat /tmp/fdroid-artifact/fdroid-version-info.json
+          VERSION_NAME=$(python3 -c "import json; print(json.load(open('/tmp/fdroid-artifact/fdroid-version-info.json'))['versionName'])")
+          COMMIT_SHA=$(python3 -c "import json; print(json.load(open('/tmp/fdroid-artifact/fdroid-version-info.json'))['commitSha'])")
           echo "versionName=${VERSION_NAME}" >> "$GITHUB_OUTPUT"
           echo "commitSha=${COMMIT_SHA}" >> "$GITHUB_OUTPUT"
           echo "✅ Version: ${VERSION_NAME} — Commit: ${COMMIT_SHA:0:10}"

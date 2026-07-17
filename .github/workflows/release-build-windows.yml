@@ -38,7 +38,7 @@ jobs:
             exit 0
           }
 
-          Write-Host 'ISCC not found — downloading Inno Setup...'
+          Write-Host 'ISCC not found - downloading Inno Setup...'
           $url = 'https://jrsoftware.org/download.php/is.exe?site=1'
           $maxRetries = 3
           for ($i = 1; $i -le $maxRetries; $i++) {
@@ -46,8 +46,8 @@ jobs:
               Write-Host "Download attempt $i of $maxRetries"
               Invoke-WebRequest -Uri $url -OutFile is.exe -ErrorAction Stop
               $size = (Get-Item is.exe).Length
-              if ($size -lt 1MB) { throw "Downloaded file too small ($size bytes) — likely corrupted" }
-              Write-Host "Downloaded $size bytes — looks healthy"
+              if ($size -lt 1MB) { throw "Downloaded file too small ($size bytes) - likely corrupted" }
+              Write-Host "Downloaded $size bytes - looks healthy"
               break
             } catch {
               Write-Host "Attempt $i failed: $_"

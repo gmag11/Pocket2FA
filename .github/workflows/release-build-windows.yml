@@ -29,29 +29,41 @@ jobs:
       - name: Build Windows Release
         run: flutter build windows --release
 
-      - name: Download Inno Setup installer
-        shell: powershell
-        run: |
-          $url = 'https://jrsoftware.org/download.php/is.exe?site=1'
-          Write-Host "Downloading Inno Setup from $url"
-          Invoke-WebRequest -Uri $url -OutFile is.exe
-
-      - name: Install Inno Setup silently
-        shell: powershell
-        run: |
-          Write-Host 'Attempting silent install of Inno Setup to "C:\Program Files (x86)\Inno Setup 6"'
-          # Try a silent install. This may require elevation; if it fails, see notes in the workflow file.
-          Start-Process -FilePath .\is.exe -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART','/SP-','/DIR="C:\Program Files (x86)\Inno Setup 6"' -Wait -NoNewWindow
-
-      - name: Confirm ISCC exists
+      - name: Locate or install Inno Setup 6
         shell: powershell
         run: |
           $iscc = 'C:\Program Files (x86)\Inno Setup 6\ISCC.exe'
+          if (Test-Path $iscc) {
+            Write-Host "Found pre-installed ISCC at $iscc"
+            exit 0
+          }
+
+          Write-Host 'ISCC not found — downloading Inno Setup...'
+          $url = 'https://jrsoftware.org/download.php/is.exe?site=1'
+          $maxRetries = 3
+          for ($i = 1; $i -le $maxRetries; $i++) {
+            try {
+              Write-Host "Download attempt $i of $maxRetries"
+              Invoke-WebRequest -Uri $url -OutFile is.exe -ErrorAction Stop
+              $size = (Get-Item is.exe).Length
+              if ($size -lt 1MB) { throw "Downloaded file too small ($size bytes) — likely corrupted" }
+              Write-Host "Downloaded $size bytes — looks healthy"
+              break
+            } catch {
+              Write-Host "Attempt $i failed: $_"
+              if ($i -eq $maxRetries) { throw "All $maxRetries download attempts failed" }
+              Start-Sleep -Seconds 5
+            }
+          }
+
+          Write-Host 'Installing Inno Setup silently...'
+          Start-Process -FilePath .\is.exe -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART','/SP-','/DIR="C:\Program Files (x86)\Inno Setup 6"' -Wait -NoNewWindow
+
           if (-not (Test-Path $iscc)) {
-            Write-Error "ISCC.exe not found at $iscc"
+            Write-Error "ISCC.exe not found at $iscc after install"
             exit 1
           }
-          Write-Host "Found ISCC at $iscc"
+          Write-Host "ISCC installed successfully at $iscc"
 
       - name: Build installer (PowerShell script)
         shell: powershell

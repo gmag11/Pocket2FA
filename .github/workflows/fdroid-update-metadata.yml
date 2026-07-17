@@ -1,8 +1,12 @@
-name: F-Droid Metadata Update
+name: F-Droid Update Metadata
 
 # ── Trigger ───────────────────────────────────────────────────────────────
 # Runs automatically when the Android release build completes successfully,
 # or manually via workflow_dispatch.
+#
+# This workflow ONLY generates the build entries and pushes them to the
+# fdroiddata fork. A separate workflow (fdroid-create-mr.yml) handles the
+# GitLab MR creation so each concern can be debugged independently.
 on:
   workflow_run:
     workflows: ["Build Android and Upload Release APKs"]
@@ -25,7 +29,6 @@ jobs:
     env:
       # ── Secrets the user must configure before first run ──────────────────
       # FDROID_DATA_SSH_KEY  — private SSH deploy key for git@gitlab.com:gmag11/fdroiddata.git
-      # FDROID_DATA_PAT      — GitLab Personal Access Token with 'api' scope (for MR creation)
       # ── Hardcoded constants ──────────────────────────────────────────────
       FDROID_FDROIDDATA_PROJECT_ID: "36528"        # fdroid/fdroiddata GitLab project ID
       FDROID_APP_ID: "net.gmartin.pocket2fa"       # F-Droid application ID
@@ -168,7 +171,22 @@ jobs:
           ARM64_CODE="${{ steps.abi-codes.outputs.arm64 }}"
           X86_64_CODE="${{ steps.abi-codes.outputs.x86_64 }}"
 
-          BINARY_BASE="https://github.com/gmag11/Pocket2FA/releases/download/${VERSION_NAME}"
+          # F-Droid expects %v placeholder in binary URLs, not a literal version.
+          BINARY_BASE="https://github.com/gmag11/Pocket2FA/releases/download/%v"
+
+          # ── Save and strip the footer block ──────────────────────────────
+          # F-Droid metadata files end with global keys (AllowedAPKSigningKeys,
+          # AutoUpdateMode, CurrentVersion, etc.) that must stay BELOW all
+          # Builds: entries. cat >> blindly appends after them, so we save
+          # the footer first, strip it, append new entries, then re-append
+          # the footer with updated CurrentVersion/CurrentVersionCode.
+          FOOTER_START_LINE=$(grep -n '^AllowedAPKSigningKeys:' "$METADATA_FILE" | head -1 | cut -d: -f1)
+          if [[ -n "$FOOTER_START_LINE" ]]; then
+            FOOTER=$(sed -n "${FOOTER_START_LINE},\$ p" "$METADATA_FILE")
+            sed -i "${FOOTER_START_LINE},\$ d" "$METADATA_FILE"
+          else
+            FOOTER=""
+          fi
 
           cat >> "$METADATA_FILE" << YAML_ENTRIES
 
@@ -281,6 +299,15 @@ jobs:
               ndk: ${NDK_VERSION}
           YAML_ENTRIES
 
+          # ── Re-append footer with updated version fields ─────────────────
+          if [[ -n "$FOOTER" ]]; then
+            FOOTER=$(echo "$FOOTER" | sed "s/^CurrentVersion: .*/CurrentVersion: ${VERSION_NAME}/")
+            FOOTER=$(echo "$FOOTER" | sed "s/^CurrentVersionCode: .*/CurrentVersionCode: ${X86_64_CODE}/")
+            # Ensure a blank line separates builds from footer.
+            echo "" >> "$METADATA_FILE"
+            echo "$FOOTER" >> "$METADATA_FILE"
+          fi
+
           echo "✅ Generated 3 build entries for v${VERSION_NAME}"
 
       # ──────────────────────────────────────────────────────────────────────
@@ -292,6 +319,8 @@ jobs:
         shell: bash
         run: |
           VERSION_NAME="${{ steps.version.outputs.versionName }}"
+          VERSION_CODE="${{ steps.version.outputs.versionCode }}"
+          COMMIT_SHA="${{ steps.commit.outputs.sha }}"
           cd /tmp/fdroiddata
 
           git config user.name "github-actions[bot]"
@@ -307,9 +336,22 @@ jobs:
           git push origin "$FDROID_BRANCH"
           echo "pushed=true" >> "$GITHUB_OUTPUT"
 
-          COMMIT_URL="https://gitlab.com/gmag11/fdroiddata/-/commit/$(git rev-parse HEAD)"
-          echo "commit_url=${COMMIT_URL}" >> "$GITHUB_OUTPUT"
-          echo "✅ Pushed to fdroiddata: ${COMMIT_URL}"
+          PUSHED_COMMIT_URL="https://gitlab.com/gmag11/fdroiddata/-/commit/$(git rev-parse HEAD)"
+          echo "commit_url=${PUSHED_COMMIT_URL}" >> "$GITHUB_OUTPUT"
+          echo "✅ Pushed to fdroiddata: ${PUSHED_COMMIT_URL}"
+
+          # Write version info JSON for the downstream MR workflow artifact.
+          python3 -c "
+          import json
+          data = {
+              'versionName': '${VERSION_NAME}',
+              'versionCode': '${VERSION_CODE}',
+              'commitSha': '${COMMIT_SHA}'
+          }
+          with open('/tmp/fdroid-version-info.json', 'w') as f:
+              json.dump(data, f)
+          "
+          echo "✅ Version artifact written to /tmp/fdroid-version-info.json"
 
       # ──────────────────────────────────────────────────────────────────────
       # 11. Verify the push (quick sanity check)
@@ -330,82 +372,15 @@ jobs:
           fi
 
       # ──────────────────────────────────────────────────────────────────────
-      # 12. Create GitLab Merge Request against fdroid/fdroiddata
+      # 12. Upload version artifact for downstream MR workflow
       # ──────────────────────────────────────────────────────────────────────
-      - name: Create GitLab Merge Request
+      - name: Upload version artifact
         if: steps.push.outputs.pushed == 'true'
-        id: mr
-        shell: bash
-        env:
-          GITLAB_PAT: ${{ secrets.FDROID_DATA_PAT }}
-        run: |
-          VERSION_NAME="${{ steps.version.outputs.versionName }}"
-          TARGET_PROJECT="$FDROID_FDROIDDATA_PROJECT_ID"
-
-          # Construct the MR description
-          read -r -d '' MR_DESCRIPTION << 'TEMPLATE_EOF' || true
-          ## Required
-          <!--Please ensure that your MR meet following requirements-->
-
-          * [x] The app complies with the [inclusion criteria](https://f-droid.org/docs/Inclusion_Policy)
-          * [x] All related [fdroiddata](https://gitlab.com/fdroid/fdroiddata/issues) and [RFP issues](https://gitlab.com/fdroid/rfp/issues) have been referenced in this merge request
-          * [x] Builds with `fdroid build`
-
-          ## Strongly Recommended
-          <!--We highly encourage you doing these thing.-->
-
-          * [x] The upstream app source code repo contains the app metadata _(summary/description/images/changelog/etc)_ in a [Fastlane](https://gitlab.com/snippets/1895688) or [Triple-T](https://gitlab.com/snippets/1901490) folder structure <!--If you are the author, please do add metadata in your repo; If you are not the author, please at least open an issue upstream for the metadata. With metadata in your repo, you can maintain it directly.-->
-          * [x] Releases are tagged <!--Our autoupdate workflow relies on the tag. Without this you have to add every version manually.-->
-
-          ## Suggested
-          <!--These suggestions may be difficult to apply on your app. Please have a try.-->
-
-          * [x] External repos are added as git submodules instead of srclibs <!--You can update git submodules without opening an MR in this repo and the submodule is covered by our scanner.-->
-          * [x] Multiple apks for native code <!--If your app has native code and the size is large, please consider building multiple apks instead of one universal apk.-->
-          TEMPLATE_EOF
-
-          # Append version-specific info
-          MR_DESCRIPTION="${MR_DESCRIPTION}
-
-          ---
-          🤖 *This MR was automatically created by the Pocket2FA release workflow.
-          **App:** net.gmartin.pocket2fa
-          **Version:** ${VERSION_NAME}
-          **Commit:** ${{ steps.commit.outputs.sha }}*"
-
-          # Escape JSON for curl
-          MR_TITLE="Pocket2FA v${VERSION_NAME} update"
-          MR_BODY_ESCAPED=$(echo "$MR_DESCRIPTION" | python3 -c "import sys,json; print(json.dumps(sys.stdin.read()))")
-
-          RESPONSE=$(curl -s -w "\n%{http_code}" \
-            --request POST \
-            --header "PRIVATE-TOKEN: ${GITLAB_PAT}" \
-            --header "Content-Type: application/json" \
-            --data "{
-              \"source_branch\": \"${FDROID_BRANCH}\",
-              \"target_branch\": \"master\",
-              \"target_project_id\": ${TARGET_PROJECT},
-              \"title\": ${MR_TITLE},
-              \"description\": ${MR_BODY_ESCAPED},
-              \"remove_source_branch\": false
-            }" \
-            "https://gitlab.com/api/v4/projects/${TARGET_PROJECT}/merge_requests")
-
-          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
-          BODY=$(echo "$RESPONSE" | sed '$d')
-
-          if [[ "$HTTP_CODE" == "201" ]]; then
-            MR_URL=$(echo "$BODY" | python3 -c "import sys,json; print(json.load(sys.stdin)['web_url'])")
-            echo "mr_url=${MR_URL}" >> "$GITHUB_OUTPUT"
-            echo "✅ MR created: ${MR_URL}"
-          elif [[ "$HTTP_CODE" == "409" ]]; then
-            echo "⚠️  An MR for branch '${FDROID_BRANCH}' already exists — skipping."
-            echo "mr_url=EXISTING" >> "$GITHUB_OUTPUT"
-          else
-            echo "❌ MR creation failed (HTTP ${HTTP_CODE}):"
-            echo "$BODY"
-            exit 1
-          fi
+        uses: actions/upload-artifact@v5
+        with:
+          name: fdroid-version-info
+          path: /tmp/fdroid-version-info.json
+          retention-days: 1
 
       # ──────────────────────────────────────────────────────────────────────
       # 13. Workflow summary
@@ -430,12 +405,7 @@ jobs:
             echo "| Status | ⚠️ Build entries already exist — nothing to do |" >> "$GITHUB_STEP_SUMMARY"
           elif [[ "${{ steps.push.outputs.pushed }}" == "true" ]]; then
             echo "| Push | [${{ steps.push.outputs.commit_url }}](${{ steps.push.outputs.commit_url }}) |" >> "$GITHUB_STEP_SUMMARY"
-            MR_URL="${{ steps.mr.outputs.mr_url }}"
-            if [[ -n "$MR_URL" && "$MR_URL" != "EXISTING" ]]; then
-              echo "| MR | [${MR_URL}](${MR_URL}) |" >> "$GITHUB_STEP_SUMMARY"
-            elif [[ "$MR_URL" == "EXISTING" ]]; then
-              echo "| MR | ⚠️ Already exists |" >> "$GITHUB_STEP_SUMMARY"
-            fi
+            echo "| Artifact | ✅ Uploaded — triggers ‘F-Droid Create MR’ workflow |" >> "$GITHUB_STEP_SUMMARY"
           else
             echo "| Status | ⚠️ No changes to push |" >> "$GITHUB_STEP_SUMMARY"
           fi

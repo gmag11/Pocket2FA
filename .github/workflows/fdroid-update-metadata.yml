@@ -201,7 +201,7 @@ jobs:
               srclibs:
                 - flutter@stable
               prebuild:
-                - flutterVersion=\$(sed -n -E "s/.*flutter-version: '(.*)'/\\1/p" .github/workflows/release-build-android.yml)
+                - flutterVersion=\$(sed -n -E "s/.*flutter-version:\\ '(.*)'/\\1/p" .github/workflows/release-build-android.yml)
                 - '[[ \$flutterVersion ]]'
                 - git -C \$\$flutter\$\$ checkout -f \$flutterVersion
                 - export repo=/home/runner/work/Pocket2FA/Pocket2FA
@@ -237,7 +237,7 @@ jobs:
               srclibs:
                 - flutter@stable
               prebuild:
-                - flutterVersion=\$(sed -n -E "s/.*flutter-version: '(.*)'/\\1/p" .github/workflows/release-build-android.yml)
+                - flutterVersion=\$(sed -n -E "s/.*flutter-version:\\ '(.*)'/\\1/p" .github/workflows/release-build-android.yml)
                 - '[[ \$flutterVersion ]]'
                 - git -C \$\$flutter\$\$ checkout -f \$flutterVersion
                 - export repo=/home/runner/work/Pocket2FA/Pocket2FA
@@ -273,7 +273,7 @@ jobs:
               srclibs:
                 - flutter@stable
               prebuild:
-                - flutterVersion=\$(sed -n -E "s/.*flutter-version: '(.*)'/\\1/p" .github/workflows/release-build-android.yml)
+                - flutterVersion=\$(sed -n -E "s/.*flutter-version:\\ '(.*)'/\\1/p" .github/workflows/release-build-android.yml)
                 - '[[ \$flutterVersion ]]'
                 - git -C \$\$flutter\$\$ checkout -f \$flutterVersion
                 - export repo=/home/runner/work/Pocket2FA/Pocket2FA

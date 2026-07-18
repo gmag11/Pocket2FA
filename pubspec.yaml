@@ -2,7 +2,7 @@ name: pocket2fa
 description: 2FA manager based on 2FAuth web app.
 publish_to: 'none'
 
-version: 0.9.17+28
+version: 0.9.17+29
 
 environment:
   sdk: ">=3.3.0 <4.0.0"
@@ -18,17 +18,17 @@ dependencies:
   shared_preferences: ^2.5.3
   hive: ^2.2.3
   hive_flutter: ^1.1.0
-  flutter_secure_storage: ^9.2.4
+  flutter_secure_storage: ^10.3.1
   local_auth: ^2.3.0
   dio: ^5.9.0
   path_provider: ^2.1.5
-  share_plus: ^10.1.4
+  share_plus: ^13.2.1
   flutter_svg: ^2.2.0
   crypto: ^3.0.6
   url_launcher: ^6.3.2
   flutter_zxing: '>=2.2.0 <2.4.0'
   image_picker: ^1.2.2
-  image_picker_android: '>=0.8.13+5 <0.8.13+18'
+  image_picker_android: '>=0.8.13+5 <0.8.13+20'
   image_picker_platform_interface: ^2.11.1
   image: ^4.5.4
   window_manager: ^0.5.1

@@ -95,8 +95,12 @@ class _HomePageState extends State<HomePage>
   void _onServerManagerChanged() {
     if (mounted) {
       setState(() {
-        // Keep the logical group key; UI will localize the display.
-        _selectedGroup = 'All';
+        // Preserve the selected group across syncs; only fall back to 'All'
+        // when the group no longer exists in the current data.
+        final availableGroups = _serverManager.getGroups();
+        if (!availableGroups.contains(_selectedGroup)) {
+          _selectedGroup = 'All';
+        }
       });
   // If servers became available after load, attempt initial sync if needed
   LogService.instance.log('HomePage: server manager changed; servers=${_serverManager.servers.length}', name: 'HomePage');

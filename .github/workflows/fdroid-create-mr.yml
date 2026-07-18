@@ -25,7 +25,8 @@ jobs:
       # ── Secrets ──────────────────────────────────────────────────────────
       # FDROID_DATA_PAT — GitLab Personal Access Token with 'api' scope
       # ── Hardcoded constants ──────────────────────────────────────────────
-      FDROID_FDROIDDATA_PROJECT_ID: "36528"        # fdroid/fdroiddata GitLab project ID
+      FDROID_FDROIDDATA_PROJECT_ID: "36528"        # fdroid/fdroiddata GitLab project ID (upstream, target)
+      FDROID_SOURCE_PROJECT_PATH: "gmag11/fdroiddata" # your fork (source) — used URL-encoded
       FDROID_APP_ID: "net.gmartin.pocket2fa"       # F-Droid application ID
       FDROID_BRANCH: "net.gmartin.pocket2fa"
 
@@ -74,6 +75,11 @@ jobs:
           VERSION_NAME="${{ steps.version-artifact.outputs.versionName || steps.version-manual.outputs.versionName }}"
           COMMIT_SHA="${{ steps.version-artifact.outputs.commitSha || steps.version-manual.outputs.commitSha }}"
           TARGET_PROJECT="$FDROID_FDROIDDATA_PROJECT_ID"
+          # GitLab requires POSTing to the SOURCE project (your fork), with
+          # target_project_id in the body pointing at the upstream project.
+          # POSTing to the upstream project's endpoint gives 403 unless you
+          # are a member of it.
+          SOURCE_PROJECT_ENCODED=$(python3 -c "import urllib.parse; print(urllib.parse.quote('$FDROID_SOURCE_PROJECT_PATH', safe=''))")
 
           if [[ -z "$VERSION_NAME" ]]; then
             echo "❌ No versionName available — aborting."
@@ -128,7 +134,7 @@ jobs:
               \"description\": ${MR_BODY_ESCAPED},
               \"remove_source_branch\": false
             }" \
-            "https://gitlab.com/api/v4/projects/${TARGET_PROJECT}/merge_requests")
+            "https://gitlab.com/api/v4/projects/${SOURCE_PROJECT_ENCODED}/merge_requests")
 
           HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
           BODY=$(echo "$RESPONSE" | sed '$d')

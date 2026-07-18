@@ -311,7 +311,25 @@ jobs:
           echo "✅ Generated 3 build entries for v${VERSION_NAME}"
 
       # ──────────────────────────────────────────────────────────────────────
-      # 10. Commit and push to fdroiddata fork
+      # 10. Normalize formatting with fdroid rewritemeta
+      #     fdroidserver's YAML dumper wraps long scalar values (e.g. long
+      #     `binary:` URLs) onto their own indented line, while short ones
+      #     stay inline. Hand-crafting that exact wrapping is fragile, so we
+      #     let the real tool format the file before committing — this is
+      #     the same check fdroiddata's CI runs, so this step guarantees the
+      #     pushed file already passes it.
+      # ──────────────────────────────────────────────────────────────────────
+      - name: Run fdroid rewritemeta
+        if: steps.check-existing.outputs.exists != 'true'
+        shell: bash
+        run: |
+          pip install --quiet fdroidserver
+          cd /tmp/fdroiddata
+          fdroid rewritemeta "${FDROID_APP_ID}"
+          echo "✅ Metadata normalized with fdroid rewritemeta"
+
+      # ──────────────────────────────────────────────────────────────────────
+      # 11. Commit and push to fdroiddata fork
       # ──────────────────────────────────────────────────────────────────────
       - name: Commit and push to fdroiddata
         if: steps.check-existing.outputs.exists != 'true'
@@ -354,7 +372,7 @@ jobs:
           echo "✅ Version artifact written to /tmp/fdroid-version-info.json"
 
       # ──────────────────────────────────────────────────────────────────────
-      # 11. Verify the push (quick sanity check)
+      # 12. Verify the push (quick sanity check)
       # ──────────────────────────────────────────────────────────────────────
       - name: Verify metadata after push
         if: steps.push.outputs.pushed == 'true'
@@ -372,7 +390,7 @@ jobs:
           fi
 
       # ──────────────────────────────────────────────────────────────────────
-      # 12. Upload version artifact for downstream MR workflow
+      # 13. Upload version artifact for downstream MR workflow
       # ──────────────────────────────────────────────────────────────────────
       - name: Upload version artifact
         if: steps.push.outputs.pushed == 'true'
@@ -383,7 +401,7 @@ jobs:
           retention-days: 1
 
       # ──────────────────────────────────────────────────────────────────────
-      # 13. Workflow summary
+      # 14. Workflow summary
       # ──────────────────────────────────────────────────────────────────────
       - name: Summary
         if: always()

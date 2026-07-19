@@ -48,10 +48,21 @@ class IconCacheService {
     final bytes =
         await _downloadIcon(server, fileName, cancelToken: cancelToken);
 
+    // Write atomically: write to a temp file first, then rename.
+    // This prevents concurrent readers (AccountTile building during a sync)
+    // from seeing a partially-written or truncated icon file, which can
+    // crash the native image decoder (especially on Android).
     try {
-      await file.writeAsBytes(bytes, flush: true);
+      final tempFile = File('${file.path}.tmp');
+      await tempFile.writeAsBytes(bytes, flush: true);
+      await tempFile.rename(file.path);
     } catch (e) {
       LogService.instance.log('IconCache: write error $e', name: 'IconCacheService');
+      // Clean up temp file on failure
+      try {
+        final tempFile = File('${file.path}.tmp');
+        if (await tempFile.exists()) await tempFile.delete();
+      } catch (_) {}
     }
 
     return bytes;

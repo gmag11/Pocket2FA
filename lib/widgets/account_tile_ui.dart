@@ -52,7 +52,15 @@ class AccountTileUi {
           radius: radius,
           backgroundColor: Colors.transparent,
           child: FutureBuilder<String>(
-            future: file.readAsString().then(_sanitizeSvg),
+            // Guard: only attempt the read if the file still exists.
+            // The atomic-write strategy in IconCacheService ensures that
+            // any file present on disk is a complete, valid icon, but a
+            // concurrent evict/clear could still remove it between the
+            // existence check and the read — the error path covers that.
+            future: file.exists().then((exists) async {
+              if (!exists) throw Exception('Icon file not found');
+              return _sanitizeSvg(await file.readAsString());
+            }),
             builder: (ctx, snapshot) {
               if (snapshot.hasData) {
                 return SvgPicture.string(
@@ -70,6 +78,9 @@ class AccountTileUi {
           ),
         );
       } else {
+        // Guard: skip FileImage if the file no longer exists (e.g. cleared
+        // by a concurrent cache eviction). FileImage on a missing file
+        // triggers onBackgroundImageError which is already handled below.
         try {
           return CircleAvatar(
             radius: radius,

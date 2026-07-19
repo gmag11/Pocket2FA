@@ -1,0 +1,6 @@
+Version 0.9.18
+
+- Group filter no longer resets to "All" after syncing with server
+- Updated Flutter SDK to 3.44.4
+- Upgraded dependencies: flutter_secure_storage, share_plus, and image_picker_android
+- Android build tools updated (Gradle 8.14, AGP 8.11.1)

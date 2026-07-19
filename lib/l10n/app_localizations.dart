@@ -1000,6 +1000,18 @@ abstract class AppLocalizations {
   /// **'Connect anyway'**
   String get connectAnyway;
 
+  /// Label for the checkbox that allows connecting to servers with self-signed SSL certificates.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept self-signed certificates'**
+  String get allowSelfSignedLabel;
+
+  /// Hint text shown below the self-signed certificate acceptance checkbox.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable if your server uses a self-signed SSL certificate'**
+  String get allowSelfSignedHint;
+
   /// Label for the Diagnostics settings section.
   ///
   /// In en, this message translates to:

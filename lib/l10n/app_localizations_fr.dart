@@ -505,6 +505,13 @@ class AppLocalizationsFr extends AppLocalizations {
   String get connectAnyway => 'Se connecter quand même';
 
   @override
+  String get allowSelfSignedLabel => 'Accepter les certificats auto-signés';
+
+  @override
+  String get allowSelfSignedHint =>
+      'Activer si votre serveur utilise un certificat SSL auto-signé';
+
+  @override
   String get settingsDiagnostics => 'DIAGNOSTIC';
 
   @override

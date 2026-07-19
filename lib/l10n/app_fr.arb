@@ -646,6 +646,14 @@
     "@connectAnyway": {
         "description": "Étiquette du bouton pour continuer malgré l'avertissement de certificat."
     },
+    "allowSelfSignedLabel": "Accepter les certificats auto-signés",
+    "@allowSelfSignedLabel": {
+        "description": "Étiquette de la case à cocher permettant de se connecter à des serveurs avec des certificats SSL auto-signés."
+    },
+    "allowSelfSignedHint": "Activer si votre serveur utilise un certificat SSL auto-signé",
+    "@allowSelfSignedHint": {
+        "description": "Texte d'aide sous la case d'acceptation des certificats auto-signés."
+    },
     "settingsDiagnostics": "DIAGNOSTIC",
     "@settingsDiagnostics": {
         "description": "Étiquette de la section Diagnostic dans les paramètres."

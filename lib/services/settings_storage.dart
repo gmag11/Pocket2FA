@@ -15,14 +15,20 @@ class SettingsStorage {
   static const _hiveBox = 'app_settings_box';
   static const _keyName = 'hive_master_key';
 
-  AndroidOptions _getAndroidOptions() => const AndroidOptions(
-        encryptedSharedPreferences: true,
+  AndroidOptions _getAndroidOptions() => const AndroidOptions();
+
+  MacOsOptions _getMacOsOptions() => const MacOsOptions(
+        accessibility: null,
+        usesDataProtectionKeychain: false,
       );
 
   static const _biometricFlagKey = 'biometric_protection_flag';
 
   FlutterSecureStorage get _secure =>
-      FlutterSecureStorage(aOptions: _getAndroidOptions());
+      FlutterSecureStorage(
+        aOptions: _getAndroidOptions(),
+        mOptions: _getMacOsOptions(),
+      );
 
   final LocalAuthentication _localAuth = LocalAuthentication();
 
@@ -66,15 +72,15 @@ class SettingsStorage {
     // platform (especially Windows, where DPAPI or Windows Hello can fail
     // for a variety of reasons) does not crash main() before runApp().
     try {
-      // Read both the biometric flag and the encryption key in a single
-      // platform-channel round trip instead of two sequential reads. Each
-      // flutter_secure_storage call has fixed overhead on Android
-      // (EncryptedSharedPreferences / Keystore cipher init), so halving the
-      // number of calls measurably helps cold-start latency there.
       final secureStopwatch = Stopwatch()..start();
-      final secureValues = await _secure.readAll();
+      final secureValues = Platform.isMacOS
+          ? <String, String?>{
+              _biometricFlagKey: await _secure.read(key: _biometricFlagKey),
+              _keyName: await _secure.read(key: _keyName),
+            }
+          : await _secure.readAll();
       LogService.instance.info(
-          'SettingsStorage.init: secure storage readAll took '
+          'SettingsStorage.init: secure storage read took '
           '${secureStopwatch.elapsedMilliseconds}ms',
           name: 'SettingsStorage');
       final biometricFlag = secureValues[_biometricFlagKey];
@@ -204,7 +210,10 @@ class SettingsStorage {
     try {
       // If the app has biometric protection enabled we prompt the user via
       // local_auth first; otherwise just read from secure storage normally.
-      final secure = FlutterSecureStorage(aOptions: _getAndroidOptions());
+      final secure = FlutterSecureStorage(
+        aOptions: _getAndroidOptions(),
+        mOptions: _getMacOsOptions(),
+      );
       final encoded = await secure.read(key: _keyName);
       if (encoded == null) return null;
       return Uint8List.fromList(base64Decode(encoded));

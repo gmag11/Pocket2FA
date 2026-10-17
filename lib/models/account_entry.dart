@@ -21,6 +21,11 @@ class AccountEntry {
   // received from the API; false for locally created unsynced accounts.
   final bool synchronized;
   final bool deleted;
+  // Sharing: present when the account was shared with the authenticated user
+  // by another user of the same 2FAuth instance. Such accounts have no local
+  // secret, so their OTPs must be fetched from the server.
+  final bool isBorrowed;
+  final String? sharedBy;
 
   AccountEntry({
     required this.id,
@@ -38,6 +43,8 @@ class AccountEntry {
     this.localIcon,
     this.synchronized = true,
     this.deleted = false,
+    this.isBorrowed = false,
+    this.sharedBy,
   });
 
   Map<String, dynamic> toMap() => {
@@ -49,6 +56,8 @@ class AccountEntry {
         'group': group,
         'synchronized': synchronized,
         'deleted': deleted,
+        'is_borrowed': isBorrowed,
+        if (sharedBy != null) 'shared_by': sharedBy,
         if (groupId != null) 'group_id': groupId,
         if (otpType != null) 'otp_type': otpType,
         if (icon != null) 'icon': icon,
@@ -103,6 +112,11 @@ class AccountEntry {
         deleted: m.containsKey('deleted')
             ? (m['deleted'] == true || m['deleted']?.toString() == 'true')
             : false,
+        isBorrowed: m.containsKey('is_borrowed')
+            ? (m['is_borrowed'] == true ||
+                m['is_borrowed']?.toString() == 'true')
+            : false,
+        sharedBy: m['shared_by']?.toString(),
       );
 
   // Legacy conversion removed: UI should use AccountEntry directly and generate OTPs dynamically.
@@ -123,6 +137,8 @@ class AccountEntry {
     String? localIcon,
     bool? synchronized,
     bool? deleted,
+    bool? isBorrowed,
+    String? sharedBy,
   }) {
     return AccountEntry(
       id: id ?? this.id,
@@ -140,6 +156,8 @@ class AccountEntry {
       localIcon: localIcon ?? this.localIcon,
       synchronized: synchronized ?? this.synchronized,
       deleted: deleted ?? this.deleted,
+      isBorrowed: isBorrowed ?? this.isBorrowed,
+      sharedBy: sharedBy ?? this.sharedBy,
     );
   }
 }

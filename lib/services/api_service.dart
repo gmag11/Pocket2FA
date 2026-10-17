@@ -448,8 +448,10 @@ class ApiService {
   ///
   /// Calls GET /twofaccounts/{id}/otp and returns a Map with keys:
   ///  - 'password': the current OTP (always present)
-  ///  - 'nextPassword': the next OTP when provided by the API (may be null)
+  ///  - 'next_password': the next OTP when provided by the API (may be null)
   ///  - 'counter': integer counter value when the API provides it (may be null)
+  ///  - 'otp_type', 'period', 'generated_at': scheduling metadata returned for
+  ///    TOTP, used to refresh server-backed codes (accounts shared with the user)
   Future<Map<String, dynamic>> fetchAccountOtp(int accountId,
       {CancelToken? cancelToken}) async {
     _ensureReady();
@@ -463,31 +465,25 @@ class ApiService {
         if (pwd == null) {
           throw StateError('Invalid OTP response shape: missing "password"');
         }
-        // Support both snake_case and camelCase from server responses
-        final nextPwd = data.containsKey('next_password')
-            ? (data['nextPassword']?.toString())
-            : (data.containsKey('next_password')
-                ? (data['next_password']?.toString())
-                : null);
-        int? counter;
-        try {
-          if (data.containsKey('counter') && data['counter'] != null) {
-            final v = data['counter'];
-            if (v is int) {
-              counter = v;
-            } else if (v is String) {
-              counter = int.tryParse(v);
-            } else {
-              counter = int.tryParse(v.toString());
-            }
-          }
-        } catch (_) {
-          counter = null;
+        // Accept both snake_case (API spec) and camelCase variants.
+        final nextPwd =
+            (data['next_password'] ?? data['nextPassword'])?.toString();
+
+        int? asInt(dynamic v) {
+          if (v == null) return null;
+          if (v is int) return v;
+          return int.tryParse(v.toString());
         }
+
         return {
           'password': pwd.toString(),
           'next_password': nextPwd,
-          'counter': counter,
+          'counter': asInt(data['counter']),
+          // Extra fields used to schedule server-backed refreshes for accounts
+          // shared with the user (whose secret is not available locally).
+          'otp_type': data['otp_type']?.toString(),
+          'period': asInt(data['period']),
+          'generated_at': asInt(data['generated_at']),
         };
       }
       throw StateError('Invalid OTP response shape');

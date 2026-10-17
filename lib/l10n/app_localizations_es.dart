@@ -423,6 +423,10 @@ class AppLocalizationsEs extends AppLocalizations {
       'La autenticación biométrica falló o se canceló. Por favor reintenta para desbloquear tus datos locales.';
 
   @override
+  String get storageUnlockFailed =>
+      'No se pudo leer el almacenamiento seguro. El llavero del dispositivo (por ejemplo, GNOME Keyring en Linux) devolvió un error.';
+
+  @override
   String get retry => 'Reintentar';
 
   @override

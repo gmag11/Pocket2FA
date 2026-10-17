@@ -156,8 +156,12 @@ class _AccountsScreenState extends State<AccountsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // If storage is locked, show an unlock screen instead of the list.
+    // If storage is locked, show an unlock screen instead of the list. A
+    // secure-storage failure is reported as such (with its detail) rather than
+    // as a biometric problem the user can never satisfy.
     if (!widget.storage.isUnlocked) {
+      final storageFailed = widget.storage.hasStorageError;
+      final detail = widget.storage.storageError;
       return Scaffold(
         appBar: AppBar(title: Text(l10n.accountsTitle)),
         body: Center(
@@ -170,12 +174,29 @@ class _AccountsScreenState extends State<AccountsScreen> {
                     style: const TextStyle(
                         fontSize: 18, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
-                Text(l10n.authenticateToUnlock, textAlign: TextAlign.center),
+                Text(
+                  storageFailed
+                      ? l10n.storageUnlockFailed
+                      : l10n.authenticateToUnlock,
+                  textAlign: TextAlign.center,
+                ),
+                if (storageFailed && detail != null) ...[
+                  const SizedBox(height: 8),
+                  SelectableText(
+                    detail,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 16),
                 ElevatedButton.icon(
                   onPressed: () async {
                     final messenger = ScaffoldMessenger.of(context);
                     final authenticationFailedMsg = l10n.authenticationFailed;
+                    final storageFailedMsg = l10n.storageUnlockFailed;
                     final ok = await widget.storage.attemptUnlock();
                     if (ok) {
                       // Reload servers and update UI
@@ -183,12 +204,17 @@ class _AccountsScreenState extends State<AccountsScreen> {
                       if (!mounted) return;
                       setState(() {});
                     } else {
-                      messenger.showSnackBar(
-                          SnackBar(content: Text(authenticationFailedMsg)));
+                      if (mounted) setState(() {});
+                      messenger.showSnackBar(SnackBar(
+                          content: Text(widget.storage.hasStorageError
+                              ? storageFailedMsg
+                              : authenticationFailedMsg)));
                     }
                   },
-                  icon: const Icon(Icons.fingerprint),
-                  label: Text(l10n.unlock),
+                  icon: Icon(storageFailed
+                      ? Icons.lock_outline
+                      : Icons.fingerprint),
+                  label: Text(storageFailed ? l10n.retry : l10n.unlock),
                 ),
               ],
             ),

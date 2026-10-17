@@ -868,6 +868,12 @@ abstract class AppLocalizations {
   /// **'Biometric authentication failed or was cancelled. Please retry to unlock your local data.'**
   String get biometricAuthFailed;
 
+  /// Shown when the platform secure storage (keyring) cannot be read.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not read the secure storage. Your device\'s keyring (for example GNOME Keyring on Linux) returned an error.'**
+  String get storageUnlockFailed;
+
   /// Label for retrying biometric authentication.
   ///
   /// In en, this message translates to:

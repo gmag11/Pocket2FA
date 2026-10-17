@@ -420,6 +420,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Biometric authentication failed or was cancelled. Please retry to unlock your local data.';
 
   @override
+  String get storageUnlockFailed =>
+      'Could not read the secure storage. Your device\'s keyring (for example GNOME Keyring on Linux) returned an error.';
+
+  @override
   String get retry => 'Retry';
 
   @override

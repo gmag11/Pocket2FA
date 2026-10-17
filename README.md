@@ -1,16 +1,22 @@
-# 2FAuth Flutter Client
+# 2FAuth Client
 
-A mobile client application for managing two-factor authentication (2FA) codes, designed to work with the [2FAuth web application](https://github.com/Bubka/2FAuth). This Flutter-based client provides a native mobile experience while securely synchronizing with your self-hosted 2FAuth instance.
+A desktop and mobile client application for managing two-factor authentication (2FA) codes, designed to work with the [2FAuth web application](https://github.com/Bubka/2FAuth). This Flutter-based client provides a native mobile experience while securely synchronizing with your self-hosted 2FAuth instance.
 
 [![Latest Release](https://img.shields.io/github/v/release/gmag11/2fauthApp?color=blue&label=latest%20release)](https://github.com/gmag11/2fauthApp/releases/latest)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/gmag11/2fauthApp/release-build-android.yml )
 
+<a href="https://f-droid.org/packages/net.gmartin.pocket2fa">
+    <img src="https://f-droid.org/badge/get-it-on.png"
+    alt="Get it on F-Droid"
+    height="80">
+</a>
+
 ## Purpose
 
 This project complements the official 2FAuth web application by offering:
 
-- Native mobile experience for accessing your 2FA codes on the go
+- Native and seamless desktop and mobile experience for accessing your 2FA codes on the go
 - Secure local generation of TOTP and STEAM codes
 - Synchronization with your self-hosted 2FAuth server
 - Offline access to your authentication codes
@@ -30,7 +36,7 @@ This project complements the official 2FAuth web application by offering:
 </p>
 <!-- markdownlint-enable MD033 -->
 
-**Important**: This client requires a running instance of 2FAuth. It does not replace the web application but extends its functionality to mobile devices.
+**Important**: This client requires a running instance of [2FAuth](https://github.com/Bubka/2FAuth). It does not replace the web application but extends its functionality as a native mobile and desktop application.
 
 ## Features
 
@@ -44,8 +50,8 @@ This project complements the official 2FAuth web application by offering:
 - **Privacy Controls**: Option to hide OTP codes on screen for privacy, with long-press to reveal
 - **Synchronization Controls**: Settings section to enable/disable automatic sync, set sync interval, and sync on app open
 - **About Dialog**: View app version and project links from the new About dialog
-- **Real-time Updates**: Codes refresh automatically every 30 seconds
-- **Copy to Clipboard**: One-tap copying of generated codes
+- **Real-time Updates**: Codes refresh automatically
+- **Copy to Clipboard**: One-tap copying of generated codes. Long tap to copy next OTP code.
 - **Group Organization**: Browse accounts organized by groups
 - **Icon Support**: Display service icons for easy identification
 
@@ -59,11 +65,12 @@ This project complements the official 2FAuth web application by offering:
 
 ### For Developers
 
-- Flutter SDK (version 3.35.1 or compatible)
+- Flutter SDK (version 3.44.4 or compatible)
 - Android Studio or VS Code with Flutter extension
 - Platform-specific development tools:
   - Android: Android SDK and emulator/device
   - Windows: Visual Studio with C++ development tools
+  - Linux: Build-essential and GTK development libraries
 
 ## Installation
 
@@ -91,12 +98,15 @@ This project complements the official 2FAuth web application by offering:
 1. **Setup**: Open the app and navigate to Settings → Servers
 2. **Add Server**: Configure connection to your 2FAuth instance (URL and API key)
 3. **Synchronize**: Pull your accounts and icons from the server
-4. **Create Entry**: Use the "New" button to add a new account entry directly from the app
-5. **Manage Mode**: Tap the "Manage" button to enter manage mode for editing or deleting entries
+4. **Create Entry**: Use the "QR" button to add a new account entry directly from the app
+5. **Manage Mode**: Tap the "Edit" button to enter manage mode for editing or deleting entries
 6. **Edit Entry**: In manage mode, tap the edit icon next to an entry to modify its details
 7. **Delete Entry**: In manage mode, select the entries you want to delete and press the "Delete" button
 8. **Access Codes**: View and copy your 2FA codes from the main accounts list
 9. **Offline Use**: Codes continue to work without internet connection after initial sync
+
+## Not implemented yet
+- **Account reorder** is not implemented in current version. If you want to change order in which accounts are shown edit them in web service.
 
 ## Privacy & Security
 

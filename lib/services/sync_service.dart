@@ -1,4 +1,4 @@
-import 'dart:developer' as developer;
+import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 // sync_service handles fetching remote groups/accounts and caching icons.
 import '../models/server_connection.dart';
@@ -6,6 +6,7 @@ import '../models/account_entry.dart';
 import '../models/group_entry.dart';
 import 'api_service.dart';
 import 'icon_cache_service.dart';
+import 'log_service.dart';
 import 'settings_storage.dart';
 
 class SyncService {
@@ -87,49 +88,33 @@ class SyncService {
       bool markAsForced = false}) async {
     // Starting sync (kept minimal)
 
-    developer.log('SyncService: forceSync START server=${server.id}',
-        name: 'SyncService');
+    LogService.instance.log('forceSync START server=${server.id}', name: 'SyncService');
 
     // First, attempt to delete any pending deleted accounts (synchronized=false && deleted=true)
     try {
-      developer.log(
-          'SyncService: calling _deletePendingAccounts for server=${server.id}',
-          name: 'SyncService');
+      LogService.instance.log('calling _deletePendingAccounts for server=${server.id}', name: 'SyncService');
       await _deletePendingAccounts(server, storage, cancelToken: cancelToken);
-      developer.log(
-          'SyncService: _deletePendingAccounts completed for server=${server.id}',
-          name: 'SyncService');
+      LogService.instance.log('_deletePendingAccounts completed for server=${server.id}', name: 'SyncService');
     } catch (e) {
-      developer.log('SyncService: _deletePendingAccounts failed: $e',
-          name: 'SyncService');
+      LogService.instance.log('_deletePendingAccounts failed: $e', name: 'SyncService');
     }
 
     // Then, upload pending new accounts
     try {
-      developer.log(
-          'SyncService: calling _uploadPendingAccounts for server=${server.id}',
-          name: 'SyncService');
+      LogService.instance.log('calling _uploadPendingAccounts for server=${server.id}', name: 'SyncService');
       await _uploadPendingAccounts(server, storage, cancelToken: cancelToken);
-      developer.log(
-          'SyncService: _uploadPendingAccounts completed for server=${server.id}',
-          name: 'SyncService');
+      LogService.instance.log('_uploadPendingAccounts completed for server=${server.id}', name: 'SyncService');
     } catch (e) {
-      developer.log('SyncService: uploadPendingAccounts failed: $e',
-          name: 'SyncService');
+      LogService.instance.log('uploadPendingAccounts failed: $e', name: 'SyncService');
     }
 
     // Finally, update pending edited accounts
     try {
-      developer.log(
-          'SyncService: calling _updatePendingAccounts for server=${server.id}',
-          name: 'SyncService');
+      LogService.instance.log('calling _updatePendingAccounts for server=${server.id}', name: 'SyncService');
       await _updatePendingAccounts(server, storage, cancelToken: cancelToken);
-      developer.log(
-          'SyncService: _updatePendingAccounts completed for server=${server.id}',
-          name: 'SyncService');
+      LogService.instance.log('_updatePendingAccounts completed for server=${server.id}', name: 'SyncService');
     } catch (e) {
-      developer.log('SyncService: _updatePendingAccounts failed: $e',
-          name: 'SyncService');
+      LogService.instance.log('_updatePendingAccounts failed: $e', name: 'SyncService');
     }
 
     // Ensure ApiService is configured for this server so Authorization headers and base are correct
@@ -149,8 +134,7 @@ class SyncService {
         groupsFetched = true;
       }
     } catch (e) {
-      developer.log('SyncService: error fetching groups: $e',
-          name: 'SyncService');
+      LogService.instance.log('error fetching groups: $e', name: 'SyncService');
     }
 
     // 2) GET /twofaccounts
@@ -169,8 +153,7 @@ class SyncService {
         // secrets are stored in AccountEntry.seed via AccountEntry.fromMap
       }
     } catch (e) {
-      developer.log('SyncService: error fetching accounts: $e',
-          name: 'SyncService');
+      LogService.instance.log('error fetching accounts: $e', name: 'SyncService');
     }
 
     // If there are locally marked deleted but unsynchronized entries, ensure
@@ -199,16 +182,13 @@ class SyncService {
                 final before = accounts.length;
                 accounts.removeWhere((a) => pendingDeleteIds.contains(a.id));
                 final removed = before - accounts.length;
-                developer.log(
-                    'SyncService: filtered out $removed fetched accounts that are pending local delete (ids=${pendingDeleteIds.toList()})',
-                    name: 'SyncService');
+                LogService.instance.log('filtered out $removed fetched accounts that are pending local delete (ids=${pendingDeleteIds.toList()})', name: 'SyncService');
               }
             }
           }
         }
       } catch (e) {
-        developer.log('SyncService: could not apply pending-delete filter: $e',
-            name: 'SyncService');
+        LogService.instance.log('could not apply pending-delete filter: $e', name: 'SyncService');
       }
     }
 
@@ -239,8 +219,7 @@ class SyncService {
     // process in batches of `concurrency`
     for (var start = 0; start < iconEntries.length; start += concurrency) {
       if (cancelToken != null && cancelToken.isCancelled) {
-        developer.log('SyncService: cancelled during icon download',
-            name: 'SyncService');
+        LogService.instance.log('cancelled during icon download', name: 'SyncService');
         break;
       }
       final end = (start + concurrency).clamp(0, iconEntries.length);
@@ -267,8 +246,7 @@ class SyncService {
           downloaded++;
         } catch (e) {
           failed++;
-          developer.log('SyncService: failed to cache icon for ${acc.id}: $e',
-              name: 'SyncService');
+          LogService.instance.log('failed to cache icon for ${acc.id}: $e', name: 'SyncService');
         }
       }).toList();
 
@@ -284,9 +262,7 @@ class SyncService {
     // and avoid overwriting persisted cached data.
     final anyFetched = groupsFetched || accountsFetched;
     if (!anyFetched) {
-      developer.log(
-          'SyncService: network failure - no groups or accounts fetched for ${server.id}',
-          name: 'SyncService');
+      LogService.instance.log('network failure - no groups or accounts fetched for ${server.id}', name: 'SyncService');
       return {
         'skipped': false,
         'success': false,
@@ -313,6 +289,7 @@ class SyncService {
       authenticatedByProxy: server.authenticatedByProxy,
       preferences: server.preferences,
       isAdmin: server.isAdmin,
+      allowSelfSigned: server.allowSelfSigned,
     );
 
     try {
@@ -339,21 +316,25 @@ class SyncService {
       await box.put(
           '$_lastSyncForcedKeyPrefix${server.id}', markAsForced == true);
     } catch (e) {
-      developer.log('SyncService: failed to persist servers: $e',
-          name: 'SyncService');
+      LogService.instance.log('failed to persist servers: $e', name: 'SyncService');
     }
 
-    developer.log(
-        'SyncService: sync completed for ${server.id} (downloaded=$downloaded failed=$failed skipped=$skipped)',
-        name: 'SyncService');
+    final iconStatus = failed == 0
+        ? 'all_ok'
+        : (failed == iconEntries.length ? 'all_failed' : 'partial');
+    final message = failed == 0
+        ? 'Sync completed'
+        : 'Sync completed — $failed icon(s) unavailable';
+
+    LogService.instance.log('sync completed for ${server.id} (downloaded=$downloaded failed=$failed skipped=$skipped iconStatus=$iconStatus)', name: 'SyncService');
     return {
       'skipped': false,
-      'success': failed == 0,
+      'success': true,
       'downloaded': downloaded,
       'failed': failed,
       'skipped_count': skipped,
-      'message':
-          (failed == 0 ? 'Sync completed' : 'Sync completed with failures')
+      'iconStatus': iconStatus,
+      'message': message,
     };
   }
 
@@ -383,13 +364,9 @@ class SyncService {
       final a = localServer.accounts[i];
       if (a.id == -1 && a.synchronized == false) pending.add(i);
     }
-    developer.log(
-        'SyncService._uploadPendingAccounts: found ${pending.length} pending accounts for server=${server.id}',
-        name: 'SyncService');
+    LogService.instance.log('found ${pending.length} pending accounts for server=${server.id}', name: 'SyncService');
     if (pending.isEmpty) {
-      developer.log(
-          'SyncService._uploadPendingAccounts: no pending accounts to upload for server=${server.id}',
-          name: 'SyncService');
+      LogService.instance.log('no pending accounts to upload for server=${server.id}', name: 'SyncService');
       return;
     }
 
@@ -398,17 +375,15 @@ class SyncService {
 
     for (final accIdx in pending) {
       final acc = localServer.accounts[accIdx];
-      developer.log(
-          'SyncService._uploadPendingAccounts: attempting upload for local acc index=$accIdx service=${acc.service} account=${acc.account} groupId=${acc.groupId}',
-          name: 'SyncService');
+      LogService.instance.log(kDebugMode
+          ? '_uploadPendingAccounts: attempting upload for local acc index=$accIdx service=${acc.service} account=${acc.account} groupId=${acc.groupId}'
+          : '_uploadPendingAccounts: attempting upload for local acc index=$accIdx groupId=${acc.groupId}', name: 'SyncService');
       try {
         final resp = await ApiService.instance.createAccountFromEntry(acc,
             groupId: acc.groupId, cancelToken: cancelToken);
         // resp is expected to be a Map representing the created resource
         if (resp.containsKey('id')) {
-          developer.log(
-              'SyncService._uploadPendingAccounts: server created account id=${resp['id']} for local index=$accIdx',
-              name: 'SyncService');
+          LogService.instance.log('server created account id=${resp['id']} for local index=$accIdx', name: 'SyncService');
           // Build a new AccountEntry from response and mark synchronized
           var created = AccountEntry.fromMap(Map<dynamic, dynamic>.from(resp))
               .copyWith(synchronized: true);
@@ -447,34 +422,29 @@ class SyncService {
             authenticatedByProxy: localServer.authenticatedByProxy,
             preferences: localServer.preferences,
             isAdmin: localServer.isAdmin,
+            allowSelfSigned: localServer.allowSelfSigned,
           );
           // Persist updated server in list
           list[idx] = updatedServer.toMap();
           await box.put('servers', list);
-          developer.log(
-              'SyncService._uploadPendingAccounts: persisted updated servers after uploading account index=$accIdx',
-              name: 'SyncService');
+          LogService.instance.log('persisted updated servers after uploading account index=$accIdx', name: 'SyncService');
           // Update localServer reference for subsequent iterations
           // (ServerConnection.accounts is final so replace localServer entirely)
           // Recreate localServer from the updated map for safety
           // local persisted data updated; continue to next pending account
         } else {
-          developer.log(
-              'SyncService._uploadPendingAccounts: server response missing id: $resp',
-              name: 'SyncService');
+          LogService.instance.log('server response missing id: $resp', name: 'SyncService');
         }
       } catch (e) {
         // If the exception is a DioException, try to log response data
         try {
           if (e is DioException) {
-            developer.log(
-                'SyncService._uploadPendingAccounts: DioException status=${e.response?.statusCode} data=${e.response?.data}',
-                name: 'SyncService');
+            LogService.instance.log('DioException status=${e.response?.statusCode} data=${e.response?.data}', name: 'SyncService');
           }
         } catch (_) {}
-        developer.log(
-            'SyncService._uploadPendingAccounts: failed to create account ${acc.service}/${acc.account}: $e',
-            name: 'SyncService');
+        LogService.instance.log(kDebugMode
+            ? '_uploadPendingAccounts: failed to create account ${acc.service}/${acc.account} (local index=$accIdx): $e'
+            : '_uploadPendingAccounts: failed to create account (local index=$accIdx): $e', name: 'SyncService');
         // continue with next pending account
       }
     }
@@ -507,9 +477,7 @@ class SyncService {
         pendingDelete.add(acc);
       }
     }
-    developer.log(
-        'SyncService._deletePendingAccounts: found ${pendingDelete.length} pending deletes for server=${server.id}',
-        name: 'SyncService');
+    LogService.instance.log('found ${pendingDelete.length} pending deletes for server=${server.id}', name: 'SyncService');
     if (pendingDelete.isEmpty) return;
 
     // Configure ApiService
@@ -541,17 +509,14 @@ class SyncService {
           authenticatedByProxy: localServer.authenticatedByProxy,
           preferences: localServer.preferences,
           isAdmin: localServer.isAdmin,
+          allowSelfSigned: localServer.allowSelfSigned,
         );
         list[idx] = updatedServer.toMap();
         await box.put('servers', list);
-        developer.log(
-            'SyncService._deletePendingAccounts: removed ${deleteIds.length} pending deletes',
-            name: 'SyncService');
+        LogService.instance.log('removed ${deleteIds.length} pending deletes', name: 'SyncService');
       } catch (e) {
         // Silent fail: log, leave marked for next sync
-        developer.log(
-            'SyncService._deletePendingAccounts: API delete failed (retry next sync): $e',
-            name: 'SyncService');
+        LogService.instance.log('API delete failed (retry next sync): $e', name: 'SyncService');
       }
     }
   }
@@ -583,13 +548,9 @@ class SyncService {
       // Find entries that are edited: have valid server ID, not synchronized, not deleted
       if (a.id > 0 && !a.synchronized && !a.deleted) pending.add(i);
     }
-    developer.log(
-        'SyncService._updatePendingAccounts: found ${pending.length} pending updates for server=${server.id}',
-        name: 'SyncService');
+    LogService.instance.log('found ${pending.length} pending updates for server=${server.id}', name: 'SyncService');
     if (pending.isEmpty) {
-      developer.log(
-          'SyncService._updatePendingAccounts: no pending updates to upload for server=${server.id}',
-          name: 'SyncService');
+      LogService.instance.log('no pending updates to upload for server=${server.id}', name: 'SyncService');
       return;
     }
 
@@ -598,18 +559,16 @@ class SyncService {
 
     for (final accIdx in pending) {
       final acc = localServer.accounts[accIdx];
-      developer.log(
-          'SyncService._updatePendingAccounts: attempting update for local acc index=$accIdx service=${acc.service} account=${acc.account} id=${acc.id}',
-          name: 'SyncService');
+      LogService.instance.log(kDebugMode
+          ? '_updatePendingAccounts: attempting update for local acc index=$accIdx service=${acc.service} account=${acc.account} id=${acc.id}'
+          : '_updatePendingAccounts: attempting update for local acc index=$accIdx id=${acc.id}', name: 'SyncService');
       try {
         final resp = await ApiService.instance
             .updateAccountFromEntry(acc, cancelToken: cancelToken);
 
         // resp is expected to be a Map representing the updated resource
         if (resp.containsKey('id')) {
-          developer.log(
-              'SyncService._updatePendingAccounts: server updated account id=${resp['id']} for local index=$accIdx',
-              name: 'SyncService');
+          LogService.instance.log('server updated account id=${resp['id']} for local index=$accIdx', name: 'SyncService');
 
           // Build a new AccountEntry from response and mark synchronized
           var updated = AccountEntry.fromMap(Map<dynamic, dynamic>.from(resp))
@@ -657,31 +616,26 @@ class SyncService {
             authenticatedByProxy: localServer.authenticatedByProxy,
             preferences: localServer.preferences,
             isAdmin: localServer.isAdmin,
+            allowSelfSigned: localServer.allowSelfSigned,
           );
           // Persist updated server in list
           list[idx] = updatedServer.toMap();
           await box.put('servers', list);
-          developer.log(
-              'SyncService._updatePendingAccounts: persisted updated servers after updating account index=$accIdx',
-              name: 'SyncService');
+          LogService.instance.log('persisted updated servers after updating account index=$accIdx', name: 'SyncService');
           // Update localServer reference for subsequent iterations
         } else {
-          developer.log(
-              'SyncService._updatePendingAccounts: server response missing id: $resp',
-              name: 'SyncService');
+          LogService.instance.log('server response missing id: $resp', name: 'SyncService');
         }
       } catch (e) {
         // If the exception is a DioException, try to log response data
         try {
           if (e is DioException) {
-            developer.log(
-                'SyncService._updatePendingAccounts: DioException status=${e.response?.statusCode} data=${e.response?.data}',
-                name: 'SyncService');
+            LogService.instance.log('DioException status=${e.response?.statusCode} data=${e.response?.data}', name: 'SyncService');
           }
         } catch (_) {}
-        developer.log(
-            'SyncService._updatePendingAccounts: failed to update account ${acc.service}/${acc.account}: $e',
-            name: 'SyncService');
+        LogService.instance.log(kDebugMode
+            ? '_updatePendingAccounts: failed to update account ${acc.service}/${acc.account} (local index=$accIdx id=${acc.id}): $e'
+            : '_updatePendingAccounts: failed to update account (local index=$accIdx id=${acc.id}): $e', name: 'SyncService');
         // continue with next pending account
       }
     }

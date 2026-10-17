@@ -10,25 +10,36 @@ import '../l10n/app_localizations.dart';
 class AccountTileUi {
   /// Builds the service avatar
   static Widget buildServiceAvatar(AccountEntry item, Color color) {
-    const double radius = 14.0;
+    const double radius = 18.0;
+
+    String getAvatarChar() {
+      final svc = item.service;
+      if (svc.isNotEmpty) {
+        return svc.characters.first.toUpperCase();
+      }
+      final acct = item.account;
+      return acct.isNotEmpty ? acct.characters.first.toUpperCase() : '?';
+    }
 
     Widget fallbackAvatar() => CircleAvatar(
           radius: radius,
           backgroundColor: Color.fromRGBO(
-              (color.r * 255.0).round() & 0xff,
-              (color.g * 255.0).round() & 0xff,
-              (color.b * 255.0).round() & 0xff,
-              0.2),
+            (color.r * 255.0).round() & 0xff,
+            (color.g * 255.0).round() & 0xff,
+            (color.b * 255.0).round() & 0xff,
+            0.2,
+          ),
           child: Text(
-            item.service.characters.first,
+            getAvatarChar(),
             style: TextStyle(
               color: Color.fromRGBO(
-                  (color.r * 255.0).round() & 0xff,
-                  (color.g * 255.0).round() & 0xff,
-                  (color.b * 255.0).round() & 0xff,
-                  0.8),
+                (color.r * 255.0).round() & 0xff,
+                (color.g * 255.0).round() & 0xff,
+                (color.b * 255.0).round() & 0xff,
+                0.8,
+              ),
               fontWeight: FontWeight.bold,
-              fontSize: 12,
+              fontSize: 20,
             ),
           ),
         );
@@ -36,29 +47,39 @@ class AccountTileUi {
     if (item.localIcon != null && item.localIcon!.isNotEmpty) {
       final file = File(item.localIcon!);
       final isSvg = item.localIcon!.toLowerCase().endsWith('.svg');
-      try {
-        if (isSvg) {
-          return CircleAvatar(
-            radius: radius,
-            backgroundColor: Colors.transparent,
-            child: SvgPicture.file(
-              file,
-              width: radius * 2,
-              height: radius * 2,
-              fit: BoxFit.contain,
-              placeholderBuilder: (ctx) => fallbackAvatar(),
-            ),
-          );
-        } else {
+      if (isSvg) {
+        return CircleAvatar(
+          radius: radius,
+          backgroundColor: Colors.transparent,
+          child: FutureBuilder<String>(
+            future: file.readAsString().then(_sanitizeSvg),
+            builder: (ctx, snapshot) {
+              if (snapshot.hasData) {
+                return SvgPicture.string(
+                  snapshot.data!,
+                  width: radius * 2,
+                  height: radius * 2,
+                  fit: BoxFit.contain,
+                  placeholderBuilder: (ctx) => fallbackAvatar(),
+                  errorBuilder: (ctx, error, stackTrace) => fallbackAvatar(),
+                );
+              }
+              if (snapshot.hasError) return fallbackAvatar();
+              return fallbackAvatar();
+            },
+          ),
+        );
+      } else {
+        try {
           return CircleAvatar(
             radius: radius,
             backgroundImage: FileImage(file),
             backgroundColor: Colors.transparent,
             onBackgroundImageError: (_, __) {},
           );
+        } catch (_) {
+          return fallbackAvatar();
         }
-      } catch (_) {
-        return fallbackAvatar();
       }
     }
     return fallbackAvatar();
@@ -66,13 +87,14 @@ class AccountTileUi {
 
   /// Builds the service info row
   static Widget buildServiceInfoRow(AccountEntry item, Color color) {
+    final display = item.service.isNotEmpty ? item.service : item.account;
     return Row(
       children: [
         buildServiceAvatar(item, color),
         const SizedBox(width: 8),
         Expanded(
           child: Text(
-            item.service,
+            display,
             style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w400),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -108,8 +130,9 @@ class AccountTileUi {
               onPressed: onPressed,
               style: ElevatedButton.styleFrom(minimumSize: const Size(0, 36)),
               child: Builder(
-                  builder: (context) =>
-                      Text(AppLocalizations.of(context)!.generate)),
+                builder: (context) =>
+                    Text(AppLocalizations.of(context)!.generate),
+              ),
             ),
           ),
         ),
@@ -146,9 +169,13 @@ class AccountTileUi {
                               onTap: onCopy,
                               child: Text(
                                 AccountTileUtils.formatCode(
-                                    hotpCode ?? '', settings),
+                                  hotpCode ?? '',
+                                  settings,
+                                ),
                                 style: const TextStyle(
-                                    fontSize: 24, fontWeight: FontWeight.w700),
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w700,
+                                ),
                               ),
                             );
                           },
@@ -158,7 +185,9 @@ class AccountTileUi {
                           child: Text(
                             AccountTileUtils.formatCode(hotpCode ?? '', null),
                             style: const TextStyle(
-                                fontSize: 24, fontWeight: FontWeight.w700),
+                              fontSize: 24,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                         ),
                 ),
@@ -169,11 +198,17 @@ class AccountTileUi {
                     child: Padding(
                       padding: const EdgeInsets.only(top: 2.0),
                       child: Builder(
-                          builder: (context) => Text(
-                              AppLocalizations.of(context)!
-                                  .hotpCounter(hotpCounter),
-                              style: TextStyle(
-                                  fontSize: 12, color: Colors.grey.shade500))),
+                        builder: (context) => Text(
+                          AppLocalizations.of(
+                            context,
+                          )!
+                              .hotpCounter(hotpCounter),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade500,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
               ],
@@ -234,5 +269,19 @@ class AccountTileUi {
         );
       },
     );
+  }
+
+  /// Strips percentage units from SVG geometry values that vector_graphics_compiler
+  /// cannot parse (e.g. `width="15%"` inside `rect` elements).
+  /// Returns the original content unchanged if sanitization fails for any reason.
+  static String _sanitizeSvg(String content) {
+    try {
+      return content.replaceAllMapped(
+        RegExp(r'(\d+(?:\.\d+)?)%'),
+        (m) => m[1]!,
+      );
+    } catch (_) {
+      return content;
+    }
   }
 }

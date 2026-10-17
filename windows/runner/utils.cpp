@@ -8,17 +8,29 @@
 #include <iostream>
 
 void CreateAndAttachConsole() {
-  if (::AllocConsole()) {
-    FILE *unused;
-    if (freopen_s(&unused, "CONOUT$", "w", stdout)) {
-      _dup2(_fileno(stdout), 1);
-    }
-    if (freopen_s(&unused, "CONOUT$", "w", stderr)) {
-      _dup2(_fileno(stdout), 2);
-    }
-    std::ios::sync_with_stdio();
-    FlutterDesktopResyncOutputStreams();
+  // Prefer attaching to an inherited console (e.g. when launched from a
+  // terminal), falling back to allocating a new one when running under a
+  // debugger with no console attached. Either way, redirect stdio so that
+  // Dart's print()/debugPrint() output actually becomes visible: simply
+  // attaching to the parent console does NOT redirect the CRT streams on
+  // its own.
+  bool has_console = ::AttachConsole(ATTACH_PARENT_PROCESS);
+  if (!has_console && ::IsDebuggerPresent()) {
+    has_console = ::AllocConsole();
   }
+  if (!has_console) {
+    return;
+  }
+
+  FILE *unused;
+  if (freopen_s(&unused, "CONOUT$", "w", stdout)) {
+    _dup2(_fileno(stdout), 1);
+  }
+  if (freopen_s(&unused, "CONOUT$", "w", stderr)) {
+    _dup2(_fileno(stdout), 2);
+  }
+  std::ios::sync_with_stdio();
+  FlutterDesktopResyncOutputStreams();
 }
 
 std::vector<std::string> GetCommandLineArguments() {

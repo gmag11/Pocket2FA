@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'dart:developer' as developer;
+import '../services/log_service.dart';
 
 import 'package:flutter/material.dart';
 import 'package:pocket2fa/screens/new_code_screen.dart';
@@ -17,6 +17,7 @@ import 'home_manage_mode.dart';
 import 'home_server_manager.dart';
 import 'home_sync_manager.dart';
 import 'search_bar.dart';
+import 'log_screen.dart';
 import 'settings_screen.dart';
 
 class HomePage extends StatefulWidget {
@@ -42,6 +43,8 @@ class _HomePageState extends State<HomePage>
   Timer? _autoSyncTimer;
   bool _initialSyncDone = false;
   bool _wasInManageMode = false;
+  bool _fabVisible = true;
+  double _lastFabScrollOffset = 0.0;
 
   // Convenience getter for localized strings
   AppLocalizations get l10n => AppLocalizations.of(context)!;
@@ -60,6 +63,7 @@ class _HomePageState extends State<HomePage>
 
     // Initialize header animation
     _headerAnimation.initialize(this);
+    _headerAnimation.listScrollController.addListener(_onScrollForFab);
 
     // Add listeners
     _serverManager.addListener(_onServerManagerChanged);
@@ -68,19 +72,38 @@ class _HomePageState extends State<HomePage>
   widget.settings.addListener(_onSettingsChanged);
   WidgetsBinding.instance.addObserver(this);
 
-    developer.log('HomePage: initState - starting loadServersAndInitialize', name: 'HomePage');
+    LogService.instance.log('HomePage: initState - starting loadServersAndInitialize', name: 'HomePage');
     // Load servers and perform initial connectivity check
   _loadServersAndInitialize();
+  }
+
+  void _onScrollForFab() {
+    if (!_headerAnimation.listScrollController.hasClients) return;
+    final offset = _headerAnimation.listScrollController.offset;
+    final delta = offset - _lastFabScrollOffset;
+    const threshold = 6.0;
+    if (offset <= 0) {
+      if (!_fabVisible) setState(() => _fabVisible = true);
+    } else if (delta > threshold) {
+      if (_fabVisible) setState(() => _fabVisible = false);
+    } else if (delta < -threshold) {
+      if (!_fabVisible) setState(() => _fabVisible = true);
+    }
+    _lastFabScrollOffset = offset.clamp(0.0, double.infinity);
   }
 
   void _onServerManagerChanged() {
     if (mounted) {
       setState(() {
-        // Keep the logical group key; UI will localize the display.
-        _selectedGroup = 'All';
+        // Preserve the selected group across syncs; only fall back to 'All'
+        // when the group no longer exists in the current data.
+        final availableGroups = _serverManager.getGroups();
+        if (!availableGroups.contains(_selectedGroup)) {
+          _selectedGroup = 'All';
+        }
       });
   // If servers became available after load, attempt initial sync if needed
-  developer.log('HomePage: server manager changed; servers=${_serverManager.servers.length}', name: 'HomePage');
+  LogService.instance.log('HomePage: server manager changed; servers=${_serverManager.servers.length}', name: 'HomePage');
   _maybePerformInitialSync();
     }
   }
@@ -99,10 +122,10 @@ class _HomePageState extends State<HomePage>
       _setupAutoSync();
       // If we just exited manage mode (was true, now false), trigger a forced sync
       if (was && !_manageMode.isManageMode) {
-        developer.log('HomePage: exited manage mode - performing forced sync', name: 'HomePage');
+        LogService.instance.log('HomePage: exited manage mode - performing forced sync', name: 'HomePage');
         if (_serverManager.servers.isNotEmpty) {
           _syncManager.forceSyncCurrentServer().catchError((e) {
-            developer.log('HomePage: forced sync after manage exit failed: $e', name: 'HomePage');
+            LogService.instance.log('HomePage: forced sync after manage exit failed: $e', name: 'HomePage');
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(content: Text(l10n.cannotSync)),
@@ -119,7 +142,7 @@ class _HomePageState extends State<HomePage>
     // Settings changed (auto-sync toggle/interval or sync-on-open). Reconfigure auto-sync.
     if (mounted) {
       setState(() {});
-    developer.log('HomePage: settings changed; syncOnOpen=${widget.settings.syncOnOpen} autoSyncEnabled=${widget.settings.autoSyncEnabled} interval=${widget.settings.autoSyncIntervalMinutes}',
+    LogService.instance.log('HomePage: settings changed; syncOnOpen=${widget.settings.syncOnOpen} autoSyncEnabled=${widget.settings.autoSyncEnabled} interval=${widget.settings.autoSyncIntervalMinutes}',
       name: 'HomePage');
     _setupAutoSync();
   // If the user enabled syncOnOpen after settings loaded, attempt initial sync
@@ -130,7 +153,7 @@ class _HomePageState extends State<HomePage>
   void _setupAutoSync() {
     // Cancel any existing timer
     if (_autoSyncTimer != null) {
-      developer.log('HomePage: cancelling existing autoSync timer', name: 'HomePage');
+      LogService.instance.log('HomePage: cancelling existing autoSync timer', name: 'HomePage');
       _autoSyncTimer?.cancel();
     }
 
@@ -144,18 +167,18 @@ class _HomePageState extends State<HomePage>
     // Guard against invalid values
     final interval = Duration(minutes: mins > 0 ? mins : 30);
 
-    developer.log('HomePage: starting autoSync timer interval=${interval.inMinutes}min', name: 'HomePage');
+    LogService.instance.log('HomePage: starting autoSync timer interval=${interval.inMinutes}min', name: 'HomePage');
     // Start periodic timer
     _autoSyncTimer = Timer.periodic(interval, (_) async {
       // Respect manage mode at execution time as well
       if (_manageMode.isManageMode) return;
       if (_serverManager.servers.isEmpty) return;
-      developer.log('HomePage: autoSync timer fired - attempting forced sync', name: 'HomePage');
+      LogService.instance.log('HomePage: autoSync timer fired - attempting forced sync', name: 'HomePage');
       try {
         await _syncManager.forceSyncCurrentServer();
-        developer.log('HomePage: autoSync forced sync completed', name: 'HomePage');
+        LogService.instance.log('HomePage: autoSync forced sync completed', name: 'HomePage');
       } catch (e) {
-        developer.log('HomePage: autoSync forced sync error: $e', name: 'HomePage');
+        LogService.instance.log('HomePage: autoSync forced sync error: $e', name: 'HomePage');
         _serverManager.updateServerReachability(false);
       }
     });
@@ -204,28 +227,28 @@ class _HomePageState extends State<HomePage>
   void _maybePerformInitialSync() async {
     // Only attempt once per HomePage lifecycle
     if (_initialSyncDone) {
-      developer.log('HomePage: skipping initial sync - already done', name: 'HomePage');
+      LogService.instance.log('HomePage: skipping initial sync - already done', name: 'HomePage');
       return;
     }
     // Do not attempt while in manage mode
     if (_manageMode.isManageMode) return;
     // Ensure settings wants sync on open and servers exist
     if (!widget.settings.syncOnOpen) {
-      developer.log('HomePage: syncOnOpen disabled - not performing initial sync', name: 'HomePage');
+      LogService.instance.log('HomePage: syncOnOpen disabled - not performing initial sync', name: 'HomePage');
       return;
     }
     if (_serverManager.servers.isEmpty) {
-      developer.log('HomePage: no servers available - not performing initial sync', name: 'HomePage');
+      LogService.instance.log('HomePage: no servers available - not performing initial sync', name: 'HomePage');
       return;
     }
 
-    developer.log('HomePage: conditions met - performing initial forced sync', name: 'HomePage');
+    LogService.instance.log('HomePage: conditions met - performing initial forced sync', name: 'HomePage');
     _initialSyncDone = true;
     try {
       await _syncManager.forceSyncCurrentServer();
-      developer.log('HomePage: initial forced sync completed', name: 'HomePage');
+      LogService.instance.log('HomePage: initial forced sync completed', name: 'HomePage');
     } catch (e) {
-      developer.log('HomePage: initial forced sync failed: $e', name: 'HomePage');
+      LogService.instance.log('HomePage: initial forced sync failed: $e', name: 'HomePage');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(l10n.cannotSync)),
@@ -335,7 +358,7 @@ class _HomePageState extends State<HomePage>
         if (success) {
           // Trigger sync for newly selected server
           try {
-        developer.log('HomePage: server selected - performing throttled sync', name: 'HomePage');
+        LogService.instance.log('HomePage: server selected - performing throttled sync', name: 'HomePage');
         await _syncManager.performThrottledSync();
           } catch (_) {
             // Ignore sync errors on server selection
@@ -347,6 +370,7 @@ class _HomePageState extends State<HomePage>
 
   @override
   void dispose() {
+    _headerAnimation.listScrollController.removeListener(_onScrollForFab);
     _searchController.dispose();
     _searchFocus.dispose();
     _headerAnimation.dispose();
@@ -383,9 +407,32 @@ class _HomePageState extends State<HomePage>
     final storage = widget.settings.storage;
 
     // If storage exists but is locked (biometric required and not yet satisfied),
-    // show a minimal screen with a single centered 'Retry' button
+    // show a minimal screen with a single centered 'Retry' button.
+    // The AppBar is kept so the user can still navigate to Settings (to disable
+    // biometric protection) or to the Debug Log.
     if (storage != null && !storage.isUnlocked) {
       return Scaffold(
+        appBar: AppBar(
+          title: Text(l10n.appTitle),
+          actions: [
+            IconButton(
+              tooltip: l10n.settingsLabel,
+              icon: const Icon(Icons.settings_outlined),
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (c) => SettingsScreen(settings: widget.settings),
+                ),
+              ),
+            ),
+            IconButton(
+              tooltip: l10n.debugLogging,
+              icon: const Icon(Icons.bug_report_outlined),
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const LogScreen()),
+              ),
+            ),
+          ],
+        ),
         body: SafeArea(
           child: Center(
             child: Column(
@@ -403,10 +450,11 @@ class _HomePageState extends State<HomePage>
                 ElevatedButton(
                   onPressed: () async {
                     final messenger = ScaffoldMessenger.of(context);
-                    // capture localized message before await to avoid context-after-await lint
+                    // capture localized message before await to avoid context-after-async lint
                     final authFailedMsg = l10n.authenticationFailed;
                     final ok = await storage.attemptUnlock();
                     if (ok) {
+                      await widget.settings.reloadFromStorage();
                       await _serverManager.loadServers();
                     } else {
                       messenger
@@ -451,9 +499,16 @@ class _HomePageState extends State<HomePage>
         ),
       ),
       floatingActionButton: !_manageMode.isManageMode && _serverManager.servers.isNotEmpty
-          ? Padding(
-              padding: const EdgeInsets.only(bottom: 56.0),
-              child: FloatingActionButton(
+          ? AnimatedSlide(
+              offset: (_fabVisible || _serverManager.currentItems.isEmpty) ? Offset.zero : const Offset(0, 2),
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+              child: AnimatedOpacity(
+                opacity: (_fabVisible || _serverManager.currentItems.isEmpty) ? 1.0 : 0.0,
+                duration: const Duration(milliseconds: 300),
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 56.0),
+                  child: FloatingActionButton(
                 onPressed: () async {
                   final srv = _serverManager.selectedServerId != null
                       ? _serverManager.servers.firstWhere(
@@ -470,15 +525,24 @@ class _HomePageState extends State<HomePage>
                               groups: srv.groups)));
                   if (result is AccountEntry) {
                     await _serverManager.updateAccount(result);
-                    if (mounted) {
+                    if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(content: Text(l10n.accountUpdated)),
                       );
                     }
+                    // Trigger a background sync so the new account appears
+                    // in the list without the user having to force it manually.
+                    _syncManager.forceSyncCurrentServer().catchError((e) {
+                      LogService.instance.log(
+                          'HomePage: post-scan sync failed: $e',
+                          name: 'HomePage');
+                    });
                   }
                 },
                 backgroundColor: const Color(0xFF4F63E6),
                 child: const Icon(Icons.qr_code, color: Colors.white),
+              ),
+                ),
               ),
             )
           : null,
@@ -577,34 +641,22 @@ class _HomePageState extends State<HomePage>
               ),
             ),
           )
-        : _serverManager.servers.isEmpty
-            ? const SizedBox(
-                width: 48,
-                height: 48,
-                child: Icon(Icons.sync, color: Colors.grey),
-              )
-            : Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Semantics(
-                    label: l10n.synchronize,
-                    button: true,
-                    child: IconButton(
-                      tooltip: l10n.synchronize,
-                      icon: const Icon(Icons.sync),
-                      onPressed: _manageMode.isManageMode ? null : _syncManager.manualSyncPressed,
-                    ),
-                  ),
-                  // no countdown displayed
-                ],
-              );
+        : Semantics(
+          label: l10n.synchronize,
+          button: true,
+          child: IconButton(
+            tooltip: l10n.synchronize,
+            icon: const Icon(Icons.sync),
+            onPressed: _serverManager.servers.isEmpty || _manageMode.isManageMode ? null : _syncManager.manualSyncPressed,
+          )
+        );
   }
 
   // Countdown helper removed
 
   void _showAboutDialog() {
     // NOTE: appVersion is kept in sync manually with pubspec.yaml's version: field.
-    const appVersion = '0.9.3';
+    const appVersion = '0.9.18';
 
     showDialog<void>(
       context: context,
@@ -616,7 +668,7 @@ class _HomePageState extends State<HomePage>
     return _manageMode.isManageMode && _manageMode.selectedAccountIds.isNotEmpty
         ? Text(
             l10n.selectedCount(_manageMode.selectedAccountIds.length),
-            style: TextStyle(color: Colors.grey.shade700),
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
           )
         : PopupMenuButton<String>(
             initialValue: _selectedGroup,
@@ -641,11 +693,11 @@ class _HomePageState extends State<HomePage>
                       ? l10n.groupAll(_serverManager.currentItems.length)
                       : '$_selectedGroup (${_serverManager.currentItems.where((a) => a.group.trim() == _selectedGroup).length})';
                   return Text(display,
-                      style: TextStyle(color: Colors.grey.shade700));
+                      style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)));
                 }),
                 const SizedBox(width: 6),
                 Icon(Icons.keyboard_arrow_down,
-                    size: 18, color: Colors.grey.shade600),
+                    size: 18, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
               ],
             ),
           );

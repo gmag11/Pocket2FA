@@ -1,9 +1,10 @@
 import 'dart:io';
 import 'dart:typed_data';
-import 'dart:developer' as developer;
 import 'package:dio/dio.dart';
+import 'package:dio/io.dart';
 import 'package:path_provider/path_provider.dart';
 import '../models/server_connection.dart';
+import 'log_service.dart';
 
 class IconCacheService {
   IconCacheService._internal();
@@ -37,7 +38,7 @@ class IconCacheService {
         return await file.readAsBytes();
       }
     } catch (e) {
-      developer.log('IconCache: read error $e', name: 'IconCacheService');
+      LogService.instance.log('IconCache: read error $e', name: 'IconCacheService');
     }
 
     try {
@@ -50,7 +51,7 @@ class IconCacheService {
     try {
       await file.writeAsBytes(bytes, flush: true);
     } catch (e) {
-      developer.log('IconCache: write error $e', name: 'IconCacheService');
+      LogService.instance.log('IconCache: write error $e', name: 'IconCacheService');
     }
 
     return bytes;
@@ -101,6 +102,17 @@ class IconCacheService {
     );
 
     final dio = Dio(opts);
+
+    if (server.allowSelfSigned) {
+      dio.httpClientAdapter = IOHttpClientAdapter(
+        createHttpClient: () {
+          final client = HttpClient();
+          client.badCertificateCallback = (cert, host, port) => true;
+          return client;
+        },
+      );
+    }
+
     final resp = await dio.get<List<int>>(url, cancelToken: cancelToken);
     if (resp.statusCode == 200 && resp.data != null) {
       return Uint8List.fromList(List<int>.from(resp.data!));

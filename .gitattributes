@@ -1,0 +1,51 @@
+# Normalización: todos los archivos de texto usan LF
+* text=auto eol=lf
+
+# Archivos binarios explícitos (Git no debe tocarlos)
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.icns binary
+*.bmp binary
+*.keystore binary
+*.jks binary
+*.jar binary
+*.aar binary
+*.apk binary
+*.aab binary
+*.db binary
+*.sqlite binary
+*.class binary
+*.dex binary
+*.so binary
+*.dll binary
+*.exe binary
+*.msi binary
+*.dmg binary
+*.zip binary
+*.gz binary
+*.tar binary
+*.7z binary
+*.pdf binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary
+*.otf binary
+*.psd binary
+*.ai binary
+*.mp3 binary
+*.mp4 binary
+*.avi binary
+*.mov binary
+*.wmv binary
+*.flv binary
+*.webm binary
+*.wav binary
+*.flac binary
+*.ogg binary
+*.aac binary
+*.pubspec.lock binary

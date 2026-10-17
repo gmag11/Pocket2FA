@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'dart:developer' as developer;
+import '../services/log_service.dart';
 import '../services/settings_service.dart';
 import '../models/server_connection.dart';
 import '../models/account_entry.dart';
@@ -33,6 +33,7 @@ class HomeServerManager extends ChangeNotifier {
   }
 
   Future<void> loadServers() async {
+    final stopwatch = Stopwatch()..start();
     final storage = settings.storage;
     List<ServerConnection> servers = [];
     // Keep a copy of the currently displayed servers so we can fall back to them
@@ -132,6 +133,10 @@ class HomeServerManager extends ChangeNotifier {
       } catch (_) {}
     }
 
+    LogService.instance.info(
+        'HomeServerManager.loadServers: took ${stopwatch.elapsedMilliseconds}ms '
+        '(${_servers.length} server(s))',
+        name: 'HomeServerManager');
     notifyListeners();
   }
 
@@ -163,7 +168,7 @@ class HomeServerManager extends ChangeNotifier {
     try {
       ApiService.instance.setServer(server);
     } catch (e) {
-      developer.log('HomeServerManager: Error configuring API: $e',
+      LogService.instance.log('HomeServerManager: Error configuring API: $e',
           name: 'HomeServerManager');
     }
 
@@ -195,13 +200,13 @@ class HomeServerManager extends ChangeNotifier {
       // If response ok, mark reachable
       _serverReachable = true;
       notifyListeners();
-      developer.log(
+      LogService.instance.log(
           'HomeServerManager: initial connectivity check passed for ${srv.id}',
           name: 'HomeServerManager');
     } catch (e) {
       _serverReachable = false;
       notifyListeners();
-      developer.log('HomeServerManager: initial connectivity check failed: $e',
+      LogService.instance.log('HomeServerManager: initial connectivity check failed: $e',
           name: 'HomeServerManager');
     }
   }
@@ -230,7 +235,7 @@ class HomeServerManager extends ChangeNotifier {
       } on StateError catch (_) {
         // ignore when storage is locked
       } catch (e) {
-        developer.log('HomeServerManager: failed to persist servers: $e',
+        LogService.instance.log('HomeServerManager: failed to persist servers: $e',
             name: 'HomeServerManager');
       }
     }
@@ -284,7 +289,7 @@ class HomeServerManager extends ChangeNotifier {
           // Persist changes
           await persistServersToStorage();
 
-          developer.log(
+          LogService.instance.log(
               'HomeServerManager: updated account id=${updatedAccount.id} service=${updatedAccount.service} (marked unsynchronized)',
               name: 'HomeServerManager');
         }
@@ -299,7 +304,7 @@ class HomeServerManager extends ChangeNotifier {
       if (g.isEmpty) continue; // do not include ungrouped entries in selector
       counts[g] = (counts[g] ?? 0) + 1;
     }
-    developer.log(
+    LogService.instance.log(
         'HomeServerManager: computed group counts=${counts.toString()} from ${_currentItems.length} items',
         name: 'HomeServerManager');
     // Return group keys (unlocalized). The UI will localize formatting.

@@ -1,8 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../models/account_entry.dart';
 import '../models/group_entry.dart';
 import '../services/api_service.dart';
-import 'dart:developer' as developer;
+import 'log_service.dart';
 import '../l10n/app_localizations.dart';
 
 class EntryCreationService {
@@ -35,12 +36,12 @@ class EntryCreationService {
         }
 
         final masked = maskSecret(uri.toString());
-        developer.log('$sourceTag: decoded URL: $masked', name: sourceTag);
-        developer.log(
-            '$sourceTag: parsed query fields: issuer=${params['issuer']}, label_query=${params['label']}, algorithm=${params['algorithm']}, digits=${params['digits']}, period=${params['period']}, counter=${params['counter']}',
+        LogService.instance.log('$sourceTag: decoded URL: $masked', name: sourceTag);
+        LogService.instance.log(
+            '$sourceTag: parsed query fields: algorithm=${params['algorithm']}, digits=${params['digits']}, period=${params['period']}, counter=${params['counter']}',
             name: sourceTag);
       } catch (_) {
-        developer.log('$sourceTag: logging failed', name: sourceTag);
+        LogService.instance.log('$sourceTag: logging failed', name: sourceTag);
       }
 
       // Extract secret (required)
@@ -80,8 +81,8 @@ class EntryCreationService {
       }
 
       // Log final parsed values
-      developer.log(
-          '$sourceTag: final parsed - service="$service" account="$account" group="$group"',
+      LogService.instance.log(
+          '$sourceTag: final parsed - group="$group"',
           name: sourceTag);
 
       // Defaults and params
@@ -94,7 +95,7 @@ class EntryCreationService {
       if (otpType == 'hotp') {
         // For HOTP we use the counter field
         counter = int.tryParse(params['counter'] ?? '0') ?? 0;
-        developer.log('$sourceTag: HOTP counter value: $counter',
+        LogService.instance.log('$sourceTag: HOTP counter value: $counter',
             name: sourceTag);
       } else {
         // For TOTP we use the period field
@@ -121,7 +122,7 @@ class EntryCreationService {
 
       return entry;
     } catch (e) {
-      developer.log('$sourceTag: Parsing failed: $e', name: sourceTag);
+      LogService.instance.log('$sourceTag: Parsing failed: $e', name: sourceTag);
       if (context != null && context.mounted) {
         final msg =
             AppLocalizations.of(context)?.errorParsingQr(e.toString()) ??
@@ -178,10 +179,14 @@ class EntryCreationService {
       if (entry.groupId != null) {
         payload['group_id'] = entry.groupId;
       }
-      developer.log(
-          '$sourceTag: Attempting immediate create for ${entry.service} with type ${entry.otpType}',
+      LogService.instance.log(
+          kDebugMode
+              ? '$sourceTag: Attempting immediate create for ${entry.service} with type ${entry.otpType}'
+              : '$sourceTag: Attempting immediate create with type ${entry.otpType}',
           name: sourceTag);
-      developer.log('$sourceTag: API payload: $payload', name: sourceTag);
+      LogService.instance.log(
+          kDebugMode ? '$sourceTag: API payload: $payload' : '$sourceTag: API payload keys: ${payload.keys.toList()}',
+          name: sourceTag);
 
       // Call createAccount directly instead of createAccountFromEntry
       // to avoid the API always including period
@@ -207,7 +212,7 @@ class EntryCreationService {
 
       return serverEntry;
     } catch (e) {
-      developer.log(
+      LogService.instance.log(
           '$sourceTag: Immediate create failed: $e (keeping local unsynced)',
           name: sourceTag);
       // if (context.mounted) {

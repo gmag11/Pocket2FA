@@ -1,0 +1,6 @@
+Version 0.9.4
+
+- Improved UI/UX across multiple screens
+- Enhanced spacing and padding in account tiles
+- Added tap gesture to copy next OTP code
+- Various UI layout improvements

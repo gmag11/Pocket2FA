@@ -341,6 +341,10 @@ class AppLocalizationsEs extends AppLocalizations {
       'Este dispositivo no tiene cámara disponible. Usa la opción de seleccionar imagen o el formulario avanzado.';
 
   @override
+  String get cameraNotSupportedMessage =>
+      'El escaneo por cámara no es compatible con este sistema. Usa la opción de seleccionar imagen o el formulario avanzado.';
+
+  @override
   String get addServerTitle => 'Añadir servidor';
 
   @override
@@ -381,6 +385,9 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get codeFormatting => 'Formato de código';
+
+  @override
+  String get darkMode => 'Tema';
 
   @override
   String get byTrio => 'por tríos';
@@ -484,4 +491,88 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get minutesLabel => 'minutos';
+
+  @override
+  String get certErrorTitle => 'Error de certificado';
+
+  @override
+  String get certErrorMessage =>
+      'El certificado SSL del servidor no se pudo verificar. Puede tratarse de un certificado autofirmado. Conectarse a un servidor con un certificado no verificado puede suponer un riesgo de seguridad. ¿Deseas conectarte de todas formas?';
+
+  @override
+  String get connectAnyway => 'Conectar de todas formas';
+
+  @override
+  String get allowSelfSignedLabel => 'Aceptar certificados autofirmados';
+
+  @override
+  String get allowSelfSignedHint =>
+      'Activar si tu servidor usa un certificado SSL autofirmado';
+
+  @override
+  String get settingsDiagnostics => 'DIAGNÓSTICO';
+
+  @override
+  String get debugLogging => 'Registro de depuración';
+
+  @override
+  String get debugLoggingDescription =>
+      'Captura registros de diagnóstico para resolver problemas. Los registros se guardan solo en memoria y se borran al reiniciar la app.';
+
+  @override
+  String get viewDiagnosticLog => 'Ver registro de diagnóstico';
+
+  @override
+  String get logViewerTitle => 'Registro de diagnóstico';
+
+  @override
+  String get logEmpty => 'No hay entradas de registro todavía';
+
+  @override
+  String get logClear => 'Limpiar';
+
+  @override
+  String get logClearTitle => 'Limpiar registro';
+
+  @override
+  String get logClearConfirm =>
+      '¿Eliminar todas las entradas de registro? Esto no se puede deshacer.';
+
+  @override
+  String get logClearAction => 'Limpiar todo';
+
+  @override
+  String get logExport => 'Exportar registro';
+
+  @override
+  String get logFilter => 'Filtrar';
+
+  @override
+  String get logFilterAll => 'Todos';
+
+  @override
+  String get logCopy => 'Copiar al portapapeles';
+
+  @override
+  String get logShare => 'Compartir / Exportar';
+
+  @override
+  String get logScrollToBottom => 'Ir al final';
+
+  @override
+  String get logCopied => 'Registro copiado al portapapeles';
+
+  @override
+  String get logExportFailed => 'Error al exportar el registro';
+
+  @override
+  String get logExported => 'Registro exportado';
+
+  @override
+  String logSavedTo(Object path) {
+    return 'Registro guardado en $path';
+  }
+
+  @override
+  String get nothingToExport => 'Nada para exportar';
 }

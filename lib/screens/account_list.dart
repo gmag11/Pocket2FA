@@ -162,15 +162,19 @@ class _AccountListState extends State<AccountList> {
     }
 
     if (columns == 1) {
+      final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+      
       return RefreshIndicator(
         onRefresh: handleRefresh,
         child: ListView.separated(
           controller: widget.scrollController,
           physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.only(bottom: 96.0),
           itemCount: filtered.length,
-          separatorBuilder: (context, index) => const Divider(
+          separatorBuilder: (context, index) => Divider(
             height: 1,
             thickness: 1,
+            color: isDarkMode ? Colors.grey[850] : Colors.grey[300],
           ),
           itemBuilder: (context, index) {
             try {
@@ -207,7 +211,7 @@ class _AccountListState extends State<AccountList> {
       child: GridView.builder(
         controller: widget.scrollController,
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+        padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 96.0),
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: columns,
           crossAxisSpacing: 16,

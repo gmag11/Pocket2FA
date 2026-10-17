@@ -30,8 +30,8 @@ fi
 # Build start message
 echo -e "${GREEN}🚀 Building Pocket2FA AppImage...${NC}"
 
-# Get the version from pubspec.yaml
-VERSION=$(grep "^version:" pubspec.yaml | cut -d' ' -f2)
+# Get the version from pubspec.yaml (strip build number, e.g. 0.9.6+17 -> 0.9.6)
+VERSION=$(grep "^version:" pubspec.yaml | cut -d' ' -f2 | sed 's/+.*//')
 echo -e "${YELLOW}📦 Versión: $VERSION${NC}"
 
 

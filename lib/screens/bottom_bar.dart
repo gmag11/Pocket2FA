@@ -1,6 +1,7 @@
-import 'dart:developer' as developer;
+import '../services/log_service.dart';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -26,7 +27,12 @@ Future<void> launchExternal(Uri uri, ScaffoldMessengerState messenger) async {
       await launchUrl(uri);
     }
   } catch (e) {
-    developer.log('HomePage: cannot launch $uri: $e', name: 'HomePage');
+    final redacted = uri.host.isNotEmpty
+        ? uri.toString().replaceFirst(uri.host, '<host>')
+        : '<uri>';
+    LogService.instance.log(
+        'HomePage: cannot launch ${kDebugMode ? uri : redacted}: $e',
+        name: 'HomePage');
     if (messenger.mounted) {
       messenger.showSnackBar(SnackBar(
         content: Text('$couldNotOpen: $e'),
@@ -70,7 +76,6 @@ class BottomBar extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      color: Colors.white,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -115,55 +120,68 @@ class BottomBar extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Reachability indicator: icon + tooltip + semantics for accessibility
-                  Tooltip(
-                    message: serverReachable ? l10n.online : l10n.offline,
-                    child: Semantics(
-                      label: serverReachable
-                          ? l10n.serverReachable
-                          : l10n.serverUnreachable,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 6.0),
-                        child: Icon(
-                          serverReachable ? Icons.cloud : Icons.cloud_off,
-                          size: 14,
-                          color: serverReachable ? Colors.green : Colors.red,
+              Flexible(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Reachability indicator: icon + tooltip + semantics for accessibility
+                    Tooltip(
+                      message: serverReachable ? l10n.online : l10n.offline,
+                      child: Semantics(
+                        label: serverReachable
+                            ? l10n.serverReachable
+                            : l10n.serverUnreachable,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 6.0),
+                          child: Icon(
+                            serverReachable ? Icons.cloud : Icons.cloud_off,
+                            size: 14,
+                            color: serverReachable ? Colors.green : Colors.red,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  GestureDetector(
-                    onTap: onOpenSelector,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8.0, vertical: 6.0),
-                      child: Builder(builder: (ctx) {
-                        // Compute display text from the selected server/account safely
-                        String displayText;
-                        if (servers.isEmpty) {
-                          displayText = l10n.noServer;
-                        } else {
-                          final srv = selectedServerId != null
-                              ? servers.firstWhere(
-                                  (s) => s.id == selectedServerId,
-                                  orElse: () => servers.first)
-                              : servers.first;
-                          // Show only the server/user email. Do not display the selected
-                          // account name in this top/bottom summary to avoid confusion.
-                          final acct = (srv.userEmail.isNotEmpty)
-                              ? srv.userEmail
-                              : l10n.noEmail;
-                          displayText = '$acct - ${Uri.parse(srv.url).host}';
-                        }
-                        return Text(displayText,
-                            style: const TextStyle(color: Colors.grey));
-                      }),
+                    Flexible(
+                      child: GestureDetector(
+                        onTap: onOpenSelector,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8.0, vertical: 6.0),
+                          child: Builder(builder: (ctx) {
+                            // Compute display text from the selected server/account safely
+                            String displayText;
+                            if (servers.isEmpty) {
+                              displayText = l10n.noServer;
+                            } else {
+                              final srv = selectedServerId != null
+                                  ? servers.firstWhere(
+                                      (s) => s.id == selectedServerId,
+                                      orElse: () => servers.first)
+                                  : servers.first;
+                              // Show only the server/user email. Do not display the selected
+                              // account name in this top/bottom summary to avoid confusion.
+                              final acct = (srv.userEmail.isNotEmpty)
+                                  ? srv.userEmail
+                                  : l10n.noEmail;
+                              displayText =
+                                  '$acct - ${Uri.parse(srv.url).host}';
+                            }
+                            return Text(
+                              displayText,
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                              style: TextStyle(
+                                  color: Theme.of(ctx)
+                                      .colorScheme
+                                      .onSurface
+                                      .withValues(alpha: 0.6)),
+                            );
+                          }),
+                        ),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ],
           ),

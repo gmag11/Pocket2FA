@@ -1,0 +1,4 @@
+Version 0.9.6
+
+- Replaced QR code scanner with ZXing (fully open source, Apache 2.0)
+- Fixed version code tracking via pubspec.yaml build number

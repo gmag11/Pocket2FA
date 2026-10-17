@@ -1,6 +1,7 @@
-import 'dart:developer' as developer;
+import '../services/log_service.dart';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../l10n/app_localizations.dart';
@@ -146,57 +147,66 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
   Widget _buildSecretField() {
     final isEditMode = widget.existingEntry != null;
     final canEdit = !isEditMode || _secretUnlocked;
-    return TextFormField(
-      controller: _secretCtrl,
-      // Keep the field enabled so suffixIcon remains interactive; use readOnly to prevent editing when locked.
-      enabled: true,
-      readOnly: !canEdit,
-      enableInteractiveSelection: canEdit,
-    obscureText:
-      isEditMode && !_secretUnlocked, // Hide text when it's locked
-      decoration: InputDecoration(
-        hintText: canEdit ? '' : l10n.secretLockedHint,
-        filled: !canEdit,
-        fillColor: !canEdit ? Colors.grey[100] : null,
-        border: OutlineInputBorder(
-          borderSide: BorderSide(
-            color: !canEdit ? Colors.grey : Colors.blue,
+    return Builder(
+      builder: (context) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        return TextFormField(
+          controller: _secretCtrl,
+          // Keep the field enabled so suffixIcon remains interactive; use readOnly to prevent editing when locked.
+          enabled: true,
+          readOnly: !canEdit,
+          enableInteractiveSelection: canEdit,
+        obscureText:
+          isEditMode && !_secretUnlocked, // Hide text when it's locked
+          decoration: InputDecoration(
+            hintText: canEdit ? '' : l10n.secretLockedHint,
+            filled: !canEdit,
+            fillColor: !canEdit 
+                ? (isDark 
+                    ? Theme.of(context).colorScheme.surfaceContainerHighest 
+                    : Colors.grey[100])
+                : null,
+            border: OutlineInputBorder(
+              borderSide: BorderSide(
+                color: !canEdit ? Colors.grey : Colors.blue,
+              ),
+            ),
+            // Lock button moved inside the field as suffixIcon. It toggles visibility and editability.
+            suffixIcon: isEditMode
+                ? IconButton(
+                    icon: Icon(
+                      _secretUnlocked ? Icons.lock_open : Icons.lock,
+                      color: _secretUnlocked ? Colors.green : Colors.grey,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _secretUnlocked = !_secretUnlocked;
+                        if (!_secretUnlocked) {
+                          // When locking, clear the selection
+                          _secretCtrl.selection =
+                              TextSelection.collapsed(offset: 0);
+                        }
+                      });
+                    },
+                    tooltip: _secretUnlocked
+                        ? 'Lock secret field'
+                        : 'Unlock secret field',
+                  )
+                : null,
           ),
-        ),
-        // Lock button moved inside the field as suffixIcon. It toggles visibility and editability.
-        suffixIcon: isEditMode
-            ? IconButton(
-                icon: Icon(
-                  _secretUnlocked ? Icons.lock_open : Icons.lock,
-                  color: _secretUnlocked ? Colors.green : Colors.grey,
-                ),
-                onPressed: () {
-                  setState(() {
-                    _secretUnlocked = !_secretUnlocked;
-                    if (!_secretUnlocked) {
-                      // When locking, clear the selection
-                      _secretCtrl.selection =
-                          TextSelection.collapsed(offset: 0);
-                    }
-                  });
-                },
-                tooltip: _secretUnlocked
-                    ? 'Lock secret field'
-                    : 'Unlock secret field',
-              )
-            : null,
-      ),
-      validator: (v) {
-        final s = v?.trim() ?? '';
-        if (s.isEmpty) return l10n.secretRequired;
-        // Normalize by removing spaces but do NOT change case; Base32 must be uppercase
-        final cleaned = s.replaceAll(' ', '');
-        // Base32: letters A-Z and digits 2-7, optionally padded with '=' characters at the end
-        final base32Regex = RegExp(r'^[A-Z2-7]+=*$');
-        if (!base32Regex.hasMatch(cleaned)) {
-          return l10n.secretBase32Error;
-        }
-        return null;
+          validator: (v) {
+            final s = v?.trim() ?? '';
+            if (s.isEmpty) return l10n.secretRequired;
+            // Normalize by removing spaces but do NOT change case; Base32 must be uppercase
+            final cleaned = s.replaceAll(' ', '');
+            // Base32: letters A-Z and digits 2-7, optionally padded with '=' characters at the end
+            final base32Regex = RegExp(r'^[A-Z2-7]+=*$');
+            if (!base32Regex.hasMatch(cleaned)) {
+              return l10n.secretBase32Error;
+            }
+            return null;
+          },
+        );
       },
     );
   }
@@ -531,8 +541,10 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
                             synchronized: false, // mark as unsynced by default
                           );
                     
-                          developer.log(
-                              'AdvancedForm: updated entry service=${updatedEntry.service} account=${updatedEntry.account} id=${updatedEntry.id}',
+                          LogService.instance.log(
+                              kDebugMode
+                                  ? 'AdvancedForm: updated entry service=${updatedEntry.service} account=${updatedEntry.account} id=${updatedEntry.id}'
+                                  : 'AdvancedForm: updated entry id=${updatedEntry.id}',
                               name: 'AdvancedForm');
                     
                           // Attempt immediate server update (silent on failure)
@@ -549,25 +561,25 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
                                 synchronized: true,
                                 localIcon: widget.existingEntry?.localIcon,
                               );
-                              developer.log(
+                              LogService.instance.log(
                                   'AdvancedForm: updated on server id=${serverEntry.id}',
                                   name: 'AdvancedForm');
                               navigator.pop(serverEntry);
                               return;
                             } else {
-                              developer.log(
+                              LogService.instance.log(
                                   'AdvancedForm: server update returned unexpected payload, returning local unsynced entry',
                                   name: 'AdvancedForm');
                             }
                           } catch (e) {
                             try {
                               if (e is DioException) {
-                                developer.log(
+                                LogService.instance.log(
                                     'AdvancedForm: server update DioException status=${e.response?.statusCode} data=${e.response?.data}',
                                     name: 'AdvancedForm');
                               }
                             } catch (_) {}
-                            developer.log(
+                            LogService.instance.log(
                                 'AdvancedForm: server update failed (ignored): $e',
                                 name: 'AdvancedForm');
                           }
@@ -593,15 +605,19 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
                                     (_otpType == 'TOTP' ? 30 : 0),
                           );
                     
-                          developer.log(
-                              'AdvancedForm: local entry created service=${entry.service} account=${entry.account} id=${entry.id} synchronized=${entry.synchronized}',
+                          LogService.instance.log(
+                              kDebugMode
+                                  ? 'AdvancedForm: local entry created service=${entry.service} account=${entry.account} id=${entry.id} synchronized=${entry.synchronized}'
+                                  : 'AdvancedForm: local entry created id=${entry.id} synchronized=${entry.synchronized}',
                               name: 'AdvancedForm');
-                    
+
                           // Use our service to attempt server-side creation
-                          developer.log(
-                              'AdvancedForm: attempting immediate server create for service=${entry.service} account=${entry.account}',
+                          LogService.instance.log(
+                              kDebugMode
+                                  ? 'AdvancedForm: attempting immediate server create for service=${entry.service} account=${entry.account}'
+                                  : 'AdvancedForm: attempting immediate server create',
                               name: 'AdvancedForm');
-                    
+
                           try {
                             final serverEntry =
                                 await EntryCreationService.createEntryOnServer(
@@ -612,31 +628,33 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
                                     sourceTag: 'AdvancedForm');
                     
                             if (serverEntry != null && serverEntry.synchronized) {
-                              developer.log(
+                              LogService.instance.log(
                                   'AdvancedForm: created on server id=${serverEntry.id}',
                                   name: 'AdvancedForm');
                               navigator.pop(serverEntry);
                               return;
                             } else {
-                              developer.log(
+                              LogService.instance.log(
                                   'AdvancedForm: server create returned no id, returning local entry',
                                   name: 'AdvancedForm');
                             }
                           } catch (e) {
                             try {
                               if (e is DioException) {
-                                developer.log(
+                                LogService.instance.log(
                                     'AdvancedForm: server create DioException status=${e.response?.statusCode} data=${e.response?.data}',
                                     name: 'AdvancedForm');
                               }
                             } catch (_) {}
-                            developer.log(
+                            LogService.instance.log(
                                 'AdvancedForm: server create failed (ignored): $e',
                                 name: 'AdvancedForm');
                           }
                     
-                          developer.log(
-                              'AdvancedForm: created local AccountEntry: ${entry.toMap()}',
+                          LogService.instance.log(
+                              kDebugMode
+                                  ? 'AdvancedForm: created local AccountEntry: ${entry.toMap()}'
+                                  : 'AdvancedForm: created local AccountEntry id=${entry.id}',
                               name: 'AdvancedForm');
                           navigator.pop(entry);
                         }

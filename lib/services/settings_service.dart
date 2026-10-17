@@ -1,10 +1,19 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart' show ThemeMode;
 import 'package:shared_preferences/shared_preferences.dart';
+
 import 'settings_storage.dart';
+import 'log_service.dart';
 
 enum CodeFormat { compact, spaced3, spaced2 }
 
 class SettingsService extends ChangeNotifier {
+  static SettingsService? _instance;
+  static SettingsService get instance {
+    assert(_instance != null, 'SettingsService not initialized');
+    return _instance!;
+  }
+
   static const _key = 'otp_format';
   static const _enabledKey = 'otp_format_enabled';
   static const _biometricKey = 'biometric_protection_enabled';
@@ -12,6 +21,9 @@ class SettingsService extends ChangeNotifier {
   static const _syncOnOpenKey = 'sync_on_home_open';
   static const _autoSyncEnabledKey = 'auto_sync_enabled';
   static const _autoSyncIntervalKey = 'auto_sync_interval_minutes';
+  static const _darkModeKey = 'dark_mode_enabled'; // legacy, kept for migration
+  static const _themeModeKey = 'theme_mode';
+  static const _debugLoggingEnabledKey = 'debug_logging_enabled';
 
   CodeFormat _format = CodeFormat.spaced3;
   CodeFormat get format => _format;
@@ -24,22 +36,43 @@ class SettingsService extends ChangeNotifier {
   bool get biometricsSupported => _biometricsSupported;
 
   SettingsService({this.storage}) {
+    _instance = this;
     _load();
   }
+
+  /// Reload settings from storage after a successful biometric unlock.
+  Future<void> reloadFromStorage() => _load();
 
   Future<void> _load() async {
     if (storage != null) {
       // Query support for biometrics once and cache the result for the UI
       _biometricsSupported = await storage!.supportsBiometrics();
+      // If storage is locked (biometric auth not yet satisfied), skip loading
+      // settings from the box and use defaults. Settings will be reloaded
+      // after a successful unlock via reloadFromStorage().
+      if (!storage!.isUnlocked) {
+        notifyListeners();
+        return;
+      }
       final box = storage!.box;
       final v = box.get(_key, defaultValue: 'spaced3') as String;
       _format = _fromString(v);
       _enabled = box.get(_enabledKey, defaultValue: true) as bool;
       _biometricEnabled = box.get(_biometricKey, defaultValue: false) as bool;
       _hideOtps = box.get(_hideOtpsKey, defaultValue: false) as bool;
-  _syncOnOpen = box.get(_syncOnOpenKey, defaultValue: true) as bool;
-  _autoSyncEnabled = box.get(_autoSyncEnabledKey, defaultValue: false) as bool;
-  _autoSyncIntervalMinutes = box.get(_autoSyncIntervalKey, defaultValue: 30) as int;
+      _syncOnOpen = box.get(_syncOnOpenKey, defaultValue: true) as bool;
+      _autoSyncEnabled = box.get(_autoSyncEnabledKey, defaultValue: false) as bool;
+      _autoSyncIntervalMinutes = box.get(_autoSyncIntervalKey, defaultValue: 30) as int;
+      _debugLoggingEnabled = box.get(_debugLoggingEnabledKey, defaultValue: false) as bool;
+      LogService.instance.enabled = _debugLoggingEnabled;
+      final storedTheme = box.get(_themeModeKey) as String?;
+      if (storedTheme != null) {
+        _themeMode = _themeModeFromString(storedTheme);
+      } else {
+        // Migrate from old bool key
+        final legacyDark = box.get(_darkModeKey, defaultValue: false) as bool;
+        _themeMode = legacyDark ? ThemeMode.dark : ThemeMode.system;
+      }
       notifyListeners();
       return;
     }
@@ -49,17 +82,28 @@ class SettingsService extends ChangeNotifier {
     _format = _fromString(v);
     _enabled = prefs.getBool(_enabledKey) ?? true;
     _hideOtps = prefs.getBool(_hideOtpsKey) ?? false;
-  _syncOnOpen = prefs.getBool(_syncOnOpenKey) ?? true;
-  _autoSyncEnabled = prefs.getBool(_autoSyncEnabledKey) ?? false;
-  _autoSyncIntervalMinutes = prefs.getInt(_autoSyncIntervalKey) ?? 30;
+    _syncOnOpen = prefs.getBool(_syncOnOpenKey) ?? true;
+    _autoSyncEnabled = prefs.getBool(_autoSyncEnabledKey) ?? false;
+    _autoSyncIntervalMinutes = prefs.getInt(_autoSyncIntervalKey) ?? 30;
+    _debugLoggingEnabled = prefs.getBool(_debugLoggingEnabledKey) ?? false;
+    LogService.instance.enabled = _debugLoggingEnabled;
+    final storedTheme = prefs.getString(_themeModeKey);
+    if (storedTheme != null) {
+      _themeMode = _themeModeFromString(storedTheme);
+    } else {
+      // Migrate from old bool key
+      final legacyDark = prefs.getBool(_darkModeKey) ?? false;
+      _themeMode = legacyDark ? ThemeMode.dark : ThemeMode.system;
+    }
     notifyListeners();
   }
 
   Future<void> setFormat(CodeFormat f) async {
     _format = f;
     if (storage != null) {
-      final box = storage!.box;
-      await box.put(_key, _toString(f));
+      if (storage!.isUnlocked) {
+        await storage!.box.put(_key, _toString(f));
+      }
       notifyListeners();
       return;
     }
@@ -72,8 +116,9 @@ class SettingsService extends ChangeNotifier {
   Future<void> setEnabled(bool on) async {
     _enabled = on;
     if (storage != null) {
-      final box = storage!.box;
-      await box.put(_enabledKey, on);
+      if (storage!.isUnlocked) {
+        await storage!.box.put(_enabledKey, on);
+      }
       notifyListeners();
       return;
     }
@@ -86,8 +131,9 @@ class SettingsService extends ChangeNotifier {
   Future<void> setHideOtps(bool on) async {
     _hideOtps = on;
     if (storage != null) {
-      final box = storage!.box;
-      await box.put(_hideOtpsKey, on);
+      if (storage!.isUnlocked) {
+        await storage!.box.put(_hideOtpsKey, on);
+      }
       notifyListeners();
       return;
     }
@@ -104,8 +150,9 @@ class SettingsService extends ChangeNotifier {
   Future<void> setSyncOnOpen(bool on) async {
     _syncOnOpen = on;
     if (storage != null) {
-      final box = storage!.box;
-      await box.put(_syncOnOpenKey, on);
+      if (storage!.isUnlocked) {
+        await storage!.box.put(_syncOnOpenKey, on);
+      }
       notifyListeners();
       return;
     }
@@ -125,8 +172,9 @@ class SettingsService extends ChangeNotifier {
   Future<void> setAutoSyncEnabled(bool on) async {
     _autoSyncEnabled = on;
     if (storage != null) {
-      final box = storage!.box;
-      await box.put(_autoSyncEnabledKey, on);
+      if (storage!.isUnlocked) {
+        await storage!.box.put(_autoSyncEnabledKey, on);
+      }
       notifyListeners();
       return;
     }
@@ -140,8 +188,9 @@ class SettingsService extends ChangeNotifier {
     if (mins <= 0) return;
     _autoSyncIntervalMinutes = mins;
     if (storage != null) {
-      final box = storage!.box;
-      await box.put(_autoSyncIntervalKey, mins);
+      if (storage!.isUnlocked) {
+        await storage!.box.put(_autoSyncIntervalKey, mins);
+      }
       notifyListeners();
       return;
     }
@@ -151,11 +200,74 @@ class SettingsService extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> setDebugLoggingEnabled(bool on) async {
+    _debugLoggingEnabled = on;
+    LogService.instance.enabled = on;
+    if (!on) {
+      LogService.instance.clear();
+    }
+    if (storage != null) {
+      if (storage!.isUnlocked) {
+        await storage!.box.put(_debugLoggingEnabledKey, on);
+      }
+      notifyListeners();
+      return;
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_debugLoggingEnabledKey, on);
+    notifyListeners();
+  }
+
   bool _biometricEnabled = false;
   bool get biometricEnabled => _biometricEnabled;
 
   bool _hideOtps = false;
   bool get hideOtps => _hideOtps;
+
+  bool _debugLoggingEnabled = false;
+  bool get debugLoggingEnabled => _debugLoggingEnabled;
+
+  ThemeMode _themeMode = ThemeMode.system;
+  ThemeMode get themeMode => _themeMode;
+
+  Future<void> setThemeMode(ThemeMode mode) async {
+    _themeMode = mode;
+    final modeString = _themeModeToString(mode);
+    if (storage != null) {
+      if (storage!.isUnlocked) {
+        await storage!.box.put(_themeModeKey, modeString);
+      }
+      notifyListeners();
+      return;
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_themeModeKey, modeString);
+    notifyListeners();
+  }
+
+  static String _themeModeToString(ThemeMode mode) {
+    switch (mode) {
+      case ThemeMode.light:
+        return 'light';
+      case ThemeMode.dark:
+        return 'dark';
+      case ThemeMode.system:
+        return 'system';
+    }
+  }
+
+  static ThemeMode _themeModeFromString(String s) {
+    switch (s) {
+      case 'light':
+        return ThemeMode.light;
+      case 'dark':
+        return ThemeMode.dark;
+      default:
+        return ThemeMode.system;
+    }
+  }
 
   /// Toggle biometric protection for local Hive key. This will call into
   /// SettingsStorage to rewrap the key; no data should be lost during toggling.
@@ -170,7 +282,9 @@ class SettingsService extends ChangeNotifier {
     }
     if (ok) {
       _biometricEnabled = on;
-      await s.box.put(_biometricKey, on);
+      if (s.isUnlocked) {
+        await s.box.put(_biometricKey, on);
+      }
       notifyListeners();
       return true;
     } else {

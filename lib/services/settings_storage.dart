@@ -1,9 +1,13 @@
 import 'dart:convert';
+import 'dart:io' show Platform, File, Directory;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:path_provider/path_provider.dart';
+
+import 'log_service.dart';
 
 /// Simple storage wrapper that initialises Hive and provides an encrypted box
 /// using a key stored in the platform secure storage (keystore/keychain).
@@ -36,47 +40,113 @@ class SettingsStorage {
 
   /// Initialise Hive and the encrypted box. Call this early (before runApp)
   Future<void> init() async {
-    await Hive.initFlutter();
+    // Store the Hive data in a per-app, always-writable location instead of the
+    // user's Documents folder. On desktop, Hive.initFlutter() would default to
+    // getApplicationDocumentsDirectory(), which can be redirected to a network
+    // share (e.g. an SMB-mapped drive) that the process cannot write to,
+    // producing "Access is denied" errors. getApplicationSupportDirectory()
+    // resolves to %APPDATA%\<app> on Windows and ~/.local/share/<app> on Linux.
+    if (!kIsWeb && (Platform.isLinux || Platform.isWindows || Platform.isMacOS)) {
+      final supportDir = await getApplicationSupportDirectory();
+      // One-time migration: if a box already exists in the legacy Documents
+      // location (used by previous versions on Windows/macOS), copy it over so
+      // existing users don't lose their servers and settings.
+      await _migrateLegacyBoxIfNeeded(supportDir);
+      Hive.init(supportDir.path);
+    } else {
+      await Hive.initFlutter();
+    }
     // Behaviour: if biometric protection is enabled, require authentication
     // before reading the stored key and opening the box. If authentication
     // fails, do not open the box and leave the store locked; caller can
     // later call attemptUnlock() to prompt again.
-    final biometricFlag = await _secure.read(key: _biometricFlagKey);
-    if (biometricFlag == '1') {
-      final can = await _localAuth.canCheckBiometrics ||
-          await _localAuth.isDeviceSupported();
-      if (!can) {
-        // No biometrics available — fall back to leaving locked.
-        _unlocked = false;
-        return;
+    //
+    // The entire init() body is wrapped in a try-catch so that a
+    // PlatformException from flutter_secure_storage or local_auth on any
+    // platform (especially Windows, where DPAPI or Windows Hello can fail
+    // for a variety of reasons) does not crash main() before runApp().
+    try {
+      // Read both the biometric flag and the encryption key in a single
+      // platform-channel round trip instead of two sequential reads. Each
+      // flutter_secure_storage call has fixed overhead on Android
+      // (EncryptedSharedPreferences / Keystore cipher init), so halving the
+      // number of calls measurably helps cold-start latency there.
+      final secureStopwatch = Stopwatch()..start();
+      final secureValues = await _secure.readAll();
+      LogService.instance.info(
+          'SettingsStorage.init: secure storage readAll took '
+          '${secureStopwatch.elapsedMilliseconds}ms',
+          name: 'SettingsStorage');
+      final biometricFlag = secureValues[_biometricFlagKey];
+      if (biometricFlag == '1') {
+        final can = await _localAuth.canCheckBiometrics ||
+            await _localAuth.isDeviceSupported();
+        if (!can) {
+          // No biometrics available — fall back to leaving locked.
+          _unlocked = false;
+          return;
+        }
+
+        final ok = await _localAuth.authenticate(
+          localizedReason: 'Authenticate to unlock local data',
+          options: const AuthenticationOptions(biometricOnly: false),
+        );
+        if (!ok) {
+          _unlocked = false;
+          return;
+        }
       }
 
-      final ok = await _localAuth.authenticate(
-        localizedReason: 'Authenticate to unlock local data',
-        options: const AuthenticationOptions(biometricOnly: false),
-      );
-      if (!ok) {
-        _unlocked = false;
-        return;
+      // Try to read an existing key from secure storage, otherwise generate
+      // and save one.
+      String? encoded = secureValues[_keyName];
+      Uint8List encryptionKey;
+      if (encoded == null) {
+        // Create a new 256-bit key
+        final key = Hive.generateSecureKey();
+        await _secure.write(key: _keyName, value: base64Encode(key));
+        encryptionKey = Uint8List.fromList(key);
+      } else {
+        encryptionKey = Uint8List.fromList(base64Decode(encoded));
       }
-    }
 
-    // Try to read an existing key from secure storage, otherwise generate and save one.
-    String? encoded = await _secure.read(key: _keyName);
-    Uint8List encryptionKey;
-    if (encoded == null) {
-      // Create a new 256-bit key
-      final key = Hive.generateSecureKey();
-      await _secure.write(key: _keyName, value: base64Encode(key));
-      encryptionKey = Uint8List.fromList(key);
-    } else {
-      encryptionKey = Uint8List.fromList(base64Decode(encoded));
+      // Open the encrypted box (will be created if missing)
+      final boxStopwatch = Stopwatch()..start();
+      await Hive.openBox(_hiveBox,
+          encryptionCipher: HiveAesCipher(encryptionKey));
+      LogService.instance.info(
+          'SettingsStorage.init: Hive.openBox took '
+          '${boxStopwatch.elapsedMilliseconds}ms',
+          name: 'SettingsStorage');
+      _unlocked = true;
+    } catch (e) {
+      debugPrint('SettingsStorage.init: failed to initialise storage: $e');
+      // Leave _unlocked = false; the app will show the unlock/retry UI.
     }
+  }
 
-    // Open the encrypted box (will be created if missing)
-    await Hive.openBox(_hiveBox,
-        encryptionCipher: HiveAesCipher(encryptionKey));
-    _unlocked = true;
+  /// Copy an existing Hive box from the legacy Documents-based location into
+  /// [supportDir] when no box exists there yet. This preserves data for users
+  /// upgrading from versions that stored the box in the Documents folder.
+  /// Any failure (e.g. the legacy location is on an unreadable network share)
+  /// is ignored so the app can continue with a fresh box.
+  Future<void> _migrateLegacyBoxIfNeeded(Directory supportDir) async {
+    try {
+      final sep = Platform.pathSeparator;
+      final newBox = File('${supportDir.path}$sep$_hiveBox.hive');
+      if (await newBox.exists()) return; // already migrated or already in use
+
+      final docsDir = await getApplicationDocumentsDirectory();
+      final oldBox = File('${docsDir.path}$sep$_hiveBox.hive');
+      if (!await oldBox.exists()) return; // nothing to migrate
+
+      await supportDir.create(recursive: true);
+      await oldBox.copy(newBox.path);
+      debugPrint(
+          'SettingsStorage.init: migrated legacy box from ${oldBox.path} to ${newBox.path}');
+    } catch (e) {
+      debugPrint('SettingsStorage.init: legacy box migration skipped: $e');
+    }
   }
 
   bool _unlocked = false;
@@ -84,29 +154,34 @@ class SettingsStorage {
 
   /// Attempt to unlock (prompt biometric) and open the box if successful.
   Future<bool> attemptUnlock() async {
-    final biometricFlag = await _secure.read(key: _biometricFlagKey);
-    if (biometricFlag != '1') return true; // not protected
+    try {
+      final biometricFlag = await _secure.read(key: _biometricFlagKey);
+      if (biometricFlag != '1') return true; // not protected
 
-    final can = await _localAuth.canCheckBiometrics ||
-        await _localAuth.isDeviceSupported();
-    if (!can) return false;
+      final can = await _localAuth.canCheckBiometrics ||
+          await _localAuth.isDeviceSupported();
+      if (!can) return false;
 
-    final ok = await _localAuth.authenticate(
-      localizedReason: 'Authenticate to unlock local data',
-      options: const AuthenticationOptions(biometricOnly: false),
-    );
-    if (!ok) return false;
+      final ok = await _localAuth.authenticate(
+        localizedReason: 'Authenticate to unlock local data',
+        options: const AuthenticationOptions(biometricOnly: false),
+      );
+      if (!ok) return false;
 
-    // Read key and open box
-    final encoded = await _secure.read(key: _keyName);
-    if (encoded == null) return false;
-    final encryptionKey = Uint8List.fromList(base64Decode(encoded));
-    if (!Hive.isBoxOpen(_hiveBox)) {
-      await Hive.openBox(_hiveBox,
-          encryptionCipher: HiveAesCipher(encryptionKey));
+      // Read key and open box
+      final encoded = await _secure.read(key: _keyName);
+      if (encoded == null) return false;
+      final encryptionKey = Uint8List.fromList(base64Decode(encoded));
+      if (!Hive.isBoxOpen(_hiveBox)) {
+        await Hive.openBox(_hiveBox,
+            encryptionCipher: HiveAesCipher(encryptionKey));
+      }
+      _unlocked = true;
+      return true;
+    } catch (e) {
+      debugPrint('SettingsStorage.attemptUnlock: failed: $e');
+      return false;
     }
-    _unlocked = true;
-    return true;
   }
 
   /// Safe accessor for the settings box.

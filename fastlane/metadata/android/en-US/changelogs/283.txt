@@ -1,0 +1,7 @@
+Version 0.9.17
+
+- Self-signed SSL certificates can now be accepted via an explicit toggle in the server settings, making the "Connect anyway" flow after SSL errors work reliably
+- Window geometry now restores correctly on Linux under Wayland
+- F-Droid publishing is now fully automated after every tagged release
+- README updated with F-Droid badge and clarified build prerequisites
+- Updated dependencies: camera, flutter_zxing, and meta

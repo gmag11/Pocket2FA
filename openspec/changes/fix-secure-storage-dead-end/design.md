@@ -89,6 +89,11 @@ The locked screen selects its message from `SettingsStorage` state:
 Failures are emitted through `LogService.instance.error(...)` so the in-app debug log (and its
 export) shows the real cause, complementing the visible message.
 
+Because the debug-logging preference is itself stored in the encrypted box, its value cannot
+be read when that box fails to open. A secure-storage failure therefore force-enables log
+capture for the session: the failure is recorded even if debug logging was off, and it stays
+inspectable from the locked screen's debug-log button while the storage remains locked.
+
 ## Risks / Trade-offs
 
 - **Bumping the plugin ships native code** → mitigate by choosing the patch release that targets

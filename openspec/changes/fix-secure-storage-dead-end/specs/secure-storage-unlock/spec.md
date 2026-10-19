@@ -69,6 +69,12 @@ service so it can be inspected and exported from the in-app debug log.
 - **WHEN** the secure-storage read fails
 - **THEN** an entry describing the failure is written to the debug log
 
+#### Scenario: Failure is recorded even when the logging preference is unreadable
+
+- **WHEN** the secure-storage read fails and the debug-logging preference cannot be read because
+  it is stored in that same secure storage
+- **THEN** log capture is enabled for the session so the failure is written to the debug log
+
 ### Requirement: Remove the upstream keyring-enumeration trigger
 
 The build SHALL use a `flutter_secure_storage_linux` version that does not enumerate all keyring

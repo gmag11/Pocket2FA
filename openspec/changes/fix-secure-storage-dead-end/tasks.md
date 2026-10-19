@@ -18,7 +18,7 @@
 - [x] 2.4 Make `attemptUnlock()` retry the storage path: read the biometric flag, prompt only
       if protection is enabled and supported, then open the box — so a startup failure recovers
 - [x] 2.5 Log storage failures via `LogService.error` so they appear in the debug log viewer
-- [ ] 2.6 Force log capture on when the secure-storage read fails, so the failure is recorded
+- [x] 2.6 Force log capture on when the secure-storage read fails, so the failure is recorded
       even though the debug-logging preference lives in the storage that just failed
 
 ## 3. UI: honest locked screen

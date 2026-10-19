@@ -13,17 +13,18 @@
 ## 3. Tile: server-backed codes for shared accounts
 
 - [x] 3.1 In `lib/widgets/account_tile_otp_service.dart`, add a `_requiresServerCode` check (`isBorrowed || seed.isEmpty`, type not `hotp`) and route those accounts to a new `_refreshFromServer()` instead of local generation
-- [x] 3.2 Implement `_refreshFromServer()`: fetch the OTP, set `currentCode`/`nextCode`, schedule the next fetch at `generated_at + period` (epoch-aligned fallback), and fire `startAnimationCallback`
+- [x] 3.2 Implement `_refreshFromServer()`: fetch the OTP, set `currentCode`/`nextCode`, schedule the next fetch at the server-reported period boundary (corrected in 3.5), and fire `startAnimationCallback`
 - [x] 3.3 On failure, set `currentCode` to the `offline` sentinel (never a locally-derived code), clear `nextCode`, and schedule a bounded retry
 - [x] 3.4 Guard against scheduling work after `dispose()` and against overlapping requests
+- [x] 3.5 Fix refresh scheduling found during device testing: `generated_at` is the code generation instant (not the period start), so schedule at the next period boundary (`periodMs - generated_at_ms % periodMs`) instead of `generated_at + period`; fall back to client epoch alignment when `generated_at` is missing
 
 ## 4. Verification
 
 - [x] 4.1 `flutter analyze` passes with no new issues for the modified `lib/` files (the dormant test file left in `test/` reports one `depend_on_referenced_packages` info until test infrastructure is added)
-- [ ] 4.2 With a 2FAuth instance that has Sharing enabled: two accounts shared with the user display two different codes, each matching the web UI, and the next code matches too
-- [ ] 4.3 Owned TOTP accounts still generate locally and work in airplane mode (unchanged)
-- [ ] 4.4 Stop the server / enable airplane mode: shared tiles show the `offline` indication (not a wrong code) and recover once connectivity returns
-- [ ] 4.5 Restart the app: shared accounts are still recognised as borrowed after loading from local storage
+- [x] 4.2 With a 2FAuth instance that has Sharing enabled: two accounts shared with the user display two different codes, each matching the web UI, and the next code matches too
+- [x] 4.3 Owned TOTP accounts still generate locally and work in airplane mode (unchanged)
+- [x] 4.4 Stop the server / enable airplane mode: shared tiles show the `offline` indication (not a wrong code) and recover once connectivity returns
+- [x] 4.5 Restart the app: shared accounts are still recognised as borrowed after loading from local storage
 
 ## 5. Test artifact (infrastructure deferred)
 

@@ -46,12 +46,17 @@ For a TOTP account shared with the user (identified as borrowed, or having no lo
 
 ### Requirement: Shared code refresh follows the server-reported period
 
-The system SHALL refresh a shared TOTP account's displayed code aligned to the server-reported generation time and period, so that the code advances at the same instant as the server's code.
+The system SHALL refresh a shared TOTP account's displayed code aligned to the period boundary derived from the server-reported generation time and period, so that the code advances at the same instant as the server's code. Because the server reports the generation instant rather than the start of the period, the next refresh MUST occur at the next period boundary on the server timeline, not a full period after the request.
 
 #### Scenario: Code refreshes at the next server period boundary
 
-- **WHEN** the server returns a code with a generation timestamp and a period
-- **THEN** the client requests a fresh code at the end of that period (generation timestamp plus period) and updates the display
+- **WHEN** the server returns a code generated at time `generated_at` with a period of `period` seconds
+- **THEN** the client requests a fresh code at the next boundary (`generated_at - generated_at % period + period`) and updates the display, regardless of how far into the period the original request was made
+
+#### Scenario: Fetch late in the period
+
+- **WHEN** the first code for a shared account is fetched near the end of a period
+- **THEN** the client replaces it at the imminent boundary instead of keeping it until the same phase of the next period, so it never displays the server's current code as the next code
 
 ### Requirement: Graceful degradation when a shared code cannot be fetched
 

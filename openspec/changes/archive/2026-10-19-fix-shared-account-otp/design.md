@@ -46,9 +46,19 @@ For a shared TOTP/STEAM account, `refreshCodes()` delegates to a new server-back
 
 **Alternative considered:** cache one decrypted "server-derived secret". Impossible — the server never reveals it.
 
-### Decision 3: Schedule refresh at the server-reported boundary, with epoch fallback
+### Decision 3: Schedule refresh at the server-reported period boundary, with epoch fallback
 
-After a successful fetch, the next refresh is scheduled at `generated_at + period`. If that instant is already in the past (client clock ahead of server) or implausibly far, fall back to the epoch-aligned boundary (`period - nowMs % periodMs`), which is the same alignment the local TOTP path already uses. A small epsilon (+250 ms) avoids re-fetching the expiring code.
+2FAuth sets `generated_at` to the instant the code was generated (see `TwoFAccount::getOTP()`: `$OtpDto->generated_at = $time ?: time()`), **not** to the start of the period in which it is valid. A code stays valid until the next multiple of `period` on the server timeline, so the remaining validity is `period - generated_at % period`, generally less than a full period.
+
+After a successful fetch, the next refresh is therefore scheduled at that boundary:
+
+```
+delayMs = periodMs - (generated_at_ms % periodMs)
+```
+
+Scheduling `generated_at + period` instead (a full period after the request) preserves the phase at which the code was first fetched: a tile first built 70 % into a period would keep flipping codes at 70 % of every later period, i.e. it would show as "next" the code the server already considered current. Using the server timestamp for the modulo also makes the schedule independent of the client's wall clock; only the response latency can delay it slightly.
+
+If `generated_at` is missing or invalid, fall back to the epoch-aligned boundary (`period - nowMs % periodMs`), which is the same alignment the local TOTP path already uses. A small epsilon (+250 ms) avoids re-fetching the expiring code.
 
 ### Decision 4: Graceful degradation to an "offline" state
 

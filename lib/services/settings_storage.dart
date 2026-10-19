@@ -172,6 +172,10 @@ class SettingsStorage {
       _unlocked = false;
       _biometricLocked = false;
       _storageError = e.toString();
+      // The debug-logging preference lives in the storage that just failed, so
+      // it cannot be read. Force capture on so this failure (and any retry)
+      // stays inspectable in the in-app debug log.
+      LogService.instance.forceCapture = true;
       LogService.instance.error(
           'SettingsStorage: failed to read secure storage: $e\n$stack',
           name: 'SettingsStorage');

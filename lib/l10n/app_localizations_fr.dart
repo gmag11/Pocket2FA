@@ -424,6 +424,10 @@ class AppLocalizationsFr extends AppLocalizations {
       'L\'authentification biométrique a échoué ou a été annulée. Veuillez réessayer pour déverrouiller vos données locales.';
 
   @override
+  String get storageUnlockFailed =>
+      'Impossible de lire le stockage sécurisé. Le trousseau de l\'appareil (par exemple GNOME Keyring sous Linux) a renvoyé une erreur.';
+
+  @override
   String get retry => 'Réessayer';
 
   @override

@@ -51,6 +51,13 @@ class SettingsService extends ChangeNotifier {
       // settings from the box and use defaults. Settings will be reloaded
       // after a successful unlock via reloadFromStorage().
       if (!storage!.isUnlocked) {
+        if (storage!.hasStorageError) {
+          // The debug-logging preference lives in the encrypted box, which
+          // could not be read. LogService has force-enabled capture for this
+          // failure; reflect that in the setting/UI so it is consistent.
+          _debugLoggingEnabled = true;
+          LogService.instance.enabled = true;
+        }
         notifyListeners();
         return;
       }
@@ -204,6 +211,7 @@ class SettingsService extends ChangeNotifier {
     _debugLoggingEnabled = on;
     LogService.instance.enabled = on;
     if (!on) {
+      LogService.instance.forceCapture = false;
       LogService.instance.clear();
     }
     if (storage != null) {

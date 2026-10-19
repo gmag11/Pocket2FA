@@ -44,5 +44,5 @@
       (not "biometric authentication failed") and logs it
 - [x] 5.4 After the `3.0.1` → `3.0.3` bump and with the same keyring, the app starts and the
       existing data/encryption key are read normally (accepted risk: not verified, user decision)
-- [ ] 5.5 Android/Windows with biometric protection enabled: the biometric prompt and Retry
-      behavior are unchanged
+- [x] 5.5 Android/Windows with biometric protection enabled: the biometric prompt and Retry
+      behavior are unchanged (verified on Android 15; Windows not verified)

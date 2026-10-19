@@ -741,5 +741,9 @@
   "nothingToExport": "Nothing to export",
   "@nothingToExport": {
     "description": "Snackbar message shown when trying to export an empty log."
+  },
+  "sharedAccount": "Shared with you",
+  "@sharedAccount": {
+    "description": "Tooltip for the icon shown next to the username of an account shared with the user."
   }
 }

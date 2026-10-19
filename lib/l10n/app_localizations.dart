@@ -1137,6 +1137,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Nothing to export'**
   String get nothingToExport;
+
+  /// Tooltip for the icon shown next to the username of an account shared with the user.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared with you'**
+  String get sharedAccount;
 }
 
 class _AppLocalizationsDelegate

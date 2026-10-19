@@ -577,4 +577,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get nothingToExport => 'Rien à exporter';
+
+  @override
+  String get sharedAccount => 'Partagé avec vous';
 }

@@ -46,9 +46,7 @@ class SettingsStorage {
   static const _hiveBox = 'app_settings_box';
   static const _keyName = 'hive_master_key';
 
-  AndroidOptions _getAndroidOptions() => const AndroidOptions(
-        encryptedSharedPreferences: true,
-      );
+  AndroidOptions _getAndroidOptions() => const AndroidOptions();
 
   static const _biometricFlagKey = 'biometric_protection_flag';
 
@@ -134,7 +132,6 @@ class SettingsStorage {
 
         final ok = await _localAuth.authenticate(
           localizedReason: 'Authenticate to unlock local data',
-          options: const AuthenticationOptions(biometricOnly: false),
         );
         if (!ok) {
           _unlocked = false;

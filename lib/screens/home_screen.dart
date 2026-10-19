@@ -524,7 +524,7 @@ class _HomePageState extends State<HomePage>
                 // Animated header
                 SizeTransition(
                   sizeFactor: _headerAnimation.headerSizeFactor,
-                  axisAlignment: -1.0,
+                  alignment: Alignment.topCenter,
                   child: SlideTransition(
                     position: _headerAnimation.headerSlide,
                     child: _buildHeader(),

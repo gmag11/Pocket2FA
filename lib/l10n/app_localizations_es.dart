@@ -579,4 +579,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get nothingToExport => 'Nada para exportar';
+
+  @override
+  String get sharedAccount => 'Compartida contigo';
 }

@@ -743,5 +743,9 @@
   },
   "nothingToExport": "Nada para exportar",
   "@nothingToExport": {
-    "description": "Mensaje mostrado al intentar exportar un registro vacío."  }
+    "description": "Mensaje mostrado al intentar exportar un registro vacío."  },
+  "sharedAccount": "Compartida contigo",
+  "@sharedAccount": {
+    "description": "Tooltip del icono mostrado junto al nombre de usuario de una cuenta compartida con el usuario."
+  }
 }

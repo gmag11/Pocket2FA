@@ -204,25 +204,32 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
                         children: [
                           // In manage mode: Checkbox + Avatar, in normal mode: only Avatar with padding
                           if (widget.isManageMode) ...[
-                            borderWrap(
-                              Padding(
-                                padding: const EdgeInsets.only(left: 8.0),
-                                child: Transform.scale(
-                                  scale: 0.8, // Make the checkbox smaller
-                                  child: Checkbox(
-                                    value: widget.isSelected,
-                                    onChanged: (_) =>
-                                        widget.onToggleSelection?.call(),
-                                    materialTapTargetSize:
-                                        MaterialTapTargetSize.shrinkWrap,
+                            if (!widget.item.isBorrowed) ...[
+                              borderWrap(
+                                Padding(
+                                  padding: const EdgeInsets.only(left: 8.0),
+                                  child: Transform.scale(
+                                    scale: 0.8, // Make the checkbox smaller
+                                    child: Checkbox(
+                                      value: widget.isSelected,
+                                      onChanged: (_) =>
+                                          widget.onToggleSelection?.call(),
+                                      materialTapTargetSize:
+                                          MaterialTapTargetSize.shrinkWrap,
+                                    ),
                                   ),
                                 ),
+                                padding: const EdgeInsets.all(2),
                               ),
-                              padding: const EdgeInsets.all(2),
-                            ),
-                            const SizedBox(width: 4),
+                              const SizedBox(width: 4),
+                            ],
                             borderWrap(
-                              AccountTileUi.buildServiceAvatar(widget.item, color),
+                              Padding(
+                                padding: EdgeInsets.only(
+                                    left: widget.item.isBorrowed ? 12.0 : 0.0),
+                                child: AccountTileUi.buildServiceAvatar(
+                                    widget.item, color),
+                              ),
                               padding: const EdgeInsets.all(2),
                             ),
                           ] else
@@ -253,17 +260,20 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
 
                           // In manage mode: edit buttons, in normal mode: OTP code
                           if (widget.isManageMode)
-                            Padding(
-                              padding: const EdgeInsets.only(right: 8.0),
-                              child: IconButton(
-                                icon: const Icon(Icons.edit,
-                                    color: Colors.blue, size: 18),
-                                onPressed: widget.onEdit,
-                                padding: const EdgeInsets.all(4),
-                                constraints:
-                                    const BoxConstraints(minWidth: 32, minHeight: 32),
-                              ),
-                            )
+                            widget.onEdit != null
+                                ? Padding(
+                                    padding:
+                                        const EdgeInsets.only(right: 8.0),
+                                    child: IconButton(
+                                      icon: const Icon(Icons.edit,
+                                          color: Colors.blue, size: 18),
+                                      onPressed: widget.onEdit,
+                                      padding: const EdgeInsets.all(4),
+                                      constraints: const BoxConstraints(
+                                          minWidth: 32, minHeight: 32),
+                                    ),
+                                  )
+                                : const SizedBox.shrink()
                           else
                             // OTP code (takes needed space, no clipping, right aligned)
                             borderWrap(
@@ -347,12 +357,25 @@ class _AccountTileTOTPState extends State<AccountTileTOTP>
                                 // add left padding so username is not flush with the tile edge
                                 // In manage mode, add more padding to align with the checkbox
                                 padding: EdgeInsets.only(
-                                    left: widget.isManageMode ? 56.0 : 12.0),
-                                child: Text(
-                                  widget.item.account,
-                                  style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
+                                    left: widget.isManageMode &&
+                                            !widget.item.isBorrowed
+                                        ? 56.0
+                                        : 12.0),
+                                child: Row(
+                                  children: [
+                                    AccountTileUi.buildSharedIndicator(
+                                        context, widget.item),
+                                    Flexible(
+                                      child: Text(
+                                        widget.item.account,
+                                        style: TextStyle(
+                                            fontSize: 14,
+                                            color: Colors.grey.shade600),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                               padding: const EdgeInsets.all(2),

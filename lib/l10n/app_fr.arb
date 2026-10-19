@@ -744,5 +744,9 @@
     "nothingToExport": "Rien à exporter",
     "@nothingToExport": {
         "description": "Message affiché lors d'une tentative d'exportation d'un journal vide."
+    },
+    "sharedAccount": "Partagé avec vous",
+    "@sharedAccount": {
+        "description": "Info-bulle de l'icône affichée à côté du nom d'utilisateur d'un compte partagé avec l'utilisateur."
     }
 }

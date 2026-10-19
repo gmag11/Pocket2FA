@@ -28,6 +28,11 @@ class HomeManageMode extends ChangeNotifier {
   }
 
   void toggleAccountSelection(int accountId) {
+    // Accounts shared with the user cannot be managed (the server authorizes
+    // deletion/update only for the owner).
+    for (final account in serverManager.currentItems) {
+      if (account.id == accountId && account.isBorrowed) return;
+    }
     if (_selectedAccountIds.contains(accountId)) {
       _selectedAccountIds.remove(accountId);
     } else {
@@ -39,11 +44,22 @@ class HomeManageMode extends ChangeNotifier {
   Future<bool> deleteSelectedAccounts(BuildContext context) async {
     if (_selectedAccountIds.isEmpty) return false;
     final l10n = AppLocalizations.of(context)!;
+
+    // Never delete an account shared with the user, even if it ended up in the
+    // selection through a stale UI state.
+    final deletableIds = _selectedAccountIds.where((id) {
+      for (final account in serverManager.currentItems) {
+        if (account.id == id) return !account.isBorrowed;
+      }
+      return true;
+    }).toSet();
+    if (deletableIds.isEmpty) return false;
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: Text(l10n.deleteAccountsTitle),
-        content: Text(l10n.deleteAccountsConfirm(_selectedAccountIds.length)),
+        content: Text(l10n.deleteAccountsConfirm(deletableIds.length)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -79,7 +95,7 @@ class HomeManageMode extends ChangeNotifier {
     final updatedAccounts = <AccountEntry>[];
     final toDeleteIds = <int>{};
     for (final acc in server.accounts) {
-      if (_selectedAccountIds.contains(acc.id)) {
+      if (deletableIds.contains(acc.id)) {
         toDeleteIds.add(acc.id);
         // Mark as deleted but keep in storage for now
         updatedAccounts.add(acc.copyWith(deleted: true, synchronized: false));

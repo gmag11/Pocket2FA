@@ -185,6 +185,8 @@ class _HomePageState extends State<HomePage>
   }
 
   Future<void> _editAccount(AccountEntry account) async {
+    // Borrowed accounts are read-only: never open the edit form for them.
+    if (account.isBorrowed) return;
     final result = await Navigator.of(context).push<AccountEntry>(
       MaterialPageRoute(
         builder: (context) {

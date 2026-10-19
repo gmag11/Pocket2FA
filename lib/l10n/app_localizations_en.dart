@@ -572,4 +572,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get nothingToExport => 'Nothing to export';
+
+  @override
+  String get sharedAccount => 'Shared with you';
 }

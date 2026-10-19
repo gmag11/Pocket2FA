@@ -184,11 +184,12 @@ class _AccountListState extends State<AccountList> {
                 settings: widget.settings,
                 isManageMode: widget.isManageMode,
                 isSelected: widget.selectedAccountIds.contains(item.id),
-                onToggleSelection: () =>
-                    widget.onToggleAccountSelection(item.id),
-                onEdit: widget.onEditAccount != null
-                    ? () => widget.onEditAccount!(item)
-                    : null,
+                onToggleSelection: item.isBorrowed
+                    ? null
+                    : () => widget.onToggleAccountSelection(item.id),
+                onEdit: item.isBorrowed || widget.onEditAccount == null
+                    ? null
+                    : () => widget.onEditAccount!(item),
               );
             } catch (e) {
               return ListTile(
@@ -231,11 +232,12 @@ class _AccountListState extends State<AccountList> {
                 settings: widget.settings,
                 isManageMode: widget.isManageMode,
                 isSelected: widget.selectedAccountIds.contains(item.id),
-                onToggleSelection: () =>
-                    widget.onToggleAccountSelection(item.id),
-                onEdit: widget.onEditAccount != null
-                    ? () => widget.onEditAccount!(item)
-                    : null,
+                onToggleSelection: item.isBorrowed
+                    ? null
+                    : () => widget.onToggleAccountSelection(item.id),
+                onEdit: item.isBorrowed || widget.onEditAccount == null
+                    ? null
+                    : () => widget.onEditAccount!(item),
               ),
             );
           } catch (e) {

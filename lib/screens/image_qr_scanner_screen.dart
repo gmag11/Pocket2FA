@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_zxing/flutter_zxing.dart';
-import 'package:image/image.dart' as img;
-import 'dart:io';
 import '../models/group_entry.dart';
 import '../models/account_entry.dart';
 import '../services/entry_creation_service.dart';
@@ -44,52 +42,18 @@ class _ImageQrScannerScreenState extends State<ImageQrScannerScreen> {
       _isProcessing = true;
     });
 
-    String? processedImagePath;
-
     try {
-      // Read and preprocess the image
-      final imageFile = File(image.path);
-      final imageBytes = await imageFile.readAsBytes();
-      final decodedImage = img.decodeImage(imageBytes);
-
-      if (decodedImage == null) {
-        throw Exception('Failed to decode image');
-      }
-
-      // Resize image if it's too large (max 1500px on longest side)
-      img.Image processedImage = decodedImage;
-      const maxSize = 1500;
-
-      if (decodedImage.width > maxSize || decodedImage.height > maxSize) {
-        if (decodedImage.width > decodedImage.height) {
-          processedImage = img.copyResize(decodedImage,
-              width: maxSize, interpolation: img.Interpolation.linear);
-        } else {
-          processedImage = img.copyResize(decodedImage,
-              height: maxSize, interpolation: img.Interpolation.linear);
-        }
-      }
-
-      // Increase contrast to help detection
-      processedImage =
-          img.adjustColor(processedImage, contrast: 1.3, brightness: 1.1);
-
-      // Save processed image to temp file
-      final tempDir = imageFile.parent.path;
-      processedImagePath = '$tempDir/processed_qr.jpg';
-      final processedFile = File(processedImagePath);
-      await processedFile
-          .writeAsBytes(img.encodeJpg(processedImage, quality: 95));
-
-      // Decode QR code from processed image
+      // Decode the QR directly from the original file. The decoder already
+      // scans its own downscaled pyramid, so pre-shrinking the image here only
+      // loses the detail of small QR codes in large screenshots.
       final codeResult = await zx.readBarcodeImagePathString(
-          processedImagePath,
+          image.path,
           DecodeParams(
             tryHarder: true,
             tryInverted: true,
             tryRotate: true,
             tryDownscale: true,
-            maxSize: 3000, // preserve full preprocessed resolution
+            maxSize: 4000, // safety bound; common screenshots are untouched
           ));
 
       if (codeResult.isValid &&
@@ -120,16 +84,6 @@ class _ImageQrScannerScreenState extends State<ImageQrScannerScreen> {
             backgroundColor: Colors.red));
       }
     } finally {
-      // Clean up temporary file
-      if (processedImagePath != null) {
-        try {
-          final tempFile = File(processedImagePath);
-          if (await tempFile.exists()) {
-            await tempFile.delete();
-          }
-        } catch (_) {}
-      }
-
       if (mounted) {
         setState(() {
           _isProcessing = false;

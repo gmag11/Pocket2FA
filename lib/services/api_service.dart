@@ -554,9 +554,10 @@ class ApiService {
       'otp_type': entry.otpType ?? 'totp',
       if (entry.digits != null) 'digits': entry.digits,
       if (entry.algorithm != null) 'algorithm': entry.algorithm,
-      // For HOTP, send counter (we store it in period) and for TOTP send period
-      if (entry.otpType?.toLowerCase() == 'hotp' && entry.period != null)
-        'counter': entry.period
+      // For HOTP, send counter (stored in counter, with period as legacy
+      // fallback) and for TOTP send period.
+      if (entry.otpType?.toLowerCase() == 'hotp')
+        'counter': entry.counter ?? entry.period ?? 0
       else if (entry.period != null)
         'period': entry.period,
       'group_id': ?groupId,

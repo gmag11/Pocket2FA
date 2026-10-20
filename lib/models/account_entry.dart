@@ -152,12 +152,40 @@ class AccountEntry {
       digits: digits ?? this.digits,
       algorithm: algorithm ?? this.algorithm,
       period: period ?? this.period,
-      // counter: counter ?? this.counter,
+      counter: counter ?? this.counter,
       localIcon: localIcon ?? this.localIcon,
       synchronized: synchronized ?? this.synchronized,
       deleted: deleted ?? this.deleted,
       isBorrowed: isBorrowed ?? this.isBorrowed,
       sharedBy: sharedBy ?? this.sharedBy,
+    );
+  }
+
+  /// Merge a server record over this local entry.
+  ///
+  /// Server responses do not always include the secret or every OTP parameter
+  /// (the list endpoint only returns secrets with `withSecret=true`). Keep the
+  /// locally captured values when the server omits them so the account can
+  /// continue generating codes offline. The result is always synchronized.
+  AccountEntry mergeServerData(AccountEntry server) {
+    return AccountEntry(
+      id: server.id,
+      service: server.service.isNotEmpty ? server.service : service,
+      account: server.account.isNotEmpty ? server.account : account,
+      seed: server.seed.isNotEmpty ? server.seed : seed,
+      group: server.group.isNotEmpty ? server.group : group,
+      groupId: server.groupId ?? groupId,
+      otpType: server.otpType ?? otpType,
+      icon: server.icon ?? icon,
+      digits: server.digits ?? digits,
+      algorithm: server.algorithm ?? algorithm,
+      period: server.period ?? period,
+      counter: server.counter ?? counter,
+      localIcon: server.localIcon ?? localIcon,
+      synchronized: true,
+      deleted: server.deleted,
+      isBorrowed: server.isBorrowed,
+      sharedBy: server.sharedBy ?? sharedBy,
     );
   }
 }

@@ -81,6 +81,29 @@ class SyncService {
     return res;
   }
 
+  /// Upload only the locally created accounts that have not reached the
+  /// server yet. This performs no groups/accounts fetch, so it is safe to call
+  /// from a short retry loop and cannot overwrite cached server data.
+  ///
+  /// Returns the number of accounts the server accepted.
+  Future<int> uploadPendingAccounts(
+      ServerConnection server, SettingsStorage storage,
+      {CancelToken? cancelToken}) async {
+    try {
+      if (!storage.isUnlocked) return 0;
+    } on StateError catch (_) {
+      return 0;
+    }
+    try {
+      return await _uploadPendingAccounts(server, storage,
+          cancelToken: cancelToken);
+    } catch (e) {
+      LogService.instance.log('uploadPendingAccounts failed: $e',
+          name: 'SyncService');
+      return 0;
+    }
+  }
+
   Future<Map<String, dynamic>> forceSync(
       ServerConnection server, SettingsStorage storage,
       {CancelToken? cancelToken,
@@ -195,9 +218,59 @@ class SyncService {
       }
     }
 
+    // Keep locally created accounts that are still waiting for upload. A full
+    // fetch must not erase them when the create endpoint failed but the read
+    // endpoint worked (or when an upload is rejected by the server).
+    if (accountsFetched) {
+      try {
+        if (storage.isUnlocked) {
+          final rawStored = storage.box.get('servers');
+          if (rawStored != null) {
+            final storedList = (rawStored as List<dynamic>)
+                .map((e) => Map<dynamic, dynamic>.from(e))
+                .toList();
+            final storedIdx =
+                storedList.indexWhere((e) => e['id'] == server.id);
+            if (storedIdx != -1) {
+              final localServer =
+                  ServerConnection.fromMap(storedList[storedIdx]);
+              final fetchedIds = accounts.map((a) => a.id).toSet();
+              var added = 0;
+              for (final pending in localServer.accounts) {
+                if (pending.synchronized ||
+                    pending.deleted ||
+                    pending.id > 0 ||
+                    pending.isBorrowed) {
+                  continue;
+                }
+                if (fetchedIds.contains(pending.id) ||
+                    accounts.any((a) => a.id == pending.id)) {
+                  continue;
+                }
+                accounts.add(pending);
+                added++;
+              }
+              if (added > 0) {
+                LogService.instance.log(
+                    'kept $added pending local account(s) after fetching server list',
+                    name: 'SyncService');
+              }
+            }
+          }
+        }
+      } catch (e) {
+        LogService.instance.log('could not merge pending local accounts: $e',
+            name: 'SyncService');
+      }
+    }
+
     // If groups were fetched, map account.groupId -> group.name so UI can filter
-    if (groups.isNotEmpty && accounts.isNotEmpty) {
-      final Map<int, String> gidToName = {for (var g in groups) g.id: g.name};
+    final effectiveGroups =
+        groupsFetched ? groups : (server.groups ?? <GroupEntry>[]);
+    if (effectiveGroups.isNotEmpty && accounts.isNotEmpty) {
+      final Map<int, String> gidToName = {
+        for (var g in effectiveGroups) g.id: g.name
+      };
       for (var i = 0; i < accounts.length; i++) {
         final acc = accounts[i];
         if ((acc.group.isEmpty) && acc.groupId != null) {
@@ -261,11 +334,12 @@ class SyncService {
       }
     }
 
-    // If we couldn't fetch either groups or accounts, treat this as a network failure
-    // and avoid overwriting persisted cached data.
-    final anyFetched = groupsFetched || accountsFetched;
-    if (!anyFetched) {
-      LogService.instance.log('network failure - no groups or accounts fetched for ${server.id}', name: 'SyncService');
+    // If the account list could not be fetched, treat this as a network
+    // failure and avoid overwriting persisted cached data. A successful groups
+    // fetch alone must never replace the local accounts (including pending
+    // uploads) with an empty list.
+    if (!accountsFetched) {
+      LogService.instance.log('network failure - accounts not fetched for ${server.id}', name: 'SyncService');
       return {
         'skipped': false,
         'success': false,
@@ -273,7 +347,7 @@ class SyncService {
         'failed': failed,
         'skipped_count': skipped,
         'network_failed': true,
-        'message': 'Network failure - no data fetched'
+        'message': 'Network failure - no account data fetched'
       };
     }
 
@@ -284,7 +358,7 @@ class SyncService {
       url: server.url,
       apiKey: server.apiKey,
       accounts: accounts,
-      groups: groups,
+      groups: groupsFetched ? groups : server.groups,
       userId: server.userId,
       userName: server.userName,
       userEmail: server.userEmail,
@@ -341,55 +415,72 @@ class SyncService {
     };
   }
 
-  Future<void> _uploadPendingAccounts(
+  Future<int> _uploadPendingAccounts(
       ServerConnection server, SettingsStorage storage,
       {CancelToken? cancelToken}) async {
     // Ensure storage is available and unlocked
     try {
-      if (!storage.isUnlocked) return;
+      if (!storage.isUnlocked) return 0;
     } on StateError catch (_) {
-      return;
+      return 0;
     }
 
     final box = storage.box;
     final raw = box.get('servers');
-    if (raw == null) return;
+    if (raw == null) return 0;
     final list = (raw as List<dynamic>)
         .map((e) => Map<dynamic, dynamic>.from(e))
         .toList();
     final idx = list.indexWhere((e) => e['id'] == server.id);
-    if (idx == -1) return;
+    if (idx == -1) return 0;
 
-    // Deserialize server so we can inspect accounts
+    // Deserialize server so we can inspect accounts. Keep a mutable working
+    // list: persisting from the original list after every upload would
+    // overwrite earlier successes with the still-pending snapshot.
     final localServer = ServerConnection.fromMap(list[idx]);
-    final pending = <int>[];
-    for (var i = 0; i < localServer.accounts.length; i++) {
-      final a = localServer.accounts[i];
-      if (a.id == -1 && a.synchronized == false) pending.add(i);
-    }
-    LogService.instance.log('found ${pending.length} pending accounts for server=${server.id}', name: 'SyncService');
+    final workingAccounts = List<AccountEntry>.from(localServer.accounts);
+    final pending = workingAccounts
+        .where((a) =>
+            a.id <= 0 && !a.synchronized && !a.deleted && !a.isBorrowed)
+        .toList();
+    LogService.instance.log(
+        'found ${pending.length} pending accounts for server=${server.id}',
+        name: 'SyncService');
     if (pending.isEmpty) {
-      LogService.instance.log('no pending accounts to upload for server=${server.id}', name: 'SyncService');
-      return;
+      LogService.instance.log(
+          'no pending accounts to upload for server=${server.id}',
+          name: 'SyncService');
+      return 0;
     }
 
     // Configure ApiService for this server
     ApiService.instance.setServer(server);
 
-    for (final accIdx in pending) {
-      final acc = localServer.accounts[accIdx];
+    var uploaded = 0;
+    for (final pendingAccount in pending) {
+      final temporaryId = pendingAccount.id;
+      final currentIdx = workingAccounts.indexWhere(
+          (a) => a.id == temporaryId && !a.synchronized && !a.deleted);
+      if (currentIdx == -1) {
+        // The entry was deleted while the upload loop was running.
+        continue;
+      }
+      final acc = workingAccounts[currentIdx];
       LogService.instance.log(kDebugMode
-          ? '_uploadPendingAccounts: attempting upload for local acc index=$accIdx service=${acc.service} account=${acc.account} groupId=${acc.groupId}'
-          : '_uploadPendingAccounts: attempting upload for local acc index=$accIdx groupId=${acc.groupId}', name: 'SyncService');
+          ? '_uploadPendingAccounts: attempting upload for local id=$temporaryId service=${acc.service} account=${acc.account} groupId=${acc.groupId}'
+          : '_uploadPendingAccounts: attempting upload for local id=$temporaryId groupId=${acc.groupId}', name: 'SyncService');
       try {
         final resp = await ApiService.instance.createAccountFromEntry(acc,
             groupId: acc.groupId, cancelToken: cancelToken);
         // resp is expected to be a Map representing the created resource
         if (resp.containsKey('id')) {
-          LogService.instance.log('server created account id=${resp['id']} for local index=$accIdx', name: 'SyncService');
-          // Build a new AccountEntry from response and mark synchronized
-          var created = AccountEntry.fromMap(Map<dynamic, dynamic>.from(resp))
-              .copyWith(synchronized: true);
+          LogService.instance.log(
+              'server created account id=${resp['id']} for local id=$temporaryId',
+              name: 'SyncService');
+          // Keep the locally captured secret/OTP parameters when the create
+          // response omits them, then mark the entry synchronized.
+          var created = acc.mergeServerData(
+              AccountEntry.fromMap(Map<dynamic, dynamic>.from(resp)));
           // If server returned only group_id and not the group name, try to
           // populate the group name from the local server.groups so UI updates
           // immediately without requiring a subsequent full sync.
@@ -408,49 +499,48 @@ class SyncService {
               if (match != null) created = created.copyWith(group: match.name);
             }
           } catch (_) {}
-          // replace in localServer.accounts
-          final updatedAccounts = List<AccountEntry>.from(localServer.accounts);
-          updatedAccounts[accIdx] = created;
-          final updatedServer = ServerConnection(
-            id: localServer.id,
-            name: localServer.name,
-            url: localServer.url,
-            apiKey: localServer.apiKey,
-            accounts: updatedAccounts,
-            groups: localServer.groups,
-            userId: localServer.userId,
-            userName: localServer.userName,
-            userEmail: localServer.userEmail,
-            oauthProvider: localServer.oauthProvider,
-            authenticatedByProxy: localServer.authenticatedByProxy,
-            preferences: localServer.preferences,
-            isAdmin: localServer.isAdmin,
-            allowSelfSigned: localServer.allowSelfSigned,
-          );
-          // Persist updated server in list
-          list[idx] = updatedServer.toMap();
+
+          // Replace by the temporary id, not by the original index: another
+          // upload or a UI deletion may have changed the list meanwhile.
+          final replaceIdx = workingAccounts.indexWhere(
+              (a) => a.id == temporaryId && !a.synchronized);
+          if (replaceIdx == -1) {
+            LogService.instance.log(
+                'pending account id=$temporaryId disappeared before reconciliation; leaving server record for next sync',
+                name: 'SyncService');
+            continue;
+          }
+          workingAccounts[replaceIdx] = created;
+          list[idx] =
+              _copyServerWithAccounts(localServer, workingAccounts).toMap();
           await box.put('servers', list);
-          LogService.instance.log('persisted updated servers after uploading account index=$accIdx', name: 'SyncService');
-          // Update localServer reference for subsequent iterations
-          // (ServerConnection.accounts is final so replace localServer entirely)
-          // Recreate localServer from the updated map for safety
-          // local persisted data updated; continue to next pending account
+          uploaded++;
+          LogService.instance.log(
+              'persisted updated servers after uploading account local id=$temporaryId as server id=${created.id}',
+              name: 'SyncService');
         } else {
-          LogService.instance.log('server response missing id: $resp', name: 'SyncService');
+          LogService.instance.log('server response missing id: $resp',
+              name: 'SyncService');
         }
       } catch (e) {
         // If the exception is a DioException, try to log response data
         try {
           if (e is DioException) {
-            LogService.instance.log('DioException status=${e.response?.statusCode} data=${e.response?.data}', name: 'SyncService');
+            LogService.instance.log(
+                'DioException status=${e.response?.statusCode} data=${e.response?.data}',
+                name: 'SyncService');
           }
         } catch (_) {}
         LogService.instance.log(kDebugMode
-            ? '_uploadPendingAccounts: failed to create account ${acc.service}/${acc.account} (local index=$accIdx): $e'
-            : '_uploadPendingAccounts: failed to create account (local index=$accIdx): $e', name: 'SyncService');
+            ? '_uploadPendingAccounts: failed to create account ${acc.service}/${acc.account} (local id=$temporaryId): $e'
+            : '_uploadPendingAccounts: failed to create account (local id=$temporaryId): $e', name: 'SyncService');
         // continue with next pending account
       }
     }
+    LogService.instance.log(
+        'uploaded $uploaded of ${pending.length} pending account(s) for server=${server.id}',
+        name: 'SyncService');
+    return uploaded;
   }
 
   Future<void> _deletePendingAccounts(
@@ -474,12 +564,29 @@ class SyncService {
 
     // Deserialize server
     final localServer = ServerConnection.fromMap(list[idx]);
-    final pendingDelete = <AccountEntry>[];
-    for (final acc in localServer.accounts) {
-      if (!acc.synchronized && acc.deleted && !acc.isBorrowed) {
-        pendingDelete.add(acc);
-      }
+    final workingAccounts = List<AccountEntry>.from(localServer.accounts);
+
+    // A pending local-only entry never existed on the server. If it was marked
+    // deleted by an older build, drop the tombstone instead of retrying it
+    // forever.
+    final localOnlyTombstones = workingAccounts
+        .where((a) => a.deleted && !a.synchronized && a.id <= 0)
+        .toList();
+    if (localOnlyTombstones.isNotEmpty) {
+      workingAccounts.removeWhere(
+          (a) => a.deleted && !a.synchronized && a.id <= 0);
+      list[idx] =
+          _copyServerWithAccounts(localServer, workingAccounts).toMap();
+      await box.put('servers', list);
+      LogService.instance.log(
+          'purged ${localOnlyTombstones.length} local-only delete marker(s)',
+          name: 'SyncService');
     }
+
+    final pendingDelete = workingAccounts
+        .where((acc) =>
+            !acc.synchronized && acc.deleted && !acc.isBorrowed && acc.id > 0)
+        .toList();
     LogService.instance.log('found ${pendingDelete.length} pending deletes for server=${server.id}', name: 'SyncService');
     if (pendingDelete.isEmpty) return;
 
@@ -487,40 +594,20 @@ class SyncService {
     ApiService.instance.setServer(server);
 
     // Collect IDs for mass delete
-    final deleteIds = pendingDelete
-        .map((a) => a.id)
-        .where((id) => id > 0)
-        .toList(); // Only if has server ID
-    if (deleteIds.isNotEmpty) {
-      try {
-        await ApiService.instance.deleteAccounts(deleteIds);
-        // Success: remove from local accounts
-        final keptAccounts = localServer.accounts
-            .where((a) => !pendingDelete.contains(a))
-            .toList();
-        final updatedServer = ServerConnection(
-          id: localServer.id,
-          name: localServer.name,
-          url: localServer.url,
-          apiKey: localServer.apiKey,
-          accounts: keptAccounts,
-          groups: localServer.groups,
-          userId: localServer.userId,
-          userName: localServer.userName,
-          userEmail: localServer.userEmail,
-          oauthProvider: localServer.oauthProvider,
-          authenticatedByProxy: localServer.authenticatedByProxy,
-          preferences: localServer.preferences,
-          isAdmin: localServer.isAdmin,
-          allowSelfSigned: localServer.allowSelfSigned,
-        );
-        list[idx] = updatedServer.toMap();
-        await box.put('servers', list);
-        LogService.instance.log('removed ${deleteIds.length} pending deletes', name: 'SyncService');
-      } catch (e) {
-        // Silent fail: log, leave marked for next sync
-        LogService.instance.log('API delete failed (retry next sync): $e', name: 'SyncService');
-      }
+    final deleteIds = pendingDelete.map((a) => a.id).toList();
+    try {
+      await ApiService.instance.deleteAccounts(deleteIds);
+      // Success: remove from local accounts
+      workingAccounts.removeWhere((a) => deleteIds.contains(a.id));
+      list[idx] =
+          _copyServerWithAccounts(localServer, workingAccounts).toMap();
+      await box.put('servers', list);
+      LogService.instance.log('removed ${deleteIds.length} pending deletes',
+          name: 'SyncService');
+    } catch (e) {
+      // Silent fail: log, leave marked for next sync
+      LogService.instance.log('API delete failed (retry next sync): $e',
+          name: 'SyncService');
     }
   }
 
@@ -573,9 +660,10 @@ class SyncService {
         if (resp.containsKey('id')) {
           LogService.instance.log('server updated account id=${resp['id']} for local index=$accIdx', name: 'SyncService');
 
-          // Build a new AccountEntry from response and mark synchronized
-          var updated = AccountEntry.fromMap(Map<dynamic, dynamic>.from(resp))
-              .copyWith(synchronized: true);
+          // Build a new AccountEntry from response and mark synchronized,
+          // retaining local OTP material the response may omit.
+          var updated = acc.mergeServerData(
+              AccountEntry.fromMap(Map<dynamic, dynamic>.from(resp)));
           // Preserve any existing localIcon path so UI avatar remains stable
           // if the server response does not include a local path.
           try {
@@ -642,5 +730,25 @@ class SyncService {
         // continue with next pending account
       }
     }
+  }
+
+  ServerConnection _copyServerWithAccounts(
+      ServerConnection server, List<AccountEntry> accounts) {
+    return ServerConnection(
+      id: server.id,
+      name: server.name,
+      url: server.url,
+      apiKey: server.apiKey,
+      accounts: accounts,
+      groups: server.groups,
+      userId: server.userId,
+      userName: server.userName,
+      userEmail: server.userEmail,
+      oauthProvider: server.oauthProvider,
+      authenticatedByProxy: server.authenticatedByProxy,
+      preferences: server.preferences,
+      isAdmin: server.isAdmin,
+      allowSelfSigned: server.allowSelfSigned,
+    );
   }
 }

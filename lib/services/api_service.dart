@@ -559,7 +559,7 @@ class ApiService {
         'counter': entry.period
       else if (entry.period != null)
         'period': entry.period,
-      if (groupId != null) 'group_id': groupId,
+      'group_id': ?groupId,
     };
     // Remove nulls/empty
     payload.removeWhere((k, v) => v == null);

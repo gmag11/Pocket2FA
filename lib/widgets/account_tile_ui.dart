@@ -75,7 +75,7 @@ class AccountTileUi {
             radius: radius,
             backgroundImage: FileImage(file),
             backgroundColor: Colors.transparent,
-            onBackgroundImageError: (_, __) {},
+            onBackgroundImageError: (_, _) {},
           );
         } catch (_) {
           return fallbackAvatar();

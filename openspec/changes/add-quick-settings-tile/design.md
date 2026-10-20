@@ -105,5 +105,5 @@ Rollback: delete the service file and its manifest entry, the drawable and the s
 
 ## Open Questions
 
-1. **Landing behavior** — should the tile just open the app, or jump straight to the code list / focus the search field? Issue #19's reporter has been asked; the current requirements only cover the plain launch, and deep-linking would be a small follow-up delta (an intent extra read through the same channel).
-2. **Tile label wording** — short enough for the shade in all three languages (e.g. "Pocket2FA" vs "2FA codes"); to be decided while implementing, without changing the spec.
+1. **Landing behavior (open, gating)** — should the tile just open the app, or jump straight to the code list / focus the search field? The question was asked on issue #19 on 2026-10-17 (comment 6239106071) and the reporter had not answered as of 2026-10-20, so implementation is paused until that answer arrives. The current requirements only cover the plain launch, and deep-linking would be a small follow-up delta (an intent extra read through the same channel).
+2. **Tile label wording (decided)** — use the brand name "Pocket2FA" in all three shipped languages. It is 9 characters (short enough for the shade), needs no translation, and matches the wording already described on issue #19. No spec change required.

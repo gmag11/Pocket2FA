@@ -3,7 +3,7 @@
 ## 0. Decide scope with the reporter
 
 - [ ] 0.1 Ask on GitHub issue #19 what the reporter expects after tapping the tile (plain launch vs. straight to the code list) and record the answer in `design.md` Open Questions
-- [ ] 0.2 Confirm the tile label wording for the three shipped languages (must stay short enough not to be truncated in the shade)
+- [x] 0.2 Confirm the tile label wording for the three shipped languages (must stay short enough not to be truncated in the shade)
 
 ## 1. Native Quick Settings tile
 

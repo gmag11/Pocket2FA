@@ -580,4 +580,73 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sharedAccount => 'Shared with you';
+
+  @override
+  String get pinLock => 'PIN lock';
+
+  @override
+  String get pinLockDescription => 'Require a PIN to unlock the app.';
+
+  @override
+  String get pinSetTitle => 'Set PIN';
+
+  @override
+  String get pinChangeTitle => 'Change PIN';
+
+  @override
+  String get pinDisableTitle => 'Disable PIN lock';
+
+  @override
+  String get pinEnter => 'Enter your PIN';
+
+  @override
+  String get pinConfirm => 'Confirm PIN';
+
+  @override
+  String get pinCurrent => 'Current PIN';
+
+  @override
+  String get pinIncorrect => 'Incorrect PIN';
+
+  @override
+  String get pinMismatch => 'PINs do not match';
+
+  @override
+  String get pinInvalidLength => 'PIN must be 4 to 8 digits';
+
+  @override
+  String pinThrottled(int seconds) {
+    return 'Too many attempts. Try again in $seconds seconds.';
+  }
+
+  @override
+  String get pinForgotWarningTitle => 'Warning: forgotten PIN';
+
+  @override
+  String get pinForgotWarning =>
+      'If you forget your PIN and have no biometric unlock enabled, your local data cannot be recovered. There is no way to reset the PIN.';
+
+  @override
+  String get pinEnabled => 'PIN lock enabled';
+
+  @override
+  String get pinDisabled => 'PIN lock disabled';
+
+  @override
+  String get pinChanged => 'PIN changed';
+
+  @override
+  String get unlockWithBiometrics => 'Unlock with biometrics';
+
+  @override
+  String get usePin => 'Use PIN';
+
+  @override
+  String get useBiometrics => 'Use biometrics';
+
+  @override
+  String get continueLabel => 'Continue';
+
+  @override
+  String get verify => 'Verify';
 }

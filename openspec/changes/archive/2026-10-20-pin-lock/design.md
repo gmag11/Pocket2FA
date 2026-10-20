@@ -44,16 +44,16 @@ On enable, generate a cryptographically-random 16-byte salt, derive `hash = PBKD
 
 Add `lib/screens/pin_lock_screen.dart` with two states:
 
-- **Biometric-first** (default when biometric protection is also enabled): on showing the lock screen, promptly trigger the `local_auth` prompt and display a "Use PIN" action. If the biometric prompt fails or is cancelled, or the user taps "Use PIN", switch to the keypad state.
-- **Keypad**: dots for the stored PIN length, a 0–9 keypad with delete, error feedback on wrong entry, and automatic submit once the expected number of digits is entered.
+- **Biometric-first** (default when biometric protection is also enabled): on showing the lock screen, promptly trigger the `local_auth` prompt and display a "Use PIN" action. If the biometric prompt fails, is cancelled or throws a platform error (for example `auth_in_progress`), or the user taps "Use PIN", switch to the keypad state. A failed prompt must never leave the screen stuck in the biometric state.
+- **Keypad**: one dot per digit typed (never a hint of the stored PIN length), a 0–9 keypad with delete, error feedback on wrong entry, and an explicit "Unlock" action enabled once 4–8 digits have been entered. There is no auto-submit. On desktop the same keypad accepts hardware keyboard digits, Backspace and Enter.
 
 When only the PIN is enabled (no biometric), the lock screen opens directly in the keypad state.
 
-**Rationale:** mirrors how OS lock screens behave — try the fastest factor (biometrics) first, keep the deterministic one (PIN) one tap away. Starting the biometric prompt proactively means a user with working biometrics never needs to see the keypad, while a biometric failure never dead-ends. Auto-submit avoids an extra tap and matches common PIN UX.
+**Rationale:** mirrors how OS lock screens behave — try the fastest factor (biometrics) first, keep the deterministic one (PIN) one tap away. Starting the biometric prompt proactively means a user with working biometrics never needs to see the keypad, while a biometric failure never dead-ends. Showing only the digits typed (instead of the configured length) keeps the PIN length private from a bystander, and requiring an explicit confirmation avoids submitting a valid prefix of a longer PIN (for example, the first four digits of an eight-digit PIN).
 
 ### 4. PIN material lives in secure storage; no length selector
 
-All PIN material — `pin_hash`, `pin_salt`, `pin_iterations` and `pin_length` — is owned by `SettingsStorage` in secure storage, which is readable before the Hive box is unlocked (same as `biometric_protection_flag`). The PIN lock is "enabled" iff `pin_hash` is present (`hasPin()`), so no separate `pin_enabled` flag is required and a missing hash can never leave the app permanently locked. `pin_length` is the digit count of the PIN the user typed (4–8); it is used only to render the correct number of dots and to know when to auto-submit on the lock screen. `SettingsService` exposes these as read-only state (`pinEnabled`, `pinLength`) for the settings UI.
+All PIN material — `pin_hash`, `pin_salt`, `pin_iterations` and `pin_length` — is owned by `SettingsStorage` in secure storage, which is readable before the Hive box is unlocked (same as `biometric_protection_flag`). The PIN lock is "enabled" iff `pin_hash` is present (`hasPin()`), so no separate `pin_enabled` flag is required and a missing hash can never leave the app permanently locked. `pin_length` is the digit count of the PIN the user typed (4–8). It is retained as metadata but deliberately not used to render the lock screen, so the configured length is never disclosed before or during entry; unlocking is always confirmed explicitly. `SettingsService` exposes these as read-only state (`pinEnabled`, `pinLength`) for the settings UI.
 
 There is **no length selector**: the user simply types a PIN and its number of digits is the length. Setting or changing a PIN takes the typed value, validates it is 4–8 digits, and stores the derived material.
 

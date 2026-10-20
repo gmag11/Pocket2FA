@@ -583,4 +583,74 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get sharedAccount => 'Compartida contigo';
+
+  @override
+  String get pinLock => 'Bloqueo con PIN';
+
+  @override
+  String get pinLockDescription =>
+      'Solicita un PIN para desbloquear la aplicación.';
+
+  @override
+  String get pinSetTitle => 'Configurar PIN';
+
+  @override
+  String get pinChangeTitle => 'Cambiar PIN';
+
+  @override
+  String get pinDisableTitle => 'Desactivar bloqueo con PIN';
+
+  @override
+  String get pinEnter => 'Introduce tu PIN';
+
+  @override
+  String get pinConfirm => 'Confirmar PIN';
+
+  @override
+  String get pinCurrent => 'PIN actual';
+
+  @override
+  String get pinIncorrect => 'PIN incorrecto';
+
+  @override
+  String get pinMismatch => 'Los PIN no coinciden';
+
+  @override
+  String get pinInvalidLength => 'El PIN debe tener entre 4 y 8 dígitos';
+
+  @override
+  String pinThrottled(int seconds) {
+    return 'Demasiados intentos. Vuelve a intentarlo en $seconds segundos.';
+  }
+
+  @override
+  String get pinForgotWarningTitle => 'Aviso: PIN olvidado';
+
+  @override
+  String get pinForgotWarning =>
+      'Si olvidas tu PIN y no tienes activado el desbloqueo biométrico, no podrás recuperar tus datos locales. No hay forma de restablecer el PIN.';
+
+  @override
+  String get pinEnabled => 'Bloqueo con PIN activado';
+
+  @override
+  String get pinDisabled => 'Bloqueo con PIN desactivado';
+
+  @override
+  String get pinChanged => 'PIN cambiado';
+
+  @override
+  String get unlockWithBiometrics => 'Desbloquear con biometría';
+
+  @override
+  String get usePin => 'Usar PIN';
+
+  @override
+  String get useBiometrics => 'Usar biometría';
+
+  @override
+  String get continueLabel => 'Continuar';
+
+  @override
+  String get verify => 'Verificar';
 }

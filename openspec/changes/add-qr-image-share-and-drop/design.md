@@ -7,7 +7,8 @@ See `proposal.md` — Why. The current image path is:
 ```
 NewCodeScreen -> ImageQrScannerScreen -> ImagePicker -> zx.readBarcodeImagePathString(maxSize: 4000)
              -> EntryCreationService.parseOtpAuthUrl -> createEntryOnServer -> pop(AccountEntry)
-             -> NewCodeScreen -> HomePage -> HomeServerManager.updateAccount + sync
+             -> NewCodeScreen -> HomePage -> HomeServerManager.insertCreatedAccount
+             -> HomeSyncManager.ensurePendingUploads
 ```
 
 Relevant constraints in the current code:
@@ -15,9 +16,14 @@ Relevant constraints in the current code:
 - `lib/main.dart` renders `_Bootstrap` first and only builds `Pocket2FA`/`HomePage` after encrypted
   storage and desktop window geometry finish initializing, so a share can arrive before any Dart
   intake handler exists.
-- `HomePage` owns the selected server (`HomeServerManager`), updates the account list
-  (`updateAccount`) and triggers a background sync after a scan; the new-code FAB is only shown
-  when at least one server exists.
+- `HomePage` owns the selected server (`HomeServerManager`), inserts created accounts
+  (`insertCreatedAccount`) and drives their upload (`HomeSyncManager.ensurePendingUploads`); the
+  new-code FAB is only shown when at least one server exists.
+- Creation results are local-first: `createEntryOnServer` may return the local entry with a
+  non-positive id and `synchronized == false` when the upload fails. `insertCreatedAccount`
+  assigns a unique temporary id, persists the entry as pending and notifies listeners;
+  `updateAccount` only updates an existing account by server id and must not be used for newly
+  created entries.
 - `MainActivity` is a `FlutterFragmentActivity` with `launchMode="singleTop"` and
   `taskAffinity=""`, and already overrides `onActivityResult`.
 - Android receives shared content as a temporary `content://` URI; the grant ends with the
@@ -131,13 +137,18 @@ A new `IncomingImageProcessor` orchestrates one accepted file:
 2. Parse with `EntryCreationService.parseOtpAuthUrl` (passing the context so the existing parse
    error message is shown once).
 3. Upload with `EntryCreationService.createEntryOnServer` when a server is configured, exactly as
-   `ImageQrScannerScreen` does.
-4. Return a typed outcome: `success(AccountEntry)`, `noQr`, `invalidQr`, `unreadable`, or
-   `serverMissing`.
+   `ImageQrScannerScreen` does. If the upload fails, that method returns the local entry with
+   `synchronized == false`, so the account continues through the offline-first pending-upload path
+   instead of being lost.
+4. Return a typed outcome: `success(AccountEntry)` (server entry or pending local entry), `noQr`,
+   `invalidQr`, `unreadable`, or `serverMissing`.
 
 `HomePage` owns the UI response: a non-dismissible progress dialog while processing, the existing
-`accountUpdated` confirmation on success, `HomeServerManager.updateAccount`, a background sync,
-and one localized message per failure. `invalidQr` does not add a second snackbar because
+`accountUpdated` confirmation on success, `HomeServerManager.insertCreatedAccount`, a call to
+`HomeSyncManager.ensurePendingUploads()` so an entry created while the server is unreachable is
+uploaded by the existing retry loop, and one localized message per failure. Relying on the
+offline-first insert/retry path instead of a forced full sync keeps the pending badge correct and
+avoids uploading the same account twice. `invalidQr` does not add a second snackbar because
 `EntryCreationService` already reported it; this preserves existing behavior while avoiding
 duplicate messages.
 
@@ -195,6 +206,10 @@ Reuse `noQrInImage`, `errorParsingQr`, and `accountUpdated`. Regenerate localiza
 - **Share arrives while a form or dialog is open** → Warm-start shares pop to the accounts route
   before processing, so the result is never shown behind another screen. The open form is
   abandoned; this is consistent with the user explicitly choosing to share into the app.
+- **Share or drop while the server is unreachable** → The account is inserted locally with a
+  temporary id and retried by the offline-first upload manager, so intake never discards a valid
+  entry. The processing flag and the manager's in-flight guard keep the account from being
+  uploaded twice.
 - **Share arrives while locked** → No account is created until unlock; the pending descriptor is
   held in memory and the staging file is deleted after processing. A process death discards the
   pending image and the startup cleanup removes the file.

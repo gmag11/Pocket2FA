@@ -73,19 +73,31 @@ rejected with a message. No account SHALL be created from a rejected intake.
 ### Requirement: Incoming image processing
 
 For an accepted image, the app SHALL scan for a QR code and, when the content is a valid OTP URI,
-create the entry, upload it when a server is configured, add it to the current server's account
-list, and confirm the addition. While the image is being scanned, the app SHALL indicate that
-processing is in progress.
+create the entry, add it to the current server's account list, upload it when a server is
+configured and reachable, and confirm the addition. When the upload fails, the entry SHALL remain
+in the account list as a pending upload and SHALL be uploaded automatically once the server is
+reachable. While the image is being scanned and uploaded, the app SHALL indicate that processing
+is in progress.
 
 #### Scenario: Valid OTP QR from a share
 
-- **WHEN** a shared image contains a valid `otpauth://` QR and a server is configured
+- **WHEN** a shared image contains a valid `otpauth://` QR and the configured server is reachable
 - **THEN** the entry is created and uploaded, appears in the current account list, and the usual confirmation is shown
 
 #### Scenario: Valid OTP QR from a drop
 
-- **WHEN** a dropped image contains a valid `otpauth://` QR and a server is configured
+- **WHEN** a dropped image contains a valid `otpauth://` QR and the configured server is reachable
 - **THEN** the entry is created and uploaded, appears in the current account list, and the usual confirmation is shown
+
+#### Scenario: Valid OTP QR while the server is unreachable
+
+- **WHEN** an accepted image contains a valid `otpauth://` QR but the configured server cannot be reached
+- **THEN** the entry is added to the current account list as a pending upload, remains usable, and is uploaded automatically once the server is reachable
+
+#### Scenario: A pending intake is uploaded once
+
+- **WHEN** an entry created from a shared or dropped image is pending upload and the server becomes reachable
+- **THEN** exactly one server account is created for that entry and the pending badge disappears
 
 #### Scenario: Processing indicator
 

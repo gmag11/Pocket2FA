@@ -22,7 +22,9 @@ desktop, while reusing the existing full-resolution QR pipeline and account-crea
   reports that only one image is supported. Nothing is created.
 - **Automatic processing:** a single accepted image is scanned with the same ZXing pipeline and
   resolution bounds as gallery scanning. A valid `otpauth://` QR is created and uploaded through
-  the existing flow; the account list is updated and the usual confirmation is shown.
+  the existing flow; the account list is updated and the usual confirmation is shown. If the
+  server is unreachable, the account is still added locally as a pending upload, exactly like any
+  other creation, and is uploaded automatically when the server returns.
 - **Clear failure outcomes:** non-image content, oversized files, unreadable images, images with
   no QR, and non-OTP QR content each produce a localized message and no account.
 - **Server and lock safety:** the image is not processed while encrypted storage is locked; it is

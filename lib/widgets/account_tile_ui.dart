@@ -75,7 +75,7 @@ class AccountTileUi {
             radius: radius,
             backgroundImage: FileImage(file),
             backgroundColor: Colors.transparent,
-            onBackgroundImageError: (_, __) {},
+            onBackgroundImageError: (_, _) {},
           );
         } catch (_) {
           return fallbackAvatar();
@@ -113,6 +113,23 @@ class AccountTileUi {
         style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
+      ),
+    );
+  }
+
+  /// Builds the indicator shown before the username of an account shared with
+  /// the authenticated user. Returns an empty box for owned accounts.
+  static Widget buildSharedIndicator(BuildContext context, AccountEntry item) {
+    if (!item.isBorrowed) return const SizedBox.shrink();
+    return Tooltip(
+      message: AppLocalizations.of(context)!.sharedAccount,
+      child: Padding(
+        padding: const EdgeInsets.only(right: 4.0),
+        child: Icon(
+          Icons.people_outline,
+          size: 14,
+          color: Colors.grey.shade600,
+        ),
       ),
     );
   }

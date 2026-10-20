@@ -118,10 +118,10 @@ class _LogScreenState extends State<LogScreen> {
     }
 
     if (context.mounted) {
-      await Share.shareXFiles(
-        [XFile(file.path, mimeType: 'text/plain')],
+      await SharePlus.instance.share(ShareParams(
+        files: [XFile(file.path, mimeType: 'text/plain')],
         subject: 'Pocket2FA Diagnostic Log',
-      );
+      ));
     }
     // Delete the temp file after share UI is dismissed
     try {
@@ -221,7 +221,7 @@ class _LogScreenState extends State<LogScreen> {
       ),
       body: ValueListenableBuilder<int>(
         valueListenable: _logService.entryCount,
-        builder: (context, _, __) {
+        builder: (context, _, _) {
           final entries = _filteredEntries;
           if (entries.isEmpty) {
             return Center(
@@ -240,7 +240,7 @@ class _LogScreenState extends State<LogScreen> {
             controller: _scrollController,
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             itemCount: entries.length,
-            separatorBuilder: (_, __) => const Divider(height: 1),
+            separatorBuilder: (_, _) => const Divider(height: 1),
             itemBuilder: (context, index) {
               final entry = entries[index];
               return _LogEntryTile(

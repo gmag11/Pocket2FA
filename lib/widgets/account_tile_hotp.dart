@@ -165,22 +165,30 @@ class _AccountTileHOTPState extends State<AccountTileHOTP> {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    // Checkbox for selection
-                    Padding(
-                      padding: const EdgeInsets.only(left: 8.0),
-                      child: Transform.scale(
-                        scale: 0.8, // Make the checkbox smaller
-                        child: Checkbox(
-                          value: widget.isSelected,
-                          onChanged: (_) => widget.onToggleSelection?.call(),
-                          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    // Checkbox for selection (owned accounts only)
+                    if (!widget.item.isBorrowed) ...[
+                      Padding(
+                        padding: const EdgeInsets.only(left: 8.0),
+                        child: Transform.scale(
+                          scale: 0.8, // Make the checkbox smaller
+                          child: Checkbox(
+                            value: widget.isSelected,
+                            onChanged: (_) => widget.onToggleSelection?.call(),
+                            materialTapTargetSize:
+                                MaterialTapTargetSize.shrinkWrap,
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 4),
+                      const SizedBox(width: 4),
+                    ],
 
                     // Avatar
-                    AccountTileUi.buildServiceAvatar(widget.item, color),
+                    Padding(
+                      padding: EdgeInsets.only(
+                          left: widget.item.isBorrowed ? 12.0 : 0.0),
+                      child:
+                          AccountTileUi.buildServiceAvatar(widget.item, color),
+                    ),
                     const SizedBox(width: 8),
 
                     // Service name - expandible
@@ -195,17 +203,18 @@ class _AccountTileHOTPState extends State<AccountTileHOTP> {
                     ),
 
                     // Edit button
-                    Padding(
-                      padding: const EdgeInsets.only(right: 8.0),
-                      child: IconButton(
-                        icon:
-                            const Icon(Icons.edit, color: Colors.blue, size: 18),
-                        onPressed: widget.onEdit,
-                        padding: const EdgeInsets.all(4),
-                        constraints:
-                            const BoxConstraints(minWidth: 32, minHeight: 32),
+                    if (widget.onEdit != null)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8.0),
+                        child: IconButton(
+                          icon: const Icon(Icons.edit,
+                              color: Colors.blue, size: 18),
+                          onPressed: widget.onEdit,
+                          padding: const EdgeInsets.all(4),
+                          constraints: const BoxConstraints(
+                              minWidth: 32, minHeight: 32),
+                        ),
                       ),
-                    ),
                   ],
                 ),
 
@@ -218,14 +227,23 @@ class _AccountTileHOTPState extends State<AccountTileHOTP> {
                   children: [
                     Expanded(
                       child: Padding(
-                        padding: const EdgeInsets.only(
-                            left: 56.0), // align under service like TOTP
-                        child: Text(
-                          widget.item.account,
-                          style: TextStyle(
-                              fontSize: 14, color: Colors.grey.shade600),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                        padding: EdgeInsets.only(
+                            left: widget.item.isBorrowed ? 12.0 : 56.0),
+                        child: Row(
+                          children: [
+                            AccountTileUi.buildSharedIndicator(
+                                context, widget.item),
+                            Flexible(
+                              child: Text(
+                                widget.item.account,
+                                style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey.shade600),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
@@ -296,12 +314,21 @@ class _AccountTileHOTPState extends State<AccountTileHOTP> {
                           // Second row: Account username
                           Padding(
                             padding: const EdgeInsets.only(left: 12.0),
-                            child: Text(
-                              widget.item.account,
-                              style: TextStyle(
-                                  fontSize: 14, color: Colors.grey.shade600),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                            child: Row(
+                              children: [
+                                AccountTileUi.buildSharedIndicator(
+                                    context, widget.item),
+                                Flexible(
+                                  child: Text(
+                                    widget.item.account,
+                                    style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.grey.shade600),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],

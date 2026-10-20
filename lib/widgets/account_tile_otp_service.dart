@@ -16,6 +16,7 @@ class AccountTileOtpService {
   Timer? _hotpTimer;
   String? _hotpCode;
   int? _hotpCounter;
+  bool _disposed = false;
 
   AccountTileOtpService({
     required this.account,
@@ -38,8 +39,19 @@ class AccountTileOtpService {
 
   /// Cancels all timers
   void dispose() {
+    _disposed = true;
     _timer?.cancel();
     _hotpTimer?.cancel();
+  }
+
+  /// Whether this account's code must be obtained from the server because its
+  /// secret is not available locally (accounts shared with the user by another
+  /// user of the same instance). HOTP is excluded: it already uses the manual
+  /// server-backed flow in [requestHotp].
+  bool get _requiresServerCode {
+    final type = (account.otpType ?? 'totp').toLowerCase();
+    if (type == 'hotp') return false;
+    return account.isBorrowed || account.seed.trim().isEmpty;
   }
 
   /// Refreshes OTP codes and schedules the next refresh
@@ -52,6 +64,13 @@ class AccountTileOtpService {
     // Cancel any pending timer so we only have one scheduled refresh at a time.
     _timer?.cancel();
     _timer = null;
+
+    // Accounts shared with the user have no local secret: fetching the code
+    // from the server is the only way to show the correct value.
+    if (_requiresServerCode) {
+      await _refreshFromServer();
+      return;
+    }
 
     if (type == 'steamtotp') {
       // Generate Steam TOTP locally (no network). Use the same generateOtp
@@ -119,6 +138,106 @@ class AccountTileOtpService {
         refreshCodes();
       });
     }
+  }
+
+  /// Fetches the current (and next) code from the server for an account whose
+  /// secret is not available locally, then schedules the next fetch aligned to
+  /// the server-reported period.
+  Future<void> _refreshFromServer() async {
+    if (_disposed) return;
+
+    // Without a valid server id we cannot ask the server for a code. Never
+    // fall back to local generation: the seed is empty and would produce a
+    // wrong code shared by every account.
+    if (account.id <= 0) {
+      _setOffline();
+      _scheduleRetry();
+      return;
+    }
+
+    try {
+      final resp = await ApiService.instance.fetchAccountOtp(account.id);
+      if (_disposed) return;
+
+      final pwd = resp['password']?.toString() ?? '';
+      if (pwd.isEmpty) {
+        _setOffline();
+        _scheduleRetry();
+        return;
+      }
+
+      final next = resp['next_password']?.toString();
+      currentCode = pwd;
+      nextCode = (next != null && next.isNotEmpty) ? next : '------';
+      refreshUi();
+
+      _scheduleServerRefresh(_periodFromResponse(resp), resp['generated_at']);
+      startAnimationCallback?.call();
+    } catch (_) {
+      if (_disposed) return;
+      _setOffline();
+      _scheduleRetry();
+    }
+  }
+
+  int _periodFromResponse(Map<String, dynamic> resp) {
+    final fromServer = resp['period'];
+    if (fromServer is int && fromServer > 0) return fromServer;
+    final local = account.period;
+    if (local != null && local > 0) return local;
+    return 30;
+  }
+
+  void _setOffline() {
+    // Sentinel understood by the tile UI and copy handlers; deliberately not a
+    // computable code.
+    currentCode = 'offline';
+    nextCode = '';
+    refreshUi();
+  }
+
+  void _scheduleServerRefresh(int periodSec, Object? generatedAt) {
+    if (_disposed) return;
+    final periodMs = periodSec * 1000;
+
+    // Fallback when the server does not report a generation time: align with
+    // the client's epoch, like the local TOTP path does.
+    var delayMs =
+        periodMs - (DateTime.now().millisecondsSinceEpoch % periodMs);
+
+    // 2FAuth sets `generated_at` to the instant the code was generated, not to
+    // the start of its period. The code stops being valid at the next multiple
+    // of the period on the server timeline, which can be much less than a full
+    // period away. Scheduling `generated_at + period` (a full period) would
+    // preserve the phase at which the code was first fetched, leaving the tile
+    // one code behind until that same phase in the next period.
+    final generatedAtMs = _epochMs(generatedAt);
+    if (generatedAtMs != null) {
+      final untilBoundaryMs = periodMs - (generatedAtMs % periodMs);
+      if (untilBoundaryMs > 0 && untilBoundaryMs <= periodMs) {
+        delayMs = untilBoundaryMs;
+      }
+    }
+
+    // Small epsilon so the server has advanced past the boundary.
+    _timer = Timer(Duration(milliseconds: delayMs + 250), () {
+      if (!_disposed) refreshCodes();
+    });
+  }
+
+  /// Normalises a server timestamp to milliseconds since epoch. The API
+  /// documents seconds; milliseconds are accepted defensively.
+  int? _epochMs(Object? timestamp) {
+    final raw = timestamp is int ? timestamp : int.tryParse('$timestamp');
+    if (raw == null || raw <= 0) return null;
+    return raw > 100000000000 ? raw : raw * 1000;
+  }
+
+  void _scheduleRetry() {
+    if (_disposed) return;
+    _timer = Timer(const Duration(seconds: 30), () {
+      if (!_disposed) refreshCodes();
+    });
   }
 
   /// Requests a HOTP code from the server

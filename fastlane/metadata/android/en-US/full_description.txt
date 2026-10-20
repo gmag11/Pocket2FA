@@ -5,6 +5,7 @@ Pocket2FA is a mobile companion for the <a href="https://github.com/Bubka/2FAuth
 <li>Generates TOTP and Steam OTP codes locally — secrets never leave your device</li>
 <li>Encrypted storage using platform security (Android Keystore)</li>
 <li>Optional biometric authentication (fingerprint / face recognition)</li>
+<li>Optional PIN lock (4 to 8 digits)</li>
 <li>Real-time code refresh with countdown timer</li>
 <li>Privacy mode: hide codes by default, reveal with long-press</li>
 <li>One-tap copy to clipboard</li>
@@ -12,6 +13,7 @@ Pocket2FA is a mobile companion for the <a href="https://github.com/Bubka/2FAuth
 <li>Service icon support</li>
 <li>QR code scanning (camera or gallery image)</li>
 <li>Multiple 2FAuth server support</li>
+<li>Shared 2FAuth accounts are clearly marked and shown as read-only</li>
 </ul>
 
 <b>Requirements</b>

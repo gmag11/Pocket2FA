@@ -24,8 +24,8 @@ scanning both more reliable and no slower.
   screenshots.
 - Remove the intermediate pipeline that only exists because of the resize: the unconditional
   contrast/brightness adjustment, the JPEG re-encode, and the temporary `processed_qr.jpg`.
-- Let the plugin scan the original file (`maxSize: 0`), avoiding its nearest-neighbour resize and
-  the second decode.
+- Let the plugin scan the original file with a high safety bound (`maxSize: 4000`), avoiding the
+  fixed 1500 px downscale, the JPEG re-encode, and the second decode.
 - Keep the existing decoder options (`tryHarder`, `tryRotate`, `tryInverted`, `tryDownscale`) and
   the existing success/error handling (parse `otpauth://`, upload, snackbars).
 - Image scanning must behave like camera scanning for the same QR content: no resolution-based

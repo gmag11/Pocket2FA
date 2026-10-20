@@ -7,6 +7,7 @@ import 'package:pocket2fa/screens/new_code_screen.dart';
 import '../l10n/app_localizations.dart';
 import '../models/account_entry.dart';
 import '../services/settings_service.dart';
+import '../services/settings_storage.dart';
 import '../widgets/about_dialog.dart';
 import 'account_list.dart';
 import 'accounts_screen.dart';
@@ -185,6 +186,8 @@ class _HomePageState extends State<HomePage>
   }
 
   Future<void> _editAccount(AccountEntry account) async {
+    // Borrowed accounts are read-only: never open the edit form for them.
+    if (account.isBorrowed) return;
     final result = await Navigator.of(context).push<AccountEntry>(
       MaterialPageRoute(
         builder: (context) {
@@ -406,11 +409,31 @@ class _HomePageState extends State<HomePage>
   Widget build(BuildContext context) {
     final storage = widget.settings.storage;
 
-    // If storage exists but is locked (biometric required and not yet satisfied),
-    // show a minimal screen with a single centered 'Retry' button.
-    // The AppBar is kept so the user can still navigate to Settings (to disable
-    // biometric protection) or to the Debug Log.
+    // If storage exists but is locked, show a screen that reflects the real
+    // cause: a pending biometric prompt, unavailable biometrics, or a failure
+    // to read the platform secure storage (e.g. a broken keyring). Retry
+    // re-runs the storage read, so a recoverable failure is not a dead end.
+    // The AppBar is kept so the user can still navigate to Settings or to the
+    // Debug Log.
     if (storage != null && !storage.isUnlocked) {
+      final reason = classifyStorageLock(
+        hasStorageError: storage.hasStorageError,
+        isBiometricLocked: storage.isBiometricLocked,
+        biometricsSupported: widget.settings.biometricsSupported,
+      );
+      final String message;
+      final String? detail;
+      switch (reason) {
+        case StorageLockReason.storageFailure:
+          message = l10n.storageUnlockFailed;
+          detail = storage.storageError;
+        case StorageLockReason.biometricUnavailable:
+          message = l10n.biometricsNotAvailable;
+          detail = null;
+        case StorageLockReason.biometricPrompt:
+          message = l10n.biometricAuthFailed;
+          detail = null;
+      }
       return Scaffold(
         appBar: AppBar(
           title: Text(l10n.appTitle),
@@ -441,24 +464,46 @@ class _HomePageState extends State<HomePage>
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24.0),
                   child: Text(
-                    l10n.biometricAuthFailed,
+                    message,
                     textAlign: TextAlign.center,
                     style: const TextStyle(fontSize: 16, color: Colors.red),
                   ),
                 ),
+                if (detail != null) ...[
+                  const SizedBox(height: 8),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                    child: SelectableText(
+                      detail,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: () async {
                     final messenger = ScaffoldMessenger.of(context);
-                    // capture localized message before await to avoid context-after-async lint
-                    final authFailedMsg = l10n.authenticationFailed;
+                    // capture localized messages before await to avoid context-after-async lint
+                    final failedMsg = l10n.authenticationFailed;
+                    final storageFailedMsg = l10n.storageUnlockFailed;
                     final ok = await storage.attemptUnlock();
                     if (ok) {
                       await widget.settings.reloadFromStorage();
                       await _serverManager.loadServers();
+                      if (mounted) setState(() {});
                     } else {
-                      messenger
-                          .showSnackBar(SnackBar(content: Text(authFailedMsg)));
+                      // Rebuild so the message reflects the updated state (e.g.
+                      // a newly recorded storage error).
+                      if (mounted) setState(() {});
+                      messenger.showSnackBar(SnackBar(
+                        content: Text(storage.hasStorageError
+                            ? storageFailedMsg
+                            : failedMsg),
+                      ));
                     }
                   },
                   child: Text(l10n.retry),
@@ -479,7 +524,7 @@ class _HomePageState extends State<HomePage>
                 // Animated header
                 SizeTransition(
                   sizeFactor: _headerAnimation.headerSizeFactor,
-                  axisAlignment: -1.0,
+                  alignment: Alignment.topCenter,
                   child: SlideTransition(
                     position: _headerAnimation.headerSlide,
                     child: _buildHeader(),
@@ -656,7 +701,7 @@ class _HomePageState extends State<HomePage>
 
   void _showAboutDialog() {
     // NOTE: appVersion is kept in sync manually with pubspec.yaml's version: field.
-    const appVersion = '0.9.18';
+    const appVersion = '0.10.0';
 
     showDialog<void>(
       context: context,

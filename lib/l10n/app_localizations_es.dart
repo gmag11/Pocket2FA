@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -423,6 +424,10 @@ class AppLocalizationsEs extends AppLocalizations {
       'La autenticación biométrica falló o se canceló. Por favor reintenta para desbloquear tus datos locales.';
 
   @override
+  String get storageUnlockFailed =>
+      'No se pudo leer el almacenamiento seguro. El llavero del dispositivo (por ejemplo, GNOME Keyring en Linux) devolvió un error.';
+
+  @override
   String get retry => 'Reintentar';
 
   @override
@@ -575,4 +580,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get nothingToExport => 'Nada para exportar';
+
+  @override
+  String get sharedAccount => 'Compartida contigo';
 }

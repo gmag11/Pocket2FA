@@ -536,6 +536,10 @@
   "@biometricAuthFailed": {
     "description": "Shown when biometric unlock fails and user must retry."
   },
+  "storageUnlockFailed": "Could not read the secure storage. Your device's keyring (for example GNOME Keyring on Linux) returned an error.",
+  "@storageUnlockFailed": {
+    "description": "Shown when the platform secure storage (keyring) cannot be read."
+  },
   "retry": "Retry",
   "@retry": {
     "description": "Label for retrying biometric authentication."
@@ -741,5 +745,9 @@
   "nothingToExport": "Nothing to export",
   "@nothingToExport": {
     "description": "Snackbar message shown when trying to export an empty log."
+  },
+  "sharedAccount": "Shared with you",
+  "@sharedAccount": {
+    "description": "Tooltip for the icon shown next to the username of an account shared with the user."
   }
 }

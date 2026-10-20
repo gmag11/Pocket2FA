@@ -175,7 +175,10 @@ class SyncService {
                   ServerConnection.fromMap(storedList[storedIdx]);
               final pendingDeleteIds = localServer.accounts
                   .where((a) =>
-                      a.deleted == true && a.synchronized == false && a.id > 0)
+                      a.deleted == true &&
+                      a.synchronized == false &&
+                      a.id > 0 &&
+                      !a.isBorrowed)
                   .map((a) => a.id)
                   .toSet();
               if (pendingDeleteIds.isNotEmpty) {
@@ -473,7 +476,7 @@ class SyncService {
     final localServer = ServerConnection.fromMap(list[idx]);
     final pendingDelete = <AccountEntry>[];
     for (final acc in localServer.accounts) {
-      if (!acc.synchronized && acc.deleted) {
+      if (!acc.synchronized && acc.deleted && !acc.isBorrowed) {
         pendingDelete.add(acc);
       }
     }

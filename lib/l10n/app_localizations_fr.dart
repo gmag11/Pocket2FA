@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -424,6 +425,10 @@ class AppLocalizationsFr extends AppLocalizations {
       'L\'authentification biométrique a échoué ou a été annulée. Veuillez réessayer pour déverrouiller vos données locales.';
 
   @override
+  String get storageUnlockFailed =>
+      'Impossible de lire le stockage sécurisé. Le trousseau de l\'appareil (par exemple GNOME Keyring sous Linux) a renvoyé une erreur.';
+
+  @override
   String get retry => 'Réessayer';
 
   @override
@@ -577,4 +582,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get nothingToExport => 'Rien à exporter';
+
+  @override
+  String get sharedAccount => 'Partagé avec vous';
 }

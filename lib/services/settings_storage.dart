@@ -9,15 +9,44 @@ import 'package:path_provider/path_provider.dart';
 
 import 'log_service.dart';
 
+/// Why the local storage is locked. The UI uses this to show an honest message
+/// instead of always blaming biometric authentication (GitHub issue #20).
+enum StorageLockReason {
+  /// Biometric protection is enabled and supported: a prompt is pending.
+  biometricPrompt,
+
+  /// Biometric protection is enabled but this platform has no biometrics.
+  biometricUnavailable,
+
+  /// The platform secure storage could not be read (e.g. a keyring failure).
+  storageFailure,
+}
+
+/// Classifies the locked-storage state from the flags reported by
+/// [SettingsStorage].
+///
+/// A storage failure always wins: it is the one reason that is *not* biometric,
+/// and misreporting it as a biometric failure is exactly the bug this guards
+/// against.
+StorageLockReason classifyStorageLock({
+  required bool hasStorageError,
+  required bool isBiometricLocked,
+  required bool biometricsSupported,
+}) {
+  if (hasStorageError) return StorageLockReason.storageFailure;
+  if (isBiometricLocked && !biometricsSupported) {
+    return StorageLockReason.biometricUnavailable;
+  }
+  return StorageLockReason.biometricPrompt;
+}
+
 /// Simple storage wrapper that initialises Hive and provides an encrypted box
 /// using a key stored in the platform secure storage (keystore/keychain).
 class SettingsStorage {
   static const _hiveBox = 'app_settings_box';
   static const _keyName = 'hive_master_key';
 
-  AndroidOptions _getAndroidOptions() => const AndroidOptions(
-        encryptedSharedPreferences: true,
-      );
+  AndroidOptions _getAndroidOptions() => const AndroidOptions();
 
   static const _biometricFlagKey = 'biometric_protection_flag';
 
@@ -28,12 +57,18 @@ class SettingsStorage {
 
   /// Check whether the device supports biometric or credential-based auth.
   /// Returns true if either biometrics or device credentials are available.
-  Future<bool> supportsBiometrics() async {
+  ///
+  /// On platforms without a biometric implementation (e.g. Linux) the plugin
+  /// channel is missing and throws a [MissingPluginException]; that is reported
+  /// as "not supported" rather than being treated as a storage failure.
+  Future<bool> supportsBiometrics() => _biometricsAvailable();
+
+  Future<bool> _biometricsAvailable() async {
     try {
       return await _localAuth.canCheckBiometrics ||
           await _localAuth.isDeviceSupported();
     } catch (e) {
-      debugPrint('supportsBiometrics check failed: $e');
+      debugPrint('SettingsStorage: biometric support check failed: $e');
       return false;
     }
   }
@@ -57,14 +92,23 @@ class SettingsStorage {
       await Hive.initFlutter();
     }
     // Behaviour: if biometric protection is enabled, require authentication
-    // before reading the stored key and opening the box. If authentication
-    // fails, do not open the box and leave the store locked; caller can
-    // later call attemptUnlock() to prompt again.
-    //
-    // The entire init() body is wrapped in a try-catch so that a
-    // PlatformException from flutter_secure_storage or local_auth on any
-    // platform (especially Windows, where DPAPI or Windows Hello can fail
-    // for a variety of reasons) does not crash main() before runApp().
+    // before reading the stored key and opening the box. Any failure (secure
+    // storage/keyring read, an unavailable biometric plugin, or opening the
+    // box) is recorded by [_openSecureStorage] so the UI can show the real
+    // cause and offer a retry that can actually succeed.
+    await _openSecureStorage();
+  }
+
+  /// Read the secure values, satisfy biometric protection when it is enabled,
+  /// and open the encrypted box.
+  ///
+  /// Never throws: a failure leaves the store locked and is classified as
+  /// either a pending biometric prompt ([isBiometricLocked]) or a secure-storage
+  /// error ([storageError]). This is shared by [init] and [attemptUnlock] so a
+  /// failure at startup can be retried from the unlock screen.
+  Future<bool> _openSecureStorage() async {
+    _storageError = null;
+    _biometricLocked = false;
     try {
       // Read both the biometric flag and the encryption key in a single
       // platform-channel round trip instead of two sequential reads. Each
@@ -79,21 +123,19 @@ class SettingsStorage {
           name: 'SettingsStorage');
       final biometricFlag = secureValues[_biometricFlagKey];
       if (biometricFlag == '1') {
-        final can = await _localAuth.canCheckBiometrics ||
-            await _localAuth.isDeviceSupported();
-        if (!can) {
-          // No biometrics available — fall back to leaving locked.
+        _biometricLocked = true;
+        if (!await _biometricsAvailable()) {
+          // No biometrics available — leave locked but not as a storage error.
           _unlocked = false;
-          return;
+          return false;
         }
 
         final ok = await _localAuth.authenticate(
           localizedReason: 'Authenticate to unlock local data',
-          options: const AuthenticationOptions(biometricOnly: false),
         );
         if (!ok) {
           _unlocked = false;
-          return;
+          return false;
         }
       }
 
@@ -119,9 +161,22 @@ class SettingsStorage {
           '${boxStopwatch.elapsedMilliseconds}ms',
           name: 'SettingsStorage');
       _unlocked = true;
-    } catch (e) {
+      _biometricLocked = false;
+      return true;
+    } catch (e, stack) {
       debugPrint('SettingsStorage.init: failed to initialise storage: $e');
-      // Leave _unlocked = false; the app will show the unlock/retry UI.
+      // Leave the store locked and record why, so the UI is honest about it.
+      _unlocked = false;
+      _biometricLocked = false;
+      _storageError = e.toString();
+      // The debug-logging preference lives in the storage that just failed, so
+      // it cannot be read. Force capture on so this failure (and any retry)
+      // stays inspectable in the in-app debug log.
+      LogService.instance.forceCapture = true;
+      LogService.instance.error(
+          'SettingsStorage: failed to read secure storage: $e\n$stack',
+          name: 'SettingsStorage');
+      return false;
     }
   }
 
@@ -152,36 +207,28 @@ class SettingsStorage {
   bool _unlocked = false;
   bool get isUnlocked => _unlocked;
 
-  /// Attempt to unlock (prompt biometric) and open the box if successful.
+  /// True while the app is waiting for a biometric prompt that is enabled and
+  /// supported. Distinguishes a pending prompt from an actual failure.
+  bool _biometricLocked = false;
+  bool get isBiometricLocked => _biometricLocked;
+
+  /// Description of the last secure-storage failure, or null when none has been
+  /// recorded. Set whenever reading the platform secure storage or opening the
+  /// encrypted box fails, so the UI can show the real cause instead of a
+  /// biometric message.
+  String? _storageError;
+  String? get storageError => _storageError;
+  bool get hasStorageError => _storageError != null;
+
+  /// Attempt to unlock by (re-)reading the secure storage and opening the box,
+  /// prompting for biometric authentication when protection is enabled and
+  /// supported. Returns true once the box is open.
+  ///
+  /// Unlike the one-shot startup path, this can be called repeatedly from the
+  /// unlock screen so a failure at startup is not a dead end.
   Future<bool> attemptUnlock() async {
-    try {
-      final biometricFlag = await _secure.read(key: _biometricFlagKey);
-      if (biometricFlag != '1') return true; // not protected
-
-      final can = await _localAuth.canCheckBiometrics ||
-          await _localAuth.isDeviceSupported();
-      if (!can) return false;
-
-      final ok = await _localAuth.authenticate(
-        localizedReason: 'Authenticate to unlock local data',
-        options: const AuthenticationOptions(biometricOnly: false),
-      );
-      if (!ok) return false;
-
-      // Read key and open box
-      final encoded = await _secure.read(key: _keyName);
-      if (encoded == null) return false;
-      final encryptionKey = Uint8List.fromList(base64Decode(encoded));
-      if (!Hive.isBoxOpen(_hiveBox)) {
-        await Hive.openBox(_hiveBox,
-            encryptionCipher: HiveAesCipher(encryptionKey));
-      }
-      _unlocked = true;
-      return true;
-    } catch (e) {
-      debugPrint('SettingsStorage.attemptUnlock: failed: $e');
-      return false;
-    }
+    if (_unlocked) return true;
+    return _openSecureStorage();
   }
 
   /// Safe accessor for the settings box.

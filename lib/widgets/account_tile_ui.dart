@@ -117,6 +117,23 @@ class AccountTileUi {
     );
   }
 
+  /// Builds the indicator shown before the username of an account shared with
+  /// the authenticated user. Returns an empty box for owned accounts.
+  static Widget buildSharedIndicator(BuildContext context, AccountEntry item) {
+    if (!item.isBorrowed) return const SizedBox.shrink();
+    return Tooltip(
+      message: AppLocalizations.of(context)!.sharedAccount,
+      child: Padding(
+        padding: const EdgeInsets.only(right: 4.0),
+        child: Icon(
+          Icons.people_outline,
+          size: 14,
+          color: Colors.grey.shade600,
+        ),
+      ),
+    );
+  }
+
   /// Builds the HOTP generation button
   static Widget buildHotpButton(VoidCallback onPressed) {
     return Expanded(

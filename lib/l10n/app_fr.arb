@@ -536,6 +536,10 @@
     "@biometricAuthFailed": {
         "description": "Affiché lorsque le déverrouillage biométrique échoue et que l'utilisateur doit réessayer."
     },
+    "storageUnlockFailed": "Impossible de lire le stockage sécurisé. Le trousseau de l'appareil (par exemple GNOME Keyring sous Linux) a renvoyé une erreur.",
+    "@storageUnlockFailed": {
+        "description": "Affiché lorsque le stockage sécurisé (trousseau) de la plateforme ne peut pas être lu."
+    },
     "retry": "Réessayer",
     "@retry": {
         "description": "Libellé pour réessayer l'authentification biométrique."
@@ -740,5 +744,9 @@
     "nothingToExport": "Rien à exporter",
     "@nothingToExport": {
         "description": "Message affiché lors d'une tentative d'exportation d'un journal vide."
+    },
+    "sharedAccount": "Partagé avec vous",
+    "@sharedAccount": {
+        "description": "Info-bulle de l'icône affichée à côté du nom d'utilisateur d'un compte partagé avec l'utilisateur."
     }
 }

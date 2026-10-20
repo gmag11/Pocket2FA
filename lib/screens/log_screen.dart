@@ -118,10 +118,10 @@ class _LogScreenState extends State<LogScreen> {
     }
 
     if (context.mounted) {
-      await Share.shareXFiles(
-        [XFile(file.path, mimeType: 'text/plain')],
+      await SharePlus.instance.share(ShareParams(
+        files: [XFile(file.path, mimeType: 'text/plain')],
         subject: 'Pocket2FA Diagnostic Log',
-      );
+      ));
     }
     // Delete the temp file after share UI is dismissed
     try {

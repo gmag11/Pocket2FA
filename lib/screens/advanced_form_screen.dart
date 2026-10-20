@@ -58,6 +58,14 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
   void initState() {
     super.initState();
 
+    // Borrowed accounts are read-only. This is a defensive guard: callers
+    // should not navigate here for a shared account.
+    if (widget.existingEntry?.isBorrowed == true) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) Navigator.of(context).maybePop();
+      });
+    }
+
     // If an existing entry is present, initialize fields with its values
     if (widget.existingEntry != null) {
       final entry = widget.existingEntry!;
@@ -250,6 +258,10 @@ class _AdvancedFormScreenState extends State<AdvancedFormScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.existingEntry?.isBorrowed == true) {
+      // Defensive guard: never render an editable form for a shared account.
+      return const Scaffold(body: SizedBox.shrink());
+    }
     return Scaffold(
       appBar: AppBar(
           title:

@@ -35,6 +35,17 @@ class SettingsService extends ChangeNotifier {
   bool _biometricsSupported = false;
   bool get biometricsSupported => _biometricsSupported;
 
+  bool _pinEnabled = false;
+
+  /// Whether the PIN lock is enabled. Derived from the hash stored in secure
+  /// storage, so a missing hash can never leave the app permanently locked.
+  bool get pinEnabled => _pinEnabled;
+
+  int? _pinLength;
+
+  /// Number of digits of the configured PIN (4–8), or null when disabled.
+  int? get pinLength => _pinLength;
+
   SettingsService({this.storage}) {
     _instance = this;
     _load();
@@ -47,10 +58,24 @@ class SettingsService extends ChangeNotifier {
     if (storage != null) {
       // Query support for biometrics once and cache the result for the UI
       _biometricsSupported = await storage!.supportsBiometrics();
+      // The PIN material lives in secure storage (not the encrypted box), so
+      // it is available even while the box is still locked.
+      _pinEnabled = await storage!.hasPin();
+      _pinLength = _pinEnabled ? storage!.pinLength : null;
       // If storage is locked (biometric auth not yet satisfied), skip loading
       // settings from the box and use defaults. Settings will be reloaded
       // after a successful unlock via reloadFromStorage().
       if (!storage!.isUnlocked) {
+        // The biometric flag also lives in secure storage: keep it so the lock
+        // screen can offer biometric-first unlocking before the box opens.
+        _biometricEnabled = storage!.isBiometricEnabled;
+        if (storage!.hasStorageError) {
+          // The debug-logging preference lives in the encrypted box, which
+          // could not be read. LogService has force-enabled capture for this
+          // failure; reflect that in the setting/UI so it is consistent.
+          _debugLoggingEnabled = true;
+          LogService.instance.enabled = true;
+        }
         notifyListeners();
         return;
       }
@@ -204,6 +229,7 @@ class SettingsService extends ChangeNotifier {
     _debugLoggingEnabled = on;
     LogService.instance.enabled = on;
     if (!on) {
+      LogService.instance.forceCapture = false;
       LogService.instance.clear();
     }
     if (storage != null) {
@@ -292,6 +318,69 @@ class SettingsService extends ChangeNotifier {
       notifyListeners();
       return false;
     }
+  }
+
+  /// Enable the PIN lock with [pin] (4–8 digits). Returns false when the PIN
+  /// is invalid or the secure storage write failed.
+  Future<bool> enablePin(String pin) async {
+    final s = storage;
+    if (s == null) return false;
+    final ok = await s.setPin(pin);
+    if (ok) {
+      _pinEnabled = true;
+      _pinLength = pin.length;
+      notifyListeners();
+    }
+    return ok;
+  }
+
+  /// Change the PIN after the current factor has been verified.
+  ///
+  /// Pass [currentVerified] when the current PIN or biometrics were already
+  /// verified by the caller (e.g. by a dialog); otherwise [current] is
+  /// verified here.
+  Future<bool> changePin(
+    String current,
+    String newPin, {
+    bool currentVerified = false,
+  }) async {
+    final s = storage;
+    if (s == null) return false;
+    if (!currentVerified && !await s.verifyPin(current)) return false;
+    final ok = await s.setPin(newPin);
+    if (ok) {
+      _pinEnabled = true;
+      _pinLength = newPin.length;
+      notifyListeners();
+    }
+    return ok;
+  }
+
+  /// Disable the PIN lock after the current factor has been verified.
+  ///
+  /// Pass [currentVerified] when the current PIN or biometrics were already
+  /// verified by the caller; otherwise [current] is verified here.
+  Future<bool> disablePin(
+    String current, {
+    bool currentVerified = false,
+  }) async {
+    final s = storage;
+    if (s == null) return false;
+    if (!currentVerified && !await s.verifyPin(current)) return false;
+    final ok = await s.clearPin();
+    if (ok) {
+      _pinEnabled = false;
+      _pinLength = null;
+      notifyListeners();
+    }
+    return ok;
+  }
+
+  /// Verify the current factor with biometrics, if available.
+  Future<bool> verifyCurrentFactorWithBiometrics({required String reason}) async {
+    final s = storage;
+    if (s == null || !biometricsSupported) return false;
+    return s.authenticateWithBiometrics(reason: reason);
   }
 
   static String _toString(CodeFormat f) {

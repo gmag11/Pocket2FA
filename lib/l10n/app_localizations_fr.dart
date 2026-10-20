@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -424,6 +425,10 @@ class AppLocalizationsFr extends AppLocalizations {
       'L\'authentification biométrique a échoué ou a été annulée. Veuillez réessayer pour déverrouiller vos données locales.';
 
   @override
+  String get storageUnlockFailed =>
+      'Impossible de lire le stockage sécurisé. Le trousseau de l\'appareil (par exemple GNOME Keyring sous Linux) a renvoyé une erreur.';
+
+  @override
   String get retry => 'Réessayer';
 
   @override
@@ -577,4 +582,77 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get nothingToExport => 'Rien à exporter';
+
+  @override
+  String get sharedAccount => 'Partagé avec vous';
+
+  @override
+  String get pinLock => 'Verrouillage par code PIN';
+
+  @override
+  String get pinLockDescription =>
+      'Demande un code PIN pour déverrouiller l\'application.';
+
+  @override
+  String get pinSetTitle => 'Définir le code PIN';
+
+  @override
+  String get pinChangeTitle => 'Modifier le code PIN';
+
+  @override
+  String get pinDisableTitle => 'Désactiver le verrouillage par code PIN';
+
+  @override
+  String get pinEnter => 'Saisissez votre code PIN';
+
+  @override
+  String get pinConfirm => 'Confirmer le code PIN';
+
+  @override
+  String get pinCurrent => 'Code PIN actuel';
+
+  @override
+  String get pinIncorrect => 'Code PIN incorrect';
+
+  @override
+  String get pinMismatch => 'Les codes PIN ne correspondent pas';
+
+  @override
+  String get pinInvalidLength => 'Le code PIN doit comporter de 4 à 8 chiffres';
+
+  @override
+  String pinThrottled(int seconds) {
+    return 'Trop de tentatives. Réessayez dans $seconds secondes.';
+  }
+
+  @override
+  String get pinForgotWarningTitle => 'Avertissement : code PIN oublié';
+
+  @override
+  String get pinForgotWarning =>
+      'Si vous oubliez votre code PIN et que le déverrouillage biométrique n\'est pas activé, vos données locales ne pourront pas être récupérées. Il n\'existe aucun moyen de réinitialiser le code PIN.';
+
+  @override
+  String get pinEnabled => 'Verrouillage par code PIN activé';
+
+  @override
+  String get pinDisabled => 'Verrouillage par code PIN désactivé';
+
+  @override
+  String get pinChanged => 'Code PIN modifié';
+
+  @override
+  String get unlockWithBiometrics => 'Déverrouiller avec la biométrie';
+
+  @override
+  String get usePin => 'Utiliser le code PIN';
+
+  @override
+  String get useBiometrics => 'Utiliser la biométrie';
+
+  @override
+  String get continueLabel => 'Continuer';
+
+  @override
+  String get verify => 'Vérifier';
 }

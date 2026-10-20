@@ -48,7 +48,9 @@ class LogEntry {
 /// for display or export. Intended for diagnostic/debugging purposes.
 ///
 /// Log capture is gated on [SettingsService.debugLoggingEnabled]. When
-/// disabled, all [log] calls are no-ops.
+/// disabled, [log] calls are no-ops, except while [forceCapture] is set for a
+/// critical failure (e.g. a secure-storage read error whose setting cannot be
+/// read).
 class LogService {
   LogService._internal();
 
@@ -66,10 +68,20 @@ class LogService {
   /// Whether logging capture is enabled. Controlled externally by SettingsService.
   bool enabled = false;
 
+  /// When true, entries are captured even if [enabled] is false.
+  ///
+  /// Set when a secure-storage failure occurs: the debug-logging preference is
+  /// stored in the very storage that failed, so it cannot be read, and the
+  /// failure must still be inspectable in the in-app debug log.
+  bool forceCapture = false;
+
+  /// Whether entries are currently being captured.
+  bool get capturing => enabled || forceCapture;
+
   /// Returns an unmodifiable snapshot of current log entries (oldest first).
   List<LogEntry> get entries => List.unmodifiable(_entries);
 
-  /// Records a new log entry. No-op when [enabled] is false.
+  /// Records a new log entry. No-op when capture is off ([capturing] false).
   /// Always forwards to `developer.log` for IDE debugging regardless of the setting.
   void log(
     String message, {
@@ -79,7 +91,7 @@ class LogService {
     // Always output to developer.log for IDE debugging
     developer.log('$name: $message', name: name);
 
-    if (!enabled) return;
+    if (!capturing) return;
 
     final entry = LogEntry(
       timestamp: DateTime.now(),

@@ -536,6 +536,10 @@
     "@biometricAuthFailed": {
         "description": "Affiché lorsque le déverrouillage biométrique échoue et que l'utilisateur doit réessayer."
     },
+    "storageUnlockFailed": "Impossible de lire le stockage sécurisé. Le trousseau de l'appareil (par exemple GNOME Keyring sous Linux) a renvoyé une erreur.",
+    "@storageUnlockFailed": {
+        "description": "Affiché lorsque le stockage sécurisé (trousseau) de la plateforme ne peut pas être lu."
+    },
     "retry": "Réessayer",
     "@retry": {
         "description": "Libellé pour réessayer l'authentification biométrique."
@@ -740,5 +744,102 @@
     "nothingToExport": "Rien à exporter",
     "@nothingToExport": {
         "description": "Message affiché lors d'une tentative d'exportation d'un journal vide."
+    },
+    "sharedAccount": "Partagé avec vous",
+    "@sharedAccount": {
+        "description": "Info-bulle de l'icône affichée à côté du nom d'utilisateur d'un compte partagé avec l'utilisateur."
+    },
+    "pinLock": "Verrouillage par code PIN",
+    "@pinLock": {
+        "description": "Titre de l'écran de verrouillage par code PIN et libellé du réglage."
+    },
+    "pinLockDescription": "Demande un code PIN pour déverrouiller l'application.",
+    "@pinLockDescription": {
+        "description": "Sous-titre du réglage de verrouillage par code PIN."
+    },
+    "pinSetTitle": "Définir le code PIN",
+    "@pinSetTitle": {
+        "description": "Titre de la boîte de dialogue pour définir un code PIN pour la première fois."
+    },
+    "pinChangeTitle": "Modifier le code PIN",
+    "@pinChangeTitle": {
+        "description": "Titre de la boîte de dialogue et du réglage pour modifier le code PIN."
+    },
+    "pinDisableTitle": "Désactiver le verrouillage par code PIN",
+    "@pinDisableTitle": {
+        "description": "Titre de la boîte de dialogue affichée avant de désactiver le verrouillage par code PIN."
+    },
+    "pinEnter": "Saisissez votre code PIN",
+    "@pinEnter": {
+        "description": "Texte affiché au-dessus du clavier numérique du code PIN."
+    },
+    "pinConfirm": "Confirmer le code PIN",
+    "@pinConfirm": {
+        "description": "Libellé du second champ du code PIN, utilisé pour confirmer le nouveau code."
+    },
+    "pinCurrent": "Code PIN actuel",
+    "@pinCurrent": {
+        "description": "Libellé du champ où le code PIN actuel est saisi."
+    },
+    "pinIncorrect": "Code PIN incorrect",
+    "@pinIncorrect": {
+        "description": "Erreur affichée lorsque le code PIN saisi est incorrect."
+    },
+    "pinMismatch": "Les codes PIN ne correspondent pas",
+    "@pinMismatch": {
+        "description": "Erreur affichée lorsque les deux saisies du nouveau code PIN diffèrent."
+    },
+    "pinInvalidLength": "Le code PIN doit comporter de 4 à 8 chiffres",
+    "@pinInvalidLength": {
+        "description": "Erreur affichée lorsque le code PIN est hors de la plage de 4 à 8 chiffres."
+    },
+    "pinThrottled": "Trop de tentatives. Réessayez dans {seconds} secondes.",
+    "@pinThrottled": {
+        "description": "Compte à rebours affiché pendant le blocage temporaire de la saisie du code PIN.",
+        "placeholders": {
+            "seconds": {
+                "type": "int"
+            }
+        }
+    },
+    "pinForgotWarningTitle": "Avertissement : code PIN oublié",
+    "@pinForgotWarningTitle": {
+        "description": "Titre de l'avertissement affiché avant d'activer le verrouillage par code PIN."
+    },
+    "pinForgotWarning": "Si vous oubliez votre code PIN et que le déverrouillage biométrique n'est pas activé, vos données locales ne pourront pas être récupérées. Il n'existe aucun moyen de réinitialiser le code PIN.",
+    "@pinForgotWarning": {
+        "description": "Avertissement sur les conséquences de l'oubli du code PIN."
+    },
+    "pinEnabled": "Verrouillage par code PIN activé",
+    "@pinEnabled": {
+        "description": "Message affiché lorsque le verrouillage par code PIN est activé."
+    },
+    "pinDisabled": "Verrouillage par code PIN désactivé",
+    "@pinDisabled": {
+        "description": "Message affiché lorsque le verrouillage par code PIN est désactivé."
+    },
+    "pinChanged": "Code PIN modifié",
+    "@pinChanged": {
+        "description": "Message affiché lorsque le code PIN est modifié."
+    },
+    "unlockWithBiometrics": "Déverrouiller avec la biométrie",
+    "@unlockWithBiometrics": {
+        "description": "Texte affiché sur l'écran de verrouillage avant la vérification biométrique."
+    },
+    "usePin": "Utiliser le code PIN",
+    "@usePin": {
+        "description": "Action qui fait passer l'écran de verrouillage de la biométrie au clavier du code PIN."
+    },
+    "useBiometrics": "Utiliser la biométrie",
+    "@useBiometrics": {
+        "description": "Action qui fait passer l'écran de verrouillage du clavier du code PIN à la biométrie."
+    },
+    "continueLabel": "Continuer",
+    "@continueLabel": {
+        "description": "Action de confirmation dans l'avertissement de code PIN oublié."
+    },
+    "verify": "Vérifier",
+    "@verify": {
+        "description": "Action qui vérifie le code PIN actuel dans une boîte de dialogue."
     }
 }

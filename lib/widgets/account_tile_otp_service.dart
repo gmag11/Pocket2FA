@@ -198,22 +198,39 @@ class AccountTileOtpService {
 
   void _scheduleServerRefresh(int periodSec, Object? generatedAt) {
     if (_disposed) return;
-    var delayMs = periodSec * 1000;
-    // Prefer the server-reported boundary (generation time + period). Fall back
-    // to the epoch-aligned boundary when the computed delay is not plausible
-    // (e.g. client clock skew).
-    if (generatedAt is int) {
-      final nowS = DateTime.now().millisecondsSinceEpoch / 1000.0;
-      final targetS = generatedAt + periodSec;
-      final candidateMs = ((targetS - nowS) * 1000).round();
-      if (candidateMs > 0 && candidateMs <= periodSec * 2000) {
-        delayMs = candidateMs;
+    final periodMs = periodSec * 1000;
+
+    // Fallback when the server does not report a generation time: align with
+    // the client's epoch, like the local TOTP path does.
+    var delayMs =
+        periodMs - (DateTime.now().millisecondsSinceEpoch % periodMs);
+
+    // 2FAuth sets `generated_at` to the instant the code was generated, not to
+    // the start of its period. The code stops being valid at the next multiple
+    // of the period on the server timeline, which can be much less than a full
+    // period away. Scheduling `generated_at + period` (a full period) would
+    // preserve the phase at which the code was first fetched, leaving the tile
+    // one code behind until that same phase in the next period.
+    final generatedAtMs = _epochMs(generatedAt);
+    if (generatedAtMs != null) {
+      final untilBoundaryMs = periodMs - (generatedAtMs % periodMs);
+      if (untilBoundaryMs > 0 && untilBoundaryMs <= periodMs) {
+        delayMs = untilBoundaryMs;
       }
     }
+
     // Small epsilon so the server has advanced past the boundary.
     _timer = Timer(Duration(milliseconds: delayMs + 250), () {
       if (!_disposed) refreshCodes();
     });
+  }
+
+  /// Normalises a server timestamp to milliseconds since epoch. The API
+  /// documents seconds; milliseconds are accepted defensively.
+  int? _epochMs(Object? timestamp) {
+    final raw = timestamp is int ? timestamp : int.tryParse('$timestamp');
+    if (raw == null || raw <= 0) return null;
+    return raw > 100000000000 ? raw : raw * 1000;
   }
 
   void _scheduleRetry() {

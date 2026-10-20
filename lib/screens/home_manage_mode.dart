@@ -96,6 +96,11 @@ class HomeManageMode extends ChangeNotifier {
     final toDeleteIds = <int>{};
     for (final acc in server.accounts) {
       if (deletableIds.contains(acc.id)) {
+        if (acc.id <= 0) {
+          // Never uploaded: there is nothing to delete on the server. Remove
+          // it locally instead of leaving an unsendable tombstone.
+          continue;
+        }
         toDeleteIds.add(acc.id);
         // Mark as deleted but keep in storage for now
         updatedAccounts.add(acc.copyWith(deleted: true, synchronized: false));

@@ -122,6 +122,8 @@ class _HomePageState extends State<HomePage>
       setState(() {});
       // When entering/exiting manage mode, (re)configure auto-sync
       _setupAutoSync();
+      // Do not replace entries while the user is selecting or deleting them.
+      _syncManager.setRetryPaused(_manageMode.isManageMode);
       // If we just exited manage mode (was true, now false), trigger a forced sync
       if (was && !_manageMode.isManageMode) {
         LogService.instance.log('HomePage: exited manage mode - performing forced sync', name: 'HomePage');
@@ -223,6 +225,11 @@ class _HomePageState extends State<HomePage>
   // Attempt initial throttled sync according to settings; may run later if
   // settings or servers become available after startup.
   _maybePerformInitialSync();
+
+    // Upload accounts created in a previous offline session even when
+    // sync-on-open and auto-sync are disabled. If the initial sync already
+    // started, this schedules a retry instead of overlapping it.
+    unawaited(_syncManager.ensurePendingUploads());
 
     // Configure auto-sync timer if enabled
     _setupAutoSync();
@@ -381,6 +388,7 @@ class _HomePageState extends State<HomePage>
     _headerAnimation.dispose();
     _serverManager.removeListener(_onServerManagerChanged);
     _syncManager.removeListener(_onSyncManagerChanged);
+    _syncManager.dispose();
     _manageMode.removeListener(_onManageModeChanged);
   widget.settings.removeListener(_onSettingsChanged);
   _autoSyncTimer?.cancel();
@@ -391,9 +399,13 @@ class _HomePageState extends State<HomePage>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      // App returned to foreground. If user enabled sync-on-open, trigger a sync.
-      if (mounted && widget.settings.syncOnOpen && !_manageMode.isManageMode) {
-        if (_serverManager.servers.isNotEmpty) {
+      if (mounted && !_manageMode.isManageMode) {
+        if (_syncManager.hasPendingUploads) {
+          // Pending local accounts must be retried even when sync-on-open is
+          // disabled. The retry manager handles backoff and errors.
+          unawaited(_syncManager.ensurePendingUploads());
+        } else if (widget.settings.syncOnOpen &&
+            _serverManager.servers.isNotEmpty) {
           // Fire-and-forget but surface errors as SnackBar like initial sync
           _syncManager.forceSyncCurrentServer().catchError((e) {
             if (mounted) {
@@ -586,19 +598,16 @@ class _HomePageState extends State<HomePage>
                               serverHost: host,
                               groups: srv.groups)));
                   if (result is AccountEntry) {
-                    await _serverManager.updateAccount(result);
+                    await _serverManager.insertCreatedAccount(result);
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(content: Text(l10n.accountUpdated)),
                       );
                     }
-                    // Trigger a background sync so the new account appears
-                    // in the list without the user having to force it manually.
-                    _syncManager.forceSyncCurrentServer().catchError((e) {
-                      LogService.instance.log(
-                          'HomePage: post-scan sync failed: $e',
-                          name: 'HomePage');
-                    });
+                    // Show the entry immediately (it is already persisted),
+                    // then upload it in the background. The retry manager keeps
+                    // trying if the server is unreachable right now.
+                    unawaited(_syncManager.ensurePendingUploads());
                   }
                 },
                 backgroundColor: const Color(0xFF4F63E6),

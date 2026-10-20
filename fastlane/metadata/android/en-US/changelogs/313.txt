@@ -1,0 +1,7 @@
+Version 0.10.0
+
+- Optional PIN lock (4 to 8 digits), with biometrics still available as an alternative
+- Shared 2FAuth accounts are now shown as read-only and marked as shared, and their codes are fetched from the server
+- Secure-storage failures now recover on retry instead of leaving the app stuck on an unlock screen
+- Updated Flutter SDK and application dependencies
+- Android build configuration updated for current Flutter and Gradle compatibility

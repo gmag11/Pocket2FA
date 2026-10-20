@@ -75,6 +75,14 @@ set_target_properties(${BINARY_NAME}
 # them to the application.
 include(flutter/generated_plugins.cmake)
 
+# jni 1.1.0 removed the `(void**)` cast around `JNIEnv**` in dartjni.c.
+# GCC 14+ and Clang 16+ treat -Wincompatible-pointer-types as an error, which
+# breaks Linux desktop builds of this Android-only transitive dependency.
+# Keep the warning visible but not fatal for that target.
+if(TARGET jni)
+  target_compile_options(jni PRIVATE -Wno-error=incompatible-pointer-types)
+endif()
+
 
 # === Installation ===
 # By default, "installing" just makes a relocatable bundle in the build

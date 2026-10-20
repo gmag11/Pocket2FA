@@ -65,7 +65,7 @@ This project complements the official 2FAuth web application by offering:
 
 ### For Developers
 
-- Flutter SDK (version 3.44.4 or compatible)
+- Flutter SDK (version 3.47.7 or compatible)
 - Android Studio or VS Code with Flutter extension
 - Platform-specific development tools:
   - Android: Android SDK and emulator/device

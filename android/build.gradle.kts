@@ -23,6 +23,9 @@ subprojects {
 // - Disable NDK build-id generation via linker flags.
 // - Normalize embedded source paths via -ffile-prefix-map (cFlags/cppFlags
 //   go directly to the compiler, bypassing CMake variable expansion issues).
+// The prefix is the plugin package root (projectDir.parentFile), not
+// projectDir itself: both plugins keep their CMake sources in ../src, so
+// mapping only <plugin>/android would leave those absolute paths untouched.
 // See https://f-droid.org/docs/Reproducible_Builds/#cmake
 //
 // NB: this must live in the root build.gradle.kts (not android/app/build.gradle.kts)
@@ -32,13 +35,14 @@ val nativeLibraryModulesWithBuildId = setOf("flutter_zxing", "jni")
 subprojects {
     plugins.withId("com.android.library") {
         if (name in nativeLibraryModulesWithBuildId) {
+            val pluginPackageRoot = project.projectDir.parentFile.absolutePath
             extensions.configure<com.android.build.gradle.LibraryExtension>("android") {
                 defaultConfig {
                     externalNativeBuild {
                         cmake {
                             arguments += "-DCMAKE_SHARED_LINKER_FLAGS=-Wl,--build-id=none"
-                            cFlags += "-ffile-prefix-map=${project.projectDir.absolutePath}=."
-                            cppFlags += "-ffile-prefix-map=${project.projectDir.absolutePath}=."
+                            cFlags += "-ffile-prefix-map=$pluginPackageRoot=."
+                            cppFlags += "-ffile-prefix-map=$pluginPackageRoot=."
                         }
                     }
                 }

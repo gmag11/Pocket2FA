@@ -2,14 +2,22 @@ import 'package:flutter/material.dart';
 
 import '../l10n/app_localizations.dart';
 import '../models/server_connection.dart';
+import '../services/settings_service.dart';
 import '../services/settings_storage.dart';
+import 'pin_lock_screen.dart';
 import 'server_add_edit_dialog.dart';
 import 'server_detail_screen.dart';
 
 class AccountsScreen extends StatefulWidget {
   final SettingsStorage storage;
   final Future<void> Function()? onServerChanged;
-  const AccountsScreen({required this.storage, this.onServerChanged, super.key});
+  final SettingsService? settings;
+  const AccountsScreen({
+    required this.storage,
+    this.onServerChanged,
+    this.settings,
+    super.key,
+  });
 
   @override
   State<AccountsScreen> createState() => _AccountsScreenState();
@@ -156,8 +164,27 @@ class _AccountsScreenState extends State<AccountsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // If storage is locked, show an unlock screen instead of the list.
+    // If storage is locked, show an unlock screen instead of the list. A
+    // secure-storage failure is reported as such (with its detail) rather than
+    // as a biometric problem the user can never satisfy.
     if (!widget.storage.isUnlocked) {
+      final settings = widget.settings;
+      if (settings != null &&
+          (widget.storage.isPinLocked || settings.pinEnabled) &&
+          !widget.storage.hasStorageError) {
+        return PinLockScreen(
+          settings: settings,
+          title: l10n.accountsTitle,
+          onUnlocked: () async {
+            if (!mounted) return;
+            _loadServers();
+            setState(() {});
+          },
+        );
+      }
+
+      final storageFailed = widget.storage.hasStorageError;
+      final detail = widget.storage.storageError;
       return Scaffold(
         appBar: AppBar(title: Text(l10n.accountsTitle)),
         body: Center(
@@ -170,12 +197,29 @@ class _AccountsScreenState extends State<AccountsScreen> {
                     style: const TextStyle(
                         fontSize: 18, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
-                Text(l10n.authenticateToUnlock, textAlign: TextAlign.center),
+                Text(
+                  storageFailed
+                      ? l10n.storageUnlockFailed
+                      : l10n.authenticateToUnlock,
+                  textAlign: TextAlign.center,
+                ),
+                if (storageFailed && detail != null) ...[
+                  const SizedBox(height: 8),
+                  SelectableText(
+                    detail,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 16),
                 ElevatedButton.icon(
                   onPressed: () async {
                     final messenger = ScaffoldMessenger.of(context);
                     final authenticationFailedMsg = l10n.authenticationFailed;
+                    final storageFailedMsg = l10n.storageUnlockFailed;
                     final ok = await widget.storage.attemptUnlock();
                     if (ok) {
                       // Reload servers and update UI
@@ -183,12 +227,17 @@ class _AccountsScreenState extends State<AccountsScreen> {
                       if (!mounted) return;
                       setState(() {});
                     } else {
-                      messenger.showSnackBar(
-                          SnackBar(content: Text(authenticationFailedMsg)));
+                      if (mounted) setState(() {});
+                      messenger.showSnackBar(SnackBar(
+                          content: Text(widget.storage.hasStorageError
+                              ? storageFailedMsg
+                              : authenticationFailedMsg)));
                     }
                   },
-                  icon: const Icon(Icons.fingerprint),
-                  label: Text(l10n.unlock),
+                  icon: Icon(storageFailed
+                      ? Icons.lock_outline
+                      : Icons.fingerprint),
+                  label: Text(storageFailed ? l10n.retry : l10n.unlock),
                 ),
               ],
             ),

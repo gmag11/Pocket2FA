@@ -536,6 +536,10 @@
   "@biometricAuthFailed": {
     "description": "Mostrado cuando falla el desbloqueo biométrico y el usuario debe reintentar."
   },
+  "storageUnlockFailed": "No se pudo leer el almacenamiento seguro. El llavero del dispositivo (por ejemplo, GNOME Keyring en Linux) devolvió un error.",
+  "@storageUnlockFailed": {
+    "description": "Mostrado cuando no se puede leer el almacenamiento seguro (llavero) de la plataforma."
+  },
   "retry": "Reintentar",
   "@retry": {
     "description": "Etiqueta para reintentar la autenticación biométrica."
@@ -739,5 +743,102 @@
   },
   "nothingToExport": "Nada para exportar",
   "@nothingToExport": {
-    "description": "Mensaje mostrado al intentar exportar un registro vacío."  }
+    "description": "Mensaje mostrado al intentar exportar un registro vacío."  },
+  "sharedAccount": "Compartida contigo",
+  "@sharedAccount": {
+    "description": "Tooltip del icono mostrado junto al nombre de usuario de una cuenta compartida con el usuario."
+  },
+  "pinLock": "Bloqueo con PIN",
+  "@pinLock": {
+    "description": "Título de la pantalla de bloqueo con PIN y etiqueta del ajuste."
+  },
+  "pinLockDescription": "Solicita un PIN para desbloquear la aplicación.",
+  "@pinLockDescription": {
+    "description": "Subtítulo del ajuste de bloqueo con PIN."
+  },
+  "pinSetTitle": "Configurar PIN",
+  "@pinSetTitle": {
+    "description": "Título del diálogo para configurar un PIN por primera vez."
+  },
+  "pinChangeTitle": "Cambiar PIN",
+  "@pinChangeTitle": {
+    "description": "Título del diálogo y del ajuste para cambiar el PIN."
+  },
+  "pinDisableTitle": "Desactivar bloqueo con PIN",
+  "@pinDisableTitle": {
+    "description": "Título del diálogo mostrado antes de desactivar el bloqueo con PIN."
+  },
+  "pinEnter": "Introduce tu PIN",
+  "@pinEnter": {
+    "description": "Texto mostrado sobre el teclado numérico del PIN."
+  },
+  "pinConfirm": "Confirmar PIN",
+  "@pinConfirm": {
+    "description": "Etiqueta del segundo campo del PIN, usado para confirmar el nuevo PIN."
+  },
+  "pinCurrent": "PIN actual",
+  "@pinCurrent": {
+    "description": "Etiqueta del campo donde se introduce el PIN actual."
+  },
+  "pinIncorrect": "PIN incorrecto",
+  "@pinIncorrect": {
+    "description": "Error mostrado cuando el PIN introducido es incorrecto."
+  },
+  "pinMismatch": "Los PIN no coinciden",
+  "@pinMismatch": {
+    "description": "Error mostrado cuando las dos entradas del nuevo PIN difieren."
+  },
+  "pinInvalidLength": "El PIN debe tener entre 4 y 8 dígitos",
+  "@pinInvalidLength": {
+    "description": "Error mostrado cuando el PIN está fuera del rango de 4 a 8 dígitos."
+  },
+  "pinThrottled": "Demasiados intentos. Vuelve a intentarlo en {seconds} segundos.",
+  "@pinThrottled": {
+    "description": "Cuenta atrás mostrada mientras se limita temporalmente la introducción del PIN.",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "pinForgotWarningTitle": "Aviso: PIN olvidado",
+  "@pinForgotWarningTitle": {
+    "description": "Título del aviso mostrado antes de activar el bloqueo con PIN."
+  },
+  "pinForgotWarning": "Si olvidas tu PIN y no tienes activado el desbloqueo biométrico, no podrás recuperar tus datos locales. No hay forma de restablecer el PIN.",
+  "@pinForgotWarning": {
+    "description": "Aviso sobre las consecuencias de olvidar el PIN."
+  },
+  "pinEnabled": "Bloqueo con PIN activado",
+  "@pinEnabled": {
+    "description": "Mensaje mostrado cuando se activa el bloqueo con PIN."
+  },
+  "pinDisabled": "Bloqueo con PIN desactivado",
+  "@pinDisabled": {
+    "description": "Mensaje mostrado cuando se desactiva el bloqueo con PIN."
+  },
+  "pinChanged": "PIN cambiado",
+  "@pinChanged": {
+    "description": "Mensaje mostrado cuando se cambia el PIN."
+  },
+  "unlockWithBiometrics": "Desbloquear con biometría",
+  "@unlockWithBiometrics": {
+    "description": "Texto mostrado en la pantalla de bloqueo antes de la comprobación biométrica."
+  },
+  "usePin": "Usar PIN",
+  "@usePin": {
+    "description": "Acción que cambia la pantalla de bloqueo de biometría al teclado del PIN."
+  },
+  "useBiometrics": "Usar biometría",
+  "@useBiometrics": {
+    "description": "Acción que cambia la pantalla de bloqueo del teclado del PIN a biometría."
+  },
+  "continueLabel": "Continuar",
+  "@continueLabel": {
+    "description": "Acción de confirmación en el aviso de PIN olvidado."
+  },
+  "verify": "Verificar",
+  "@verify": {
+    "description": "Acción que verifica el PIN actual en un diálogo."
+  }
 }

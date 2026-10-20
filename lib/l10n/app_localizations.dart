@@ -1149,6 +1149,138 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Shared with you'**
   String get sharedAccount;
+
+  /// Title of the PIN lock screen and label of the PIN lock setting.
+  ///
+  /// In en, this message translates to:
+  /// **'PIN lock'**
+  String get pinLock;
+
+  /// Subtitle for the PIN lock setting.
+  ///
+  /// In en, this message translates to:
+  /// **'Require a PIN to unlock the app.'**
+  String get pinLockDescription;
+
+  /// Title of the dialog used to set a PIN for the first time.
+  ///
+  /// In en, this message translates to:
+  /// **'Set PIN'**
+  String get pinSetTitle;
+
+  /// Title of the dialog and setting used to change the PIN.
+  ///
+  /// In en, this message translates to:
+  /// **'Change PIN'**
+  String get pinChangeTitle;
+
+  /// Title of the dialog shown before disabling the PIN lock.
+  ///
+  /// In en, this message translates to:
+  /// **'Disable PIN lock'**
+  String get pinDisableTitle;
+
+  /// Prompt shown above the PIN keypad.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your PIN'**
+  String get pinEnter;
+
+  /// Label of the second PIN field, used to confirm the new PIN.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm PIN'**
+  String get pinConfirm;
+
+  /// Label of the field where the current PIN is entered.
+  ///
+  /// In en, this message translates to:
+  /// **'Current PIN'**
+  String get pinCurrent;
+
+  /// Error shown when the entered PIN is wrong.
+  ///
+  /// In en, this message translates to:
+  /// **'Incorrect PIN'**
+  String get pinIncorrect;
+
+  /// Error shown when the two new PIN entries differ.
+  ///
+  /// In en, this message translates to:
+  /// **'PINs do not match'**
+  String get pinMismatch;
+
+  /// Error shown when a PIN is outside the 4-8 digit range.
+  ///
+  /// In en, this message translates to:
+  /// **'PIN must be 4 to 8 digits'**
+  String get pinInvalidLength;
+
+  /// Countdown shown while PIN entry is temporarily throttled.
+  ///
+  /// In en, this message translates to:
+  /// **'Too many attempts. Try again in {seconds} seconds.'**
+  String pinThrottled(int seconds);
+
+  /// Title of the warning shown before enabling the PIN lock.
+  ///
+  /// In en, this message translates to:
+  /// **'Warning: forgotten PIN'**
+  String get pinForgotWarningTitle;
+
+  /// Warning about the consequences of forgetting the PIN.
+  ///
+  /// In en, this message translates to:
+  /// **'If you forget your PIN and have no biometric unlock enabled, your local data cannot be recovered. There is no way to reset the PIN.'**
+  String get pinForgotWarning;
+
+  /// Snackbar shown when the PIN lock is enabled.
+  ///
+  /// In en, this message translates to:
+  /// **'PIN lock enabled'**
+  String get pinEnabled;
+
+  /// Snackbar shown when the PIN lock is disabled.
+  ///
+  /// In en, this message translates to:
+  /// **'PIN lock disabled'**
+  String get pinDisabled;
+
+  /// Snackbar shown when the PIN is changed.
+  ///
+  /// In en, this message translates to:
+  /// **'PIN changed'**
+  String get pinChanged;
+
+  /// Prompt shown on the lock screen before the biometric check.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock with biometrics'**
+  String get unlockWithBiometrics;
+
+  /// Action that switches the lock screen from biometrics to the PIN keypad.
+  ///
+  /// In en, this message translates to:
+  /// **'Use PIN'**
+  String get usePin;
+
+  /// Action that switches the lock screen from the PIN keypad to biometrics.
+  ///
+  /// In en, this message translates to:
+  /// **'Use biometrics'**
+  String get useBiometrics;
+
+  /// Confirmation action in the forgotten-PIN warning dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get continueLabel;
+
+  /// Action that verifies the current PIN in a dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify'**
+  String get verify;
 }
 
 class _AppLocalizationsDelegate

@@ -19,6 +19,7 @@ import 'home_server_manager.dart';
 import 'home_sync_manager.dart';
 import 'search_bar.dart';
 import 'log_screen.dart';
+import 'pin_lock_screen.dart';
 import 'settings_screen.dart';
 
 class HomePage extends StatefulWidget {
@@ -341,6 +342,7 @@ class _HomePageState extends State<HomePage>
           await Navigator.of(context).push(MaterialPageRoute(
               builder: (c) => AccountsScreen(
                     storage: widget.settings.storage!,
+                    settings: widget.settings,
                     onServerChanged: _serverManager.loadServers,
                   )));
         } else {
@@ -416,6 +418,21 @@ class _HomePageState extends State<HomePage>
     // The AppBar is kept so the user can still navigate to Settings or to the
     // Debug Log.
     if (storage != null && !storage.isUnlocked) {
+      // With the PIN lock enabled the dedicated lock screen owns unlocking
+      // (PIN or biometric). A secure-storage failure is still reported by the
+      // generic screen below, since the PIN could not be verified either.
+      if ((storage.isPinLocked || widget.settings.pinEnabled) &&
+          !storage.hasStorageError) {
+        return PinLockScreen(
+          settings: widget.settings,
+          title: l10n.appTitle,
+          onUnlocked: () async {
+            await _serverManager.loadServers();
+            if (mounted) setState(() {});
+          },
+        );
+      }
+
       final reason = classifyStorageLock(
         hasStorageError: storage.hasStorageError,
         isBiometricLocked: storage.isBiometricLocked,

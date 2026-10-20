@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../l10n/app_localizations.dart';
 import '../services/settings_service.dart';
 import 'log_screen.dart';
+import 'pin_settings_dialogs.dart';
 
 class SettingsScreen extends StatelessWidget {
   final SettingsService settings;
@@ -133,6 +134,36 @@ class SettingsScreen extends StatelessWidget {
                 }),
               ),
               
+              // PIN lock
+              _buildSettingTile(
+                icon: Icons.pin_outlined,
+                title: l10n.pinLock,
+                subtitle: l10n.pinLockDescription,
+                trailing: Switch(
+                  value: settings.pinEnabled,
+                  onChanged: (v) async {
+                    if (v) {
+                      await _enablePin(context);
+                    } else {
+                      await _disablePin(context);
+                    }
+                  },
+                  activeThumbColor: _baseAccent,
+                ),
+              ),
+
+              // Change PIN (only meaningful while the PIN lock is enabled)
+              if (settings.pinEnabled)
+                _buildSettingTile(
+                  icon: Icons.password,
+                  title: l10n.pinChangeTitle,
+                  trailing: IconButton(
+                    tooltip: l10n.pinChangeTitle,
+                    icon: const Icon(Icons.chevron_right),
+                    onPressed: () => _changePin(context),
+                  ),
+                ),
+
               // Hide OTPs setting
               _buildSettingTile(
                 icon: Icons.visibility_off,
@@ -234,6 +265,65 @@ class SettingsScreen extends StatelessWidget {
         },
       ),
     );
+  }
+
+  Future<void> _enablePin(BuildContext context) async {
+    final l10n = AppLocalizations.of(context)!;
+    final messenger = ScaffoldMessenger.of(context);
+
+    // Warn about the consequences of forgetting the PIN before anything is set.
+    final accepted = await showPinForgotWarningDialog(context);
+    if (!accepted || !context.mounted) return;
+
+    final pin = await showSetPinDialog(context, title: l10n.pinSetTitle);
+    if (pin == null || !context.mounted) return;
+
+    final ok = await settings.enablePin(pin);
+    if (!context.mounted) return;
+    messenger.showSnackBar(SnackBar(
+      content: Text(ok ? l10n.pinEnabled : l10n.operationFailed),
+    ));
+  }
+
+  Future<void> _disablePin(BuildContext context) async {
+    final l10n = AppLocalizations.of(context)!;
+    final messenger = ScaffoldMessenger.of(context);
+
+    // The current PIN (or biometrics, when enabled) must be verified first.
+    final verification = await showCurrentFactorDialog(
+      context,
+      settings: settings,
+      title: l10n.pinDisableTitle,
+    );
+    if (verification == null || !context.mounted) return;
+
+    final ok = await settings.disablePin('', currentVerified: true);
+    if (!context.mounted) return;
+    messenger.showSnackBar(SnackBar(
+      content: Text(ok ? l10n.pinDisabled : l10n.operationFailed),
+    ));
+  }
+
+  Future<void> _changePin(BuildContext context) async {
+    final l10n = AppLocalizations.of(context)!;
+    final messenger = ScaffoldMessenger.of(context);
+
+    // The current factor must be verified before choosing a new PIN.
+    final verification = await showCurrentFactorDialog(
+      context,
+      settings: settings,
+      title: l10n.pinChangeTitle,
+    );
+    if (verification == null || !context.mounted) return;
+
+    final pin = await showSetPinDialog(context, title: l10n.pinSetTitle);
+    if (pin == null || !context.mounted) return;
+
+    final ok = await settings.changePin('', pin, currentVerified: true);
+    if (!context.mounted) return;
+    messenger.showSnackBar(SnackBar(
+      content: Text(ok ? l10n.pinChanged : l10n.operationFailed),
+    ));
   }
 
   Widget _buildSectionHeader(String title) {

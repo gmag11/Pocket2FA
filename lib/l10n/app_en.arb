@@ -749,5 +749,98 @@
   "sharedAccount": "Shared with you",
   "@sharedAccount": {
     "description": "Tooltip for the icon shown next to the username of an account shared with the user."
+  },
+  "pinLock": "PIN lock",
+  "@pinLock": {
+    "description": "Title of the PIN lock screen and label of the PIN lock setting."
+  },
+  "pinLockDescription": "Require a PIN to unlock the app.",
+  "@pinLockDescription": {
+    "description": "Subtitle for the PIN lock setting."
+  },
+  "pinSetTitle": "Set PIN",
+  "@pinSetTitle": {
+    "description": "Title of the dialog used to set a PIN for the first time."
+  },
+  "pinChangeTitle": "Change PIN",
+  "@pinChangeTitle": {
+    "description": "Title of the dialog and setting used to change the PIN."
+  },
+  "pinDisableTitle": "Disable PIN lock",
+  "@pinDisableTitle": {
+    "description": "Title of the dialog shown before disabling the PIN lock."
+  },
+  "pinEnter": "Enter your PIN",
+  "@pinEnter": {
+    "description": "Prompt shown above the PIN keypad."
+  },
+  "pinConfirm": "Confirm PIN",
+  "@pinConfirm": {
+    "description": "Label of the second PIN field, used to confirm the new PIN."
+  },
+  "pinCurrent": "Current PIN",
+  "@pinCurrent": {
+    "description": "Label of the field where the current PIN is entered."
+  },
+  "pinIncorrect": "Incorrect PIN",
+  "@pinIncorrect": {
+    "description": "Error shown when the entered PIN is wrong."
+  },
+  "pinMismatch": "PINs do not match",
+  "@pinMismatch": {
+    "description": "Error shown when the two new PIN entries differ."
+  },
+  "pinInvalidLength": "PIN must be 4 to 8 digits",
+  "@pinInvalidLength": {
+    "description": "Error shown when a PIN is outside the 4-8 digit range."
+  },
+  "pinThrottled": "Too many attempts. Try again in {seconds} seconds.",
+  "@pinThrottled": {
+    "description": "Countdown shown while PIN entry is temporarily throttled.",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "pinForgotWarningTitle": "Warning: forgotten PIN",
+  "@pinForgotWarningTitle": {
+    "description": "Title of the warning shown before enabling the PIN lock."
+  },
+  "pinForgotWarning": "If you forget your PIN and have no biometric unlock enabled, your local data cannot be recovered. There is no way to reset the PIN.",
+  "@pinForgotWarning": {
+    "description": "Warning about the consequences of forgetting the PIN."
+  },
+  "pinEnabled": "PIN lock enabled",
+  "@pinEnabled": {
+    "description": "Snackbar shown when the PIN lock is enabled."
+  },
+  "pinDisabled": "PIN lock disabled",
+  "@pinDisabled": {
+    "description": "Snackbar shown when the PIN lock is disabled."
+  },
+  "pinChanged": "PIN changed",
+  "@pinChanged": {
+    "description": "Snackbar shown when the PIN is changed."
+  },
+  "unlockWithBiometrics": "Unlock with biometrics",
+  "@unlockWithBiometrics": {
+    "description": "Prompt shown on the lock screen before the biometric check."
+  },
+  "usePin": "Use PIN",
+  "@usePin": {
+    "description": "Action that switches the lock screen from biometrics to the PIN keypad."
+  },
+  "useBiometrics": "Use biometrics",
+  "@useBiometrics": {
+    "description": "Action that switches the lock screen from the PIN keypad to biometrics."
+  },
+  "continueLabel": "Continue",
+  "@continueLabel": {
+    "description": "Confirmation action in the forgotten-PIN warning dialog."
+  },
+  "verify": "Verify",
+  "@verify": {
+    "description": "Action that verifies the current PIN in a dialog."
   }
 }

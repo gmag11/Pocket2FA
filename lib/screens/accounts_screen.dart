@@ -2,14 +2,22 @@ import 'package:flutter/material.dart';
 
 import '../l10n/app_localizations.dart';
 import '../models/server_connection.dart';
+import '../services/settings_service.dart';
 import '../services/settings_storage.dart';
+import 'pin_lock_screen.dart';
 import 'server_add_edit_dialog.dart';
 import 'server_detail_screen.dart';
 
 class AccountsScreen extends StatefulWidget {
   final SettingsStorage storage;
   final Future<void> Function()? onServerChanged;
-  const AccountsScreen({required this.storage, this.onServerChanged, super.key});
+  final SettingsService? settings;
+  const AccountsScreen({
+    required this.storage,
+    this.onServerChanged,
+    this.settings,
+    super.key,
+  });
 
   @override
   State<AccountsScreen> createState() => _AccountsScreenState();
@@ -160,6 +168,21 @@ class _AccountsScreenState extends State<AccountsScreen> {
     // secure-storage failure is reported as such (with its detail) rather than
     // as a biometric problem the user can never satisfy.
     if (!widget.storage.isUnlocked) {
+      final settings = widget.settings;
+      if (settings != null &&
+          (widget.storage.isPinLocked || settings.pinEnabled) &&
+          !widget.storage.hasStorageError) {
+        return PinLockScreen(
+          settings: settings,
+          title: l10n.accountsTitle,
+          onUnlocked: () async {
+            if (!mounted) return;
+            _loadServers();
+            setState(() {});
+          },
+        );
+      }
+
       final storageFailed = widget.storage.hasStorageError;
       final detail = widget.storage.storageError;
       return Scaffold(

@@ -94,6 +94,7 @@ class _AccountListState extends State<AccountList> {
                               MaterialPageRoute(
                                 builder: (c) => AccountsScreen(
                                   storage: widget.settings.storage!,
+                                  settings: widget.settings,
                                   onServerChanged: widget.onReloadServers,
                                 ),
                               ),

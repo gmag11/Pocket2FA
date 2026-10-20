@@ -192,9 +192,10 @@ class EntryCreationService {
       // to avoid the API always including period
       final response = await ApiService.instance.createAccount(payload);
 
-      // On success, update with server data
-      var serverEntry =
-          AccountEntry.fromMap(response).copyWith(synchronized: true);
+      // On success, update with server data while retaining the locally
+      // captured secret and OTP parameters when the response omits them.
+      var serverEntry = entry.mergeServerData(
+          AccountEntry.fromMap(response));
 
       // Populate group name if server returned group_id but not group
       if (serverEntry.group.isEmpty &&

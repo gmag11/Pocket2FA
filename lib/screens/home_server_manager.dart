@@ -95,6 +95,11 @@ class HomeServerManager extends ChangeNotifier {
       servers = previousServers;
     }
 
+    // Older builds could persist several pending accounts with the same id
+    // (-1). Give each one a distinct negative id so the list keys and the
+    // selection sets remain unique.
+    final normalizedPendingIds = _normalizePendingIds(servers);
+
     _servers = servers;
     if (_servers.isNotEmpty) {
       if (restoredServerId != null) {
@@ -137,6 +142,14 @@ class HomeServerManager extends ChangeNotifier {
         'HomeServerManager.loadServers: took ${stopwatch.elapsedMilliseconds}ms '
         '(${_servers.length} server(s))',
         name: 'HomeServerManager');
+
+    if (normalizedPendingIds) {
+      await persistServersToStorage();
+      LogService.instance.log(
+          'HomeServerManager: persisted normalized pending account ids',
+          name: 'HomeServerManager');
+    }
+
     notifyListeners();
   }
 
@@ -239,6 +252,133 @@ class HomeServerManager extends ChangeNotifier {
             name: 'HomeServerManager');
       }
     }
+  }
+
+  /// Insert the result of a creation flow into the selected server.
+  ///
+  /// A positive id is a server id: replace the cached entry when it already
+  /// exists, otherwise append it. A non-positive id means the entry has not
+  /// reached the server yet, so give it a unique negative id and keep it
+  /// marked as unsynchronized.
+  Future<void> insertCreatedAccount(AccountEntry account) async {
+    final serverId = _selectedServerId;
+    if (serverId == null) {
+      LogService.instance.log(
+          'HomeServerManager: cannot insert created account without a selected server',
+          name: 'HomeServerManager');
+      return;
+    }
+    final idx = _servers.indexWhere((s) => s.id == serverId);
+    if (idx == -1) {
+      LogService.instance.log(
+          'HomeServerManager: selected server $serverId not found; created account not inserted',
+          name: 'HomeServerManager');
+      return;
+    }
+
+    final server = _servers[idx];
+    var entry = account;
+    int? existingIdx;
+    if (entry.id > 0) {
+      existingIdx = server.accounts.indexWhere((a) => a.id == entry.id);
+    } else {
+      entry = entry.copyWith(
+        id: _nextTemporaryId(server.accounts),
+        synchronized: false,
+      );
+    }
+
+    final accounts = List<AccountEntry>.from(server.accounts);
+    if (existingIdx != null && existingIdx != -1) {
+      accounts[existingIdx] = entry;
+    } else {
+      accounts.add(entry);
+    }
+
+    final updatedServers = List<ServerConnection>.from(_servers);
+    updatedServers[idx] = _copyServerWithAccounts(server, accounts);
+    _servers = updatedServers;
+    _currentItems = accounts.where((a) => !a.deleted).toList();
+    notifyListeners();
+
+    await persistServersToStorage();
+    LogService.instance.log(
+        'HomeServerManager: inserted created account id=${entry.id} '
+        'synchronized=${entry.synchronized}',
+        name: 'HomeServerManager');
+  }
+
+  static int _nextTemporaryId(List<AccountEntry> accounts) {
+    var minimum = 0;
+    for (final account in accounts) {
+      if (account.id < minimum) minimum = account.id;
+    }
+    return minimum - 1;
+  }
+
+  bool _normalizePendingIds(List<ServerConnection> servers) {
+    var anyChanged = false;
+    for (var i = 0; i < servers.length; i++) {
+      final server = servers[i];
+      final pending = server.accounts
+          .where((a) => !a.synchronized && !a.deleted && a.id <= 0)
+          .toList();
+      if (pending.length < 2) continue;
+
+      final counts = <int, int>{};
+      for (final account in pending) {
+        counts[account.id] = (counts[account.id] ?? 0) + 1;
+      }
+      if (!counts.values.any((count) => count > 1)) continue;
+
+      final used = server.accounts
+          .where((a) => a.id < 0)
+          .map((a) => a.id)
+          .toSet();
+      var next = used.isEmpty ? -1 : used.reduce((a, b) => a < b ? a : b) - 1;
+      final accounts = List<AccountEntry>.from(server.accounts);
+      final seen = <int>{};
+      var serverChanged = false;
+      for (var j = 0; j < accounts.length; j++) {
+        final account = accounts[j];
+        if (account.synchronized || account.deleted || account.id > 0) {
+          continue;
+        }
+        if (seen.add(account.id)) continue;
+        while (used.contains(next)) {
+          next -= 1;
+        }
+        used.add(next);
+        seen.add(next);
+        accounts[j] = account.copyWith(id: next);
+        serverChanged = true;
+      }
+      if (serverChanged) {
+        servers[i] = _copyServerWithAccounts(server, accounts);
+        anyChanged = true;
+      }
+    }
+    return anyChanged;
+  }
+
+  ServerConnection _copyServerWithAccounts(
+      ServerConnection server, List<AccountEntry> accounts) {
+    return ServerConnection(
+      id: server.id,
+      name: server.name,
+      url: server.url,
+      apiKey: server.apiKey,
+      accounts: accounts,
+      groups: server.groups,
+      userId: server.userId,
+      userName: server.userName,
+      userEmail: server.userEmail,
+      oauthProvider: server.oauthProvider,
+      authenticatedByProxy: server.authenticatedByProxy,
+      preferences: server.preferences,
+      isAdmin: server.isAdmin,
+      allowSelfSigned: server.allowSelfSigned,
+    );
   }
 
   void addNewAccount(AccountEntry account) {

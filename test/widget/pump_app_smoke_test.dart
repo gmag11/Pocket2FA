@@ -5,14 +5,13 @@ import 'package:pocket2fa/l10n/app_localizations.dart';
 import '../helpers/pump.dart';
 
 void main() {
-  testWidgets('pumpApp provides the app localization delegates',
-      (tester) async {
+  testWidgets('pumpApp provides the app localization delegates', (
+    tester,
+  ) async {
     await pumpApp(
       tester,
       Builder(
-        builder: (context) => Text(
-          AppLocalizations.of(context)!.appTitle,
-        ),
+        builder: (context) => Text(AppLocalizations.of(context)!.appTitle),
       ),
     );
 

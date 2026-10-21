@@ -15,8 +15,5 @@ T withFixedTime<T>(DateTime instant, T Function() body) =>
 ///
 /// The clock override is zone-scoped, so it remains active across awaits
 /// inside [body].
-Future<T> withFixedTimeAsync<T>(
-  DateTime instant,
-  Future<T> Function() body,
-) =>
+Future<T> withFixedTimeAsync<T>(DateTime instant, Future<T> Function() body) =>
     withClock(Clock.fixed(instant), body);

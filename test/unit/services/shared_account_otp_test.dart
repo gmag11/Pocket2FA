@@ -70,27 +70,39 @@ void main() {
 
   group('root cause: empty seeds collide', () {
     test('two accounts with empty seeds generate the same local code', () {
-      final a =
-          AccountEntry(id: 1, service: 'A', account: 'a', seed: '', group: '');
-      final b =
-          AccountEntry(id: 2, service: 'B', account: 'b', seed: '', group: '');
+      final a = AccountEntry(
+        id: 1,
+        service: 'A',
+        account: 'a',
+        seed: '',
+        group: '',
+      );
+      final b = AccountEntry(
+        id: 2,
+        service: 'B',
+        account: 'b',
+        seed: '',
+        group: '',
+      );
 
       expect(OtpService.generateOtp(a), OtpService.generateOtp(b));
     });
 
     test('distinct seeds generate distinct codes', () {
       final a = AccountEntry(
-          id: 1,
-          service: 'A',
-          account: 'a',
-          seed: 'JBSWY3DPEHPK3PXP',
-          group: '');
+        id: 1,
+        service: 'A',
+        account: 'a',
+        seed: 'JBSWY3DPEHPK3PXP',
+        group: '',
+      );
       final b = AccountEntry(
-          id: 2,
-          service: 'B',
-          account: 'b',
-          seed: 'KRSXG5CTMVRXEZLU',
-          group: '');
+        id: 2,
+        service: 'B',
+        account: 'b',
+        seed: 'KRSXG5CTMVRXEZLU',
+        group: '',
+      );
 
       expect(OtpService.generateOtp(a), isNot(OtpService.generateOtp(b)));
     });

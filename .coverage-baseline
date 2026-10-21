@@ -3,4 +3,4 @@
 # Overall coverage of lib/ (generated lib/l10n/ excluded) must not drop below
 # this number. Raise it deliberately as coverage grows; never lower it.
 # Once coverage reaches 70.0 it stays pinned there as the floor.
-20.20
+31.67

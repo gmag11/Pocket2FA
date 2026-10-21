@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:flutter_zxing/flutter_zxing.dart';
 import '../models/group_entry.dart';
 import '../models/account_entry.dart';
 import '../services/entry_creation_service.dart';
+import '../services/qr_image_scanner.dart';
 import '../l10n/app_localizations.dart';
 
 class ImageQrScannerScreen extends StatefulWidget {
@@ -43,23 +43,13 @@ class _ImageQrScannerScreenState extends State<ImageQrScannerScreen> {
     });
 
     try {
-      // Decode the QR directly from the original file. The decoder already
-      // scans its own downscaled pyramid, so pre-shrinking the image here only
-      // loses the detail of small QR codes in large screenshots.
-      final codeResult = await zx.readBarcodeImagePathString(
-          image.path,
-          DecodeParams(
-            tryHarder: true,
-            tryInverted: true,
-            tryRotate: true,
-            tryDownscale: true,
-            maxSize: 4000, // safety bound; common screenshots are untouched
-          ));
+      // Decode from the original file through the shared scanner service. It
+      // scans a downscaled pyramid internally, so pre-shrinking the image here
+      // would only lose the detail of small QR codes in large screenshots.
+      final qrText = await const QrImageScanner().decodeFile(image.path);
 
-      if (codeResult.isValid &&
-          codeResult.text != null &&
-          codeResult.text!.isNotEmpty) {
-        final entry = await _parseAndCreateEntry(codeResult.text!);
+      if (qrText != null) {
+        final entry = await _parseAndCreateEntry(qrText);
 
         if (entry != null && mounted) {
           Navigator.of(context).pop(entry);

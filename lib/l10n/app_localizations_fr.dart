@@ -65,6 +65,35 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
+  String get oneImageAtATime => 'Une seule image peut être traitée à la fois';
+
+  @override
+  String get unsupportedFile =>
+      'Fichier non pris en charge. Choisissez une image contenant un code QR.';
+
+  @override
+  String imageTooLarge(String maxSize) {
+    return 'L\'image est trop volumineuse (maximum $maxSize).';
+  }
+
+  @override
+  String get unreadableImage => 'Impossible de lire l\'image';
+
+  @override
+  String get serverRequiredForImage =>
+      'Ajoutez un serveur avant de créer un compte à partir d\'une image';
+
+  @override
+  String get processingIncomingImage => 'Traitement de l\'image...';
+
+  @override
+  String get incomingImageBusy =>
+      'Une autre image est déjà en cours de traitement. Réessayez dans un instant.';
+
+  @override
+  String get dropQrImageHere => 'Déposez ici une image contenant un QR';
+
+  @override
   String get selectQrImageTitle => 'Sélectionner une image QR';
 
   @override

@@ -202,6 +202,54 @@ abstract class AppLocalizations {
   /// **'Error scanning image: {error}'**
   String errorScanningImage(Object error);
 
+  /// Shown when a share or drop delivers more than one image.
+  ///
+  /// In en, this message translates to:
+  /// **'Only one image can be processed at a time'**
+  String get oneImageAtATime;
+
+  /// Shown when a shared or dropped item is not an image.
+  ///
+  /// In en, this message translates to:
+  /// **'Unsupported file. Choose an image that contains a QR code.'**
+  String get unsupportedFile;
+
+  /// Shown when an incoming image exceeds the accepted size limit.
+  ///
+  /// In en, this message translates to:
+  /// **'Image is too large (maximum {maxSize}).'**
+  String imageTooLarge(String maxSize);
+
+  /// Shown when an incoming image cannot be decoded.
+  ///
+  /// In en, this message translates to:
+  /// **'The image could not be read'**
+  String get unreadableImage;
+
+  /// Shown when an image arrives but no server is configured.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a server before creating an account from an image'**
+  String get serverRequiredForImage;
+
+  /// Progress dialog text while a shared or dropped image is processed.
+  ///
+  /// In en, this message translates to:
+  /// **'Processing image...'**
+  String get processingIncomingImage;
+
+  /// Shown when a second image arrives while one is still processing.
+  ///
+  /// In en, this message translates to:
+  /// **'Another image is already being processed. Try again in a moment.'**
+  String get incomingImageBusy;
+
+  /// Overlay text shown while an image is dragged over the desktop window.
+  ///
+  /// In en, this message translates to:
+  /// **'Drop a QR image here'**
+  String get dropQrImageHere;
+
   /// Title for the image QR picker screen.
   ///
   /// In en, this message translates to:

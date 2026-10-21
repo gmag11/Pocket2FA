@@ -28,8 +28,11 @@ Relevant constraints in the current code:
   `taskAffinity=""`, and already overrides `onActivityResult`.
 - Android receives shared content as a temporary `content://` URI; the grant ends with the
   receiving component's lifecycle, so the bytes must be copied before processing.
-- `desktop_drop` 0.9.2 requires Flutter 3.47.7 (the project's version) and releases provider or
-  temporary files when the `onDrop` callback returns; file reads/copies must be awaited inside it.
+- `desktop_drop` 0.8.4 is the newest release compatible with the project's `image_picker`
+  (0.9.x requires `cross_file` 0.4, which `image_picker_platform_interface` 2.11.2 does not
+  support). Its `onDragDone` callback is synchronous and, on Windows/Linux, the dropped files are
+  local paths that remain readable after the callback returns, so the copy starts immediately
+  from that callback.
 - The repo has Android, Windows and Linux targets only; there is no iOS project.
 - `flutter_zxing` decodes at full resolution with `maxSize: 4000`; the gallery screen and the new
   paths must use the same call so detection stays identical.
@@ -81,21 +84,25 @@ activity, and implement the share lifecycle in `MainActivity.kt`:
 the activity launch mode, and hides the exact copy/size/single-image rules this change needs.
 The native implementation is small and keeps the existing `singleTop` behavior.
 
-### Decision 2: Use `desktop_drop` for Windows/Linux drag-and-drop
+### Decision 2: Use `desktop_drop` 0.8.4 for Windows/Linux drag-and-drop
 
-Wrap the `HomePage` content in a `DropTarget` enabled only on Windows and Linux, with
-`acceptedKinds: {DropItemKind.file}`. The target covers the whole accounts UI, not a small zone.
+`desktop_drop` 0.9.x requires `cross_file` 0.4, which is incompatible with the project's
+`image_picker_platform_interface` 2.11.2 (`XFile(path)`, `XFile.path` and `XFile.mimeType` were
+removed). 0.8.4 is the newest compatible release and keeps Windows/Linux support.
 
-- `onWillAccept` is synchronous and only checks the preview: exactly one `DropFileItem` whose
-  MIME type starts with `image/` or whose name has a common image extension. It cannot perform
-  I/O, per the plugin contract.
-- `onEnter`/`onLeave` drive a translucent overlay with a drop icon and a localized "Drop a QR
-  image here" message. The overlay is ignorable (`IgnorePointer`) so it does not affect the drop
-  hit test.
-- `onDrop` validates the actual item list, then copies the single file into
-  `cacheDir/incoming_qr_desktop/<uuid>.<ext>` with the same 32 MiB limit. The copy is awaited
-  inside `onDrop` because the plugin releases transfer files when the callback returns. Processing
-  starts only after the copy completes.
+Wrap the `HomePage` content in a `DropTarget` enabled only on Windows and Linux. The target
+covers the whole accounts UI, not a small zone.
+
+- 0.8.4 has no preview-based `onWillAccept`/`acceptedKinds`; every file drop reaches `onDragDone`.
+  The callback validates the item list there: exactly one `DropItemFile` whose MIME type starts
+  with `image/` or whose name has a common image extension.
+- `onDragEntered`/`onDragExited` drive a translucent overlay with a drop icon and a localized
+  "Drop a QR image here" message. The overlay is ignorable (`IgnorePointer`) so it does not affect
+  the drop hit test.
+- `onDragDone` is synchronous. It starts (and awaits internally) the copy of the single file into
+  `cacheDir/incoming_qr_desktop/<uuid>.<ext>` with the same 32 MiB limit. On Windows and Linux the
+  dropped items carry local paths that stay valid after the callback, so the copy can continue
+  asynchronously. Processing starts only after the copy completes.
 - More than one item, zero file items, or a non-image item produces the corresponding rejection
   without copying.
 
@@ -216,8 +223,8 @@ Reuse `noQrInImage`, `errorParsingQr`, and `accountUpdated`. Regenerate localiza
 - **Multi-image share targets** → The app declares `SEND_MULTIPLE` so it can honor the requested
   "only one image" error instead of silently not appearing. Users who select several images get
   an explicit rejection rather than a partial import.
-- **Desktop provider files** → `onDrop` copies before returning; not doing so would lose the file
-  when the plugin releases provider access.
+- **Desktop drop files** → The copy starts immediately from `onDragDone`; on Windows/Linux the
+  items are local paths that remain valid, unlike provider-backed content on other platforms.
 - **Desktop drop while a modal route is open** → The drop target sits under the modal barrier and
   will not receive the drop; the user can close the dialog and drop again. No special handling is
   added.

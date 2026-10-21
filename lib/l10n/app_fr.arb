@@ -74,6 +74,43 @@
             "error": {}
         }
     },
+    "oneImageAtATime": "Une seule image peut être traitée à la fois",
+    "@oneImageAtATime": {
+        "description": "Affiché lorsqu'un partage ou un dépôt contient plusieurs images."
+    },
+    "unsupportedFile": "Fichier non pris en charge. Choisissez une image contenant un code QR.",
+    "@unsupportedFile": {
+        "description": "Affiché lorsque l'élément partagé ou déposé n'est pas une image."
+    },
+    "imageTooLarge": "L'image est trop volumineuse (maximum {maxSize}).",
+    "@imageTooLarge": {
+        "description": "Affiché lorsqu'une image entrante dépasse la limite de taille.",
+        "placeholders": {
+            "maxSize": {
+                "type": "String"
+            }
+        }
+    },
+    "unreadableImage": "Impossible de lire l'image",
+    "@unreadableImage": {
+        "description": "Affiché lorsqu'une image entrante ne peut pas être décodée."
+    },
+    "serverRequiredForImage": "Ajoutez un serveur avant de créer un compte à partir d'une image",
+    "@serverRequiredForImage": {
+        "description": "Affiché lorsqu'une image arrive sans aucun serveur configuré."
+    },
+    "processingIncomingImage": "Traitement de l'image...",
+    "@processingIncomingImage": {
+        "description": "Texte du dialogue de progression pendant le traitement d'une image partagée ou déposée."
+    },
+    "incomingImageBusy": "Une autre image est déjà en cours de traitement. Réessayez dans un instant.",
+    "@incomingImageBusy": {
+        "description": "Affiché lorsqu'une deuxième image arrive pendant le traitement d'une autre."
+    },
+    "dropQrImageHere": "Déposez ici une image contenant un QR",
+    "@dropQrImageHere": {
+        "description": "Texte superposé pendant le glissement d'une image sur la fenêtre de bureau."
+    },
     "selectQrImageTitle": "Sélectionner une image QR",
     "@selectQrImageTitle": {
         "description": "Titre de l'écran de sélection d'image QR."

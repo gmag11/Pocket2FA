@@ -43,6 +43,7 @@ This project complements the official 2FAuth web application by offering:
 - **Secure Code Generation**: All codes are generated locally on your device
 - **Server Synchronization**: Sync your accounts and icons from your 2FAuth instance
 - **Account Management**: Create, edit, and delete entries directly from the mobile app
+- **Share or Drop QR Images**: Share an image containing a QR code to the Android app, or drop one onto the desktop window, to create the account without browsing for the file again
 - **Offline Access**: Access your codes even without internet connection
 - **Encrypted Storage**: Your secrets are stored securely using platform encryption
 - **Platform Support**: Native support for Android, Windows, and Linux
@@ -99,11 +100,12 @@ This project complements the official 2FAuth web application by offering:
 2. **Add Server**: Configure connection to your 2FAuth instance (URL and API key)
 3. **Synchronize**: Pull your accounts and icons from the server
 4. **Create Entry**: Use the "QR" button to add a new account entry directly from the app
-5. **Manage Mode**: Tap the "Edit" button to enter manage mode for editing or deleting entries
-6. **Edit Entry**: In manage mode, tap the edit icon next to an entry to modify its details
-7. **Delete Entry**: In manage mode, select the entries you want to delete and press the "Delete" button
-8. **Access Codes**: View and copy your 2FA codes from the main accounts list
-9. **Offline Use**: Codes continue to work without internet connection after initial sync
+5. **Share or Drop an Image**: On Android, share one image containing an `otpauth://` QR code to Pocket2FA; on Windows/Linux, drag one image file onto the accounts window. The account is added automatically, or kept as a pending upload when the server is unreachable. More than one image is rejected.
+6. **Manage Mode**: Tap the "Edit" button to enter manage mode for editing or deleting entries
+7. **Edit Entry**: In manage mode, tap the edit icon next to an entry to modify its details
+8. **Delete Entry**: In manage mode, select the entries you want to delete and press the "Delete" button
+9. **Access Codes**: View and copy your 2FA codes from the main accounts list
+10. **Offline Use**: Codes continue to work without internet connection after initial sync
 
 ## Not implemented yet
 - **Account reorder** is not implemented in current version. If you want to change order in which accounts are shown edit them in web service.

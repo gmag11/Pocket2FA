@@ -57,7 +57,8 @@ desktop, while reusing the existing full-resolution QR pipeline and account-crea
   new intake/processing services under `lib/services/`; `lib/screens/image_qr_scanner_screen.dart`
   (extract the scan call so both entry points share it); `lib/l10n/app_{en,es,fr}.arb` and
   generated localizations (new messages).
-- **Dependencies:** add `desktop_drop` (^0.9.2, Windows/Linux drag-and-drop); no Android share
+- **Dependencies:** add `desktop_drop` (^0.8.4, Windows/Linux drag-and-drop). 0.9.x requires
+  `cross_file` 0.4, which the project's `image_picker` does not support yet. No Android share
   plugin is added — the share intent is handled natively in `MainActivity`.
 - **Platforms:** Android, Windows, and Linux. There is no iOS target in this repository, so no
   iOS share extension is added.

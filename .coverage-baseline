@@ -10,4 +10,5 @@
 #
 # Raised from 15.62 to 19.15 by unit-tests-entry-creation-otp.
 # Raised from 19.15 to 24.89 by unit-tests-sync-service.
-24.89
+# Raised from 24.89 to 31.43 by unit-tests-account-tile-ui.
+31.43

@@ -74,6 +74,43 @@
       "error": {}
     }
   },
+  "oneImageAtATime": "Only one image can be processed at a time",
+  "@oneImageAtATime": {
+    "description": "Shown when a share or drop delivers more than one image."
+  },
+  "unsupportedFile": "Unsupported file. Choose an image that contains a QR code.",
+  "@unsupportedFile": {
+    "description": "Shown when a shared or dropped item is not an image."
+  },
+  "imageTooLarge": "Image is too large (maximum {maxSize}).",
+  "@imageTooLarge": {
+    "description": "Shown when an incoming image exceeds the accepted size limit.",
+    "placeholders": {
+      "maxSize": {
+        "type": "String"
+      }
+    }
+  },
+  "unreadableImage": "The image could not be read",
+  "@unreadableImage": {
+    "description": "Shown when an incoming image cannot be decoded."
+  },
+  "serverRequiredForImage": "Add a server before creating an account from an image",
+  "@serverRequiredForImage": {
+    "description": "Shown when an image arrives but no server is configured."
+  },
+  "processingIncomingImage": "Processing image...",
+  "@processingIncomingImage": {
+    "description": "Progress dialog text while a shared or dropped image is processed."
+  },
+  "incomingImageBusy": "Another image is already being processed. Try again in a moment.",
+  "@incomingImageBusy": {
+    "description": "Shown when a second image arrives while one is still processing."
+  },
+  "dropQrImageHere": "Drop a QR image here",
+  "@dropQrImageHere": {
+    "description": "Overlay text shown while an image is dragged over the desktop window."
+  },
   "selectQrImageTitle": "Select QR Image",
   "@selectQrImageTitle": {
     "description": "Title for the image QR picker screen."

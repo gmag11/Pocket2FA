@@ -139,7 +139,7 @@ class EntryCreationService {
   static Future<AccountEntry?> createEntryOnServer(AccountEntry entry,
       {required String serverHost,
       List<GroupEntry>? groups,
-      required BuildContext context,
+      BuildContext? context,
       String sourceTag = 'EntryCreation'}) async {
     if (serverHost.isEmpty) {
       return entry; // No server host, return local entry

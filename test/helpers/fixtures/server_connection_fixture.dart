@@ -11,6 +11,7 @@ ServerConnection serverConnectionFixture({
   String url = 'http://example.test',
   String apiKey = 'test-api-key',
   List<AccountEntry> accounts = const [],
+  String userEmail = 'user@example.test',
   bool allowSelfSigned = false,
 }) {
   return ServerConnection(
@@ -19,7 +20,7 @@ ServerConnection serverConnectionFixture({
     url: url,
     apiKey: apiKey,
     accounts: accounts,
-    userEmail: 'user@example.test',
+    userEmail: userEmail,
     allowSelfSigned: allowSelfSigned,
   );
 }

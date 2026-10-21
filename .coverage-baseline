@@ -1,6 +1,10 @@
 # Coverage ratchet for `dart run tool/check_coverage.dart`.
 #
-# Overall coverage of lib/ (generated lib/l10n/ excluded) must not drop below
+# Overall coverage of every non-generated file under lib/ must not drop below
 # this number. Raise it deliberately as coverage grows; never lower it.
 # Once coverage reaches 70.0 it stays pinned there as the floor.
-70.0
+#
+# The metric now counts files that no test executes as 0% (see
+# test/coverage/import_all_test.dart). The previous 70.0 was measured over
+# loaded files only, so it is not comparable with this value.
+15.62

@@ -31,7 +31,7 @@
 ## 6. CI integration
 
 - [x] 6.1 Add `.github/workflows/test.yml` running on `push` and `pull_request` with Flutter `3.47.7`: `flutter pub get`, `flutter analyze`, `flutter test --coverage`, and `dart run tool/check_coverage.dart`; verify the YAML is valid and the same four commands pass locally.
-- [ ] 6.2 Confirm the gate behavior on CI: open the branch's first run, verify the job is green at the baseline, then verify a deliberately lowered coverage (temporary, reverted) turns the job red.
+- [x] 6.2 Confirm the gate behavior on CI: open the branch's first run, verify the job is green at the baseline, then verify a deliberately lowered coverage (temporary, reverted) turns the job red.
 
 ## 7. Integration check
 

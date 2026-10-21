@@ -13,4 +13,5 @@
 # Raised from 24.89 to 31.43 by unit-tests-account-tile-ui.
 # Raised from 31.43 to 35.34 by widget-tests-account-tile-behavior.
 # Raised from 35.34 to 38.65 by widget-tests-small-ui.
-38.65
+# Raised from 38.65 to 42.33 by screen-tests-settings.
+42.33

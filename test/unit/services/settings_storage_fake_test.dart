@@ -33,4 +33,14 @@ void main() {
     expect(storage.isUnlocked, isFalse);
     expect(() => storage.box, throwsStateError);
   });
+
+  test('reports a configured storage error', () {
+    final failing = FakeSettingsStorage(storageError: 'keyring unavailable');
+    final healthy = FakeSettingsStorage();
+
+    expect(failing.hasStorageError, isTrue);
+    expect(failing.storageError, 'keyring unavailable');
+    expect(healthy.hasStorageError, isFalse);
+    expect(healthy.storageError, isNull);
+  });
 }

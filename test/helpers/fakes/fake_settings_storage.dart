@@ -17,16 +17,17 @@ class FakeSettingsStorage extends SettingsStorage {
     bool pinEnabled = false,
     int? pinDigits,
     this.biometricsSupported = false,
-  })  : _values = {...?initialValues},
-        _hasPin = pinEnabled,
-        _pinLength = pinDigits {
+    this.storageError,
+  }) : _values = {...?initialValues},
+       _hasPin = pinEnabled,
+       _pinLength = pinDigits {
     when(() => _box.get(any(), defaultValue: any(named: 'defaultValue')))
         .thenAnswer((invocation) {
-      final key = invocation.positionalArguments.first;
-      return _values.containsKey(key)
-          ? _values[key]
-          : invocation.namedArguments[#defaultValue];
-    });
+          final key = invocation.positionalArguments.first;
+          return _values.containsKey(key)
+              ? _values[key]
+              : invocation.namedArguments[#defaultValue];
+        });
     when(() => _box.put(any(), any())).thenAnswer((invocation) async {
       _values[invocation.positionalArguments[0]] =
           invocation.positionalArguments[1];
@@ -35,8 +36,7 @@ class FakeSettingsStorage extends SettingsStorage {
       _values.remove(invocation.positionalArguments.first);
     });
     when(() => _box.containsKey(any())).thenAnswer(
-      (invocation) =>
-          _values.containsKey(invocation.positionalArguments.first),
+      (invocation) => _values.containsKey(invocation.positionalArguments.first),
     );
   }
 
@@ -47,6 +47,12 @@ class FakeSettingsStorage extends SettingsStorage {
   final bool _hasPin;
   final int? _pinLength;
   final bool biometricsSupported;
+
+  @override
+  final String? storageError;
+
+  @override
+  bool get hasStorageError => storageError != null;
 
   Map<dynamic, dynamic> get values => Map.unmodifiable(_values);
 

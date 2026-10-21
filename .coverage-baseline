@@ -7,4 +7,6 @@
 # The metric now counts files that no test executes as 0% (see
 # test/coverage/import_all_test.dart). The previous 70.0 was measured over
 # loaded files only, so it is not comparable with this value.
-15.62
+#
+# Raised from 15.62 to 19.15 by unit-tests-entry-creation-otp.
+19.15

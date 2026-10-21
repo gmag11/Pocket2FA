@@ -7,8 +7,11 @@ import 'package:http_mock_adapter/http_mock_adapter.dart';
 /// interceptor keeps the real [RequestOptions] so tests can assert the exact
 /// payload, query parameters and path that [ApiService] produced.
 class ApiTestHarness {
-  ApiTestHarness(this.dio) {
-    adapter = DioAdapter(dio: dio, matcher: const UrlRequestMatcher());
+  ApiTestHarness(this.dio, {bool matchMethod = false}) {
+    adapter = DioAdapter(
+      dio: dio,
+      matcher: UrlRequestMatcher(matchMethod: matchMethod),
+    );
     dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) {

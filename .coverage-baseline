@@ -9,4 +9,5 @@
 # loaded files only, so it is not comparable with this value.
 #
 # Raised from 15.62 to 19.15 by unit-tests-entry-creation-otp.
-19.15
+# Raised from 19.15 to 24.89 by unit-tests-sync-service.
+24.89

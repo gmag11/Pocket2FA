@@ -1,0 +1,13 @@
+{
+  "id": 2,
+  "service": "MySite",
+  "account": "john.doe",
+  "secret": "JBSWY3DPEHPK3PXP",
+  "otp_type": "totp",
+  "period": 30,
+  "digits": 6,
+  "algorithm": "sha1",
+  "group_id": 1,
+  "group": "Personal",
+  "is_borrowed": false
+}

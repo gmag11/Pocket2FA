@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:typed_data';
+import 'package:clock/clock.dart';
 import 'package:crypto/crypto.dart';
 import '../models/account_entry.dart';
 import '../services/settings_storage.dart';
@@ -33,7 +34,7 @@ class OtpService {
       final secretBytes = _decodeSecret(acct.seed);
       final sharedSecretBase64 = base64.encode(secretBytes);
       return generateSteamTotp(sharedSecretBase64,
-          forUnixTime: (DateTime.now().toUtc().millisecondsSinceEpoch ~/ 1000) +
+          forUnixTime: (clock.now().toUtc().millisecondsSinceEpoch ~/ 1000) +
               timeOffsetSeconds);
     }
 
@@ -71,7 +72,7 @@ class OtpService {
 
     final key = _decodeSecret(seed);
 
-    final ts = ((DateTime.now().toUtc().millisecondsSinceEpoch ~/ 1000) +
+    final ts = ((clock.now().toUtc().millisecondsSinceEpoch ~/ 1000) +
             timeOffsetSeconds) ~/
         period;
 
@@ -125,7 +126,7 @@ class OtpService {
 
       // 2) Compute time counter (step = 30s). Use forUnixTime if provided.
       final unixTime = forUnixTime ??
-          (DateTime.now().toUtc().millisecondsSinceEpoch ~/ 1000);
+          (clock.now().toUtc().millisecondsSinceEpoch ~/ 1000);
       final timeStep = 30;
       final counter = unixTime ~/ timeStep;
 

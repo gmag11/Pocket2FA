@@ -1,15 +1,7 @@
 name: Build Android and Upload Release APKs
 
 on:
-  release:
-    types: [published]
-  workflow_dispatch:
-    inputs:
-      branch:
-        description: 'Branch to build'
-        required: true
-        default: 'main'
-        type: string
+  workflow_call:
 
 jobs:
   android:

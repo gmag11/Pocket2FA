@@ -4,10 +4,12 @@ import 'package:pocket2fa/models/account_entry.dart';
 import 'package:pocket2fa/models/server_connection.dart';
 import 'package:pocket2fa/screens/home_server_manager.dart';
 import 'package:pocket2fa/screens/home_sync_manager.dart';
+import 'package:pocket2fa/services/api_service.dart';
 import 'package:pocket2fa/services/settings_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../helpers/fakes/fake_settings_storage.dart';
+import '../../helpers/fixtures/api_test_harness.dart';
 import '../../helpers/fixtures/server_connection_fixture.dart';
 import '../../helpers/reset.dart';
 
@@ -47,11 +49,15 @@ void _stub(
 
 void main() {
   setUp(() {
+    ApiService.instance.close();
     SharedPreferences.setMockInitialValues({});
     resetLogService();
   });
 
-  tearDown(resetLogService);
+  tearDown(() {
+    ApiService.instance.close();
+    resetLogService();
+  });
 
   test('updates sync flags and notifications', () {
     final manager = MockHomeServerManager();
@@ -163,4 +169,95 @@ void main() {
       expect(sync.isSyncing, isFalse);
     },
   );
+
+  test('force sync refreshes a server and marks it reachable', () async {
+    final api = ApiService.instance;
+    final account = _account(id: 1);
+    final server = serverConnectionFixture(accounts: [account]);
+    final storage = FakeSettingsStorage(
+      initialValues: {
+        'servers': [server.toMap()],
+        'selected': {'serverId': server.id, 'accountIndex': 0},
+      },
+    );
+    final settings = SettingsService(storage: storage);
+    await settings.reloadFromStorage();
+    final manager = HomeServerManager(settings);
+    await manager.loadServers();
+    final sync = HomeSyncManager(manager);
+
+    final harness = ApiTestHarness(api.dio);
+    harness.adapter.onGet('groups', (s) => s.reply(200, []));
+    harness.adapter.onGet(
+      'twofaccounts',
+      (s) => s.reply(200, [account.toMap()]),
+    );
+
+    await sync.forceSyncCurrentServer();
+
+    expect(manager.serverReachable, isTrue);
+    expect(sync.isSyncing, isFalse);
+  });
+
+  test('force sync marks a failed account fetch unreachable', () async {
+    final api = ApiService.instance;
+    final server = serverConnectionFixture(accounts: [_account(id: 1)]);
+    final storage = FakeSettingsStorage(
+      initialValues: {
+        'servers': [server.toMap()],
+        'selected': {'serverId': server.id, 'accountIndex': 0},
+      },
+    );
+    final settings = SettingsService(storage: storage);
+    await settings.reloadFromStorage();
+    final manager = HomeServerManager(settings);
+    await manager.loadServers();
+    final sync = HomeSyncManager(manager);
+
+    final harness = ApiTestHarness(api.dio);
+    harness.adapter.onGet('groups', (s) => s.reply(200, []));
+    harness.adapter.onGet(
+      'twofaccounts',
+      (s) => s.reply(500, {'message': 'offline'}),
+    );
+
+    await sync.forceSyncCurrentServer();
+
+    expect(manager.serverReachable, isFalse);
+    expect(sync.isSyncing, isFalse);
+  });
+
+  test('uploads a pending local account', () async {
+    final api = ApiService.instance;
+    final pending = _account(id: -1, synchronized: false);
+    final server = serverConnectionFixture(accounts: [pending]);
+    final storage = FakeSettingsStorage(
+      initialValues: {
+        'servers': [server.toMap()],
+        'selected': {'serverId': server.id, 'accountIndex': 0},
+      },
+    );
+    final settings = SettingsService(storage: storage);
+    await settings.reloadFromStorage();
+    final manager = HomeServerManager(settings);
+    await manager.loadServers();
+    final sync = HomeSyncManager(manager);
+
+    final harness = ApiTestHarness(api.dio);
+    harness.adapter.onPost(
+      'twofaccounts',
+      (s) => s.reply(201, {
+        'id': 5,
+        'service': 'GitHub',
+        'account': 'alice',
+        'secret': 'JBSWY3DPEHPK3PXP',
+        'group': '',
+      }),
+    );
+
+    await sync.ensurePendingUploads();
+
+    expect(manager.currentItems.map((a) => a.id), contains(5));
+    expect(manager.serverReachable, isTrue);
+  });
 }

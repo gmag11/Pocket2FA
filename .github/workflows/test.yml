@@ -1,8 +1,8 @@
 name: CI - Tests and coverage
 
 on:
-  push:
   pull_request:
+  workflow_call:
 
 jobs:
   test:
@@ -10,6 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.inputs.branch || github.ref }}
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2

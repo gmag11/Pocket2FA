@@ -7,7 +7,7 @@ on:
 jobs:
   test:
     name: Analyze, test and coverage ratchet
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v6
         with:
@@ -21,7 +21,7 @@ jobs:
           cache: true
 
       - name: Cache Pub & Dart tool
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ~/.pub-cache

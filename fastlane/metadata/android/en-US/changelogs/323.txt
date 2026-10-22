@@ -1,0 +1,6 @@
+Version 0.11.0
+
+- Create accounts offline and sync them when the server is available again
+- Share QR images from other apps or drag and drop them onto the desktop app
+- Scan QR codes from the gallery at full resolution for better reliability
+- Prevent duplicate account submissions while a save is in progress

@@ -1,0 +1,14 @@
+{
+  "id": 25,
+  "service": "AnotherSite",
+  "account": "jane.doe",
+  "secret": "",
+  "otp_type": "totp",
+  "period": 30,
+  "digits": 6,
+  "algorithm": "sha1",
+  "group_id": 3,
+  "group": "Shared",
+  "is_borrowed": true,
+  "shared_by": "Jane"
+}

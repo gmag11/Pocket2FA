@@ -1,8 +1,7 @@
 name: Build Linux AppImage
 
 on:
-  release:
-    types: [published]
+  workflow_call:
 
 jobs:
   linux-x64:
@@ -69,14 +68,6 @@ jobs:
           fi
           echo "x86_64 AppImage found and ready for upload"
           ls -la build/linux/x64/release/appimage/
-
-      - name: Test build complete (manual dispatch)
-        if: github.event_name == 'workflow_dispatch'
-        run: |
-          echo "🎉 Manual test build completed successfully!"
-          echo "📦 AppImage: build/linux/x64/release/appimage/Pocket2FA-${{ steps.get_version.outputs.version }}-x86_64.AppImage"
-          echo "🔐 Checksum: $(cat build/linux/x64/release/appimage/Pocket2FA-${{ steps.get_version.outputs.version }}-x86_64.AppImage.sha256 | cut -d' ' -f1)"
-          echo "ℹ️  This was a test build - no files were uploaded to release."
 
       - name: Upload x86_64 AppImage to release
         if: github.event_name == 'release'

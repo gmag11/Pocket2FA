@@ -1,7 +1,7 @@
 ; Inno Setup script for Pocket2FA
 [Setup]
 AppName=Pocket2FA
-AppVersion=0.10.0
+AppVersion=0.11.0
 DefaultDirName={autopf}\Pocket2FA
 DefaultGroupName=Pocket2FA
 OutputBaseFilename=Pocket2FA_Installer_Windows_x64

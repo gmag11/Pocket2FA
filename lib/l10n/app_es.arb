@@ -74,6 +74,43 @@
       "error": {}
     }
   },
+  "oneImageAtATime": "Solo se puede procesar una imagen a la vez",
+  "@oneImageAtATime": {
+    "description": "Mostrado cuando un envío o arrastre entrega más de una imagen."
+  },
+  "unsupportedFile": "Archivo no compatible. Elige una imagen que contenga un código QR.",
+  "@unsupportedFile": {
+    "description": "Mostrado cuando el elemento compartido o arrastrado no es una imagen."
+  },
+  "imageTooLarge": "La imagen es demasiado grande (máximo {maxSize}).",
+  "@imageTooLarge": {
+    "description": "Mostrado cuando una imagen entrante supera el límite de tamaño.",
+    "placeholders": {
+      "maxSize": {
+        "type": "String"
+      }
+    }
+  },
+  "unreadableImage": "No se pudo leer la imagen",
+  "@unreadableImage": {
+    "description": "Mostrado cuando una imagen entrante no se puede decodificar."
+  },
+  "serverRequiredForImage": "Añade un servidor antes de crear una cuenta desde una imagen",
+  "@serverRequiredForImage": {
+    "description": "Mostrado cuando llega una imagen pero no hay ningún servidor configurado."
+  },
+  "processingIncomingImage": "Procesando imagen...",
+  "@processingIncomingImage": {
+    "description": "Texto del diálogo de progreso mientras se procesa una imagen compartida o arrastrada."
+  },
+  "incomingImageBusy": "Ya se está procesando otra imagen. Inténtalo de nuevo en un momento.",
+  "@incomingImageBusy": {
+    "description": "Mostrado cuando llega una segunda imagen mientras se procesa otra."
+  },
+  "dropQrImageHere": "Suelta aquí una imagen con QR",
+  "@dropQrImageHere": {
+    "description": "Texto superpuesto mientras se arrastra una imagen sobre la ventana de escritorio."
+  },
   "selectQrImageTitle": "Seleccionar imagen QR",
   "@selectQrImageTitle": {
     "description": "Título para el selector de imágenes con QR."

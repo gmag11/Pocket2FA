@@ -1215,7 +1215,7 @@ class _HomePageState extends State<HomePage>
 
   void _showAboutDialog() {
     // NOTE: appVersion is kept in sync manually with pubspec.yaml's version: field.
-    const appVersion = '0.10.0';
+    const appVersion = '0.11.0';
 
     showDialog<void>(
       context: context,

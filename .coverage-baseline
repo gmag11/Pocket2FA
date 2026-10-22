@@ -21,4 +21,5 @@
 # Raised from 49.66 to 51.48 by state-tests-home-manage-mode.
 # Raised from 51.48 to 55.03 by state-tests-home-server-manager.
 # Raised from 55.03 to 59.95 by screen-tests-advanced-form.
-59.95
+# Raised from 59.95 to 61.94 by screen-tests-pin-dialogs.
+61.94

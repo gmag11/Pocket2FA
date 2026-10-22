@@ -25,4 +25,5 @@
 # Raised from 61.94 to 63.11 by service-tests-image.
 # Raised from 63.11 to 67.51 by screen-tests-pin-lock.
 # Raised from 67.51 to 68.65 by screen-tests-window-geometry.
-68.65
+# Raised from 68.65 to 70.00 by service-tests-settings-storage; pinned at the target.
+70.0

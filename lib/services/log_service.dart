@@ -1,6 +1,7 @@
 import 'dart:collection';
 import 'dart:developer' as developer;
 import 'dart:io';
+import 'package:clock/clock.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:path_provider/path_provider.dart';
@@ -94,7 +95,7 @@ class LogService {
     if (!capturing) return;
 
     final entry = LogEntry(
-      timestamp: DateTime.now(),
+      timestamp: clock.now(),
       level: level,
       name: name,
       message: message,
@@ -137,7 +138,7 @@ class LogService {
   String exportAsText() {
     final buf = StringBuffer();
     buf.writeln('Pocket2FA Diagnostic Log');
-    buf.writeln('Generated: ${DateTime.now().toIso8601String()}');
+    buf.writeln('Generated: ${clock.now().toIso8601String()}');
     buf.writeln('Platform: ${Platform.operatingSystem} ${Platform.operatingSystemVersion}');
     buf.writeln('Dart SDK: ${Platform.version}');
     buf.writeln('─' * 60);
@@ -153,7 +154,7 @@ class LogService {
     try {
       final dir = await getTemporaryDirectory();
       final fileName =
-          'pocket2fa_log_${DateTime.now().millisecondsSinceEpoch}.txt';
+          'pocket2fa_log_${clock.now().millisecondsSinceEpoch}.txt';
       final file = File('${dir.path}/$fileName');
       await file.writeAsString(exportAsText());
       return file;

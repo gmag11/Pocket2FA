@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:typed_data';
+import 'package:clock/clock.dart';
 import 'package:crypto/crypto.dart';
 import '../models/account_entry.dart';
 import '../services/settings_storage.dart';
@@ -33,31 +34,16 @@ class OtpService {
       final secretBytes = _decodeSecret(acct.seed);
       final sharedSecretBase64 = base64.encode(secretBytes);
       return generateSteamTotp(sharedSecretBase64,
-          forUnixTime: (DateTime.now().toUtc().millisecondsSinceEpoch ~/ 1000) +
+          forUnixTime: (clock.now().toUtc().millisecondsSinceEpoch ~/ 1000) +
               timeOffsetSeconds);
     }
 
     return "";
   }
 
-  static Uint8List _decodeSecret(String secret) {
-    // Remove spaces and padding
-    final s = secret.replaceAll(' ', '').replaceAll('=', '');
-    // Try Base32 decode
-    try {
-      return base32Decode(s);
-    } catch (_) {}
-    // Try hex
-    try {
-      final cleaned = s.replaceAll(RegExp(r'[^0-9a-fA-F]'), '');
-      if (cleaned.length % 2 == 0) {
-        return Uint8List.fromList(List<int>.generate(cleaned.length ~/ 2,
-            (i) => int.parse(cleaned.substring(i * 2, i * 2 + 2), radix: 16)));
-      }
-    } catch (_) {}
-    // Fallback: utf8 bytes
-    return Uint8List.fromList(utf8.encode(s));
-  }
+  /// Decodes the account secret as Base32. [base32Decode] ignores spaces,
+  /// padding and characters outside the Base32 alphabet.
+  static Uint8List _decodeSecret(String secret) => base32Decode(secret);
 
   /// Generate a TOTP code for [acct]. This is an independent implementation
   /// (HMAC + dynamic truncation) so it does not share control flow with HOTP
@@ -71,7 +57,7 @@ class OtpService {
 
     final key = _decodeSecret(seed);
 
-    final ts = ((DateTime.now().toUtc().millisecondsSinceEpoch ~/ 1000) +
+    final ts = ((clock.now().toUtc().millisecondsSinceEpoch ~/ 1000) +
             timeOffsetSeconds) ~/
         period;
 
@@ -106,12 +92,6 @@ class OtpService {
     return otp.toString().padLeft(digits, '0');
   }
 
-  // ignore: unused_element
-  static String _hotp(AccountEntry acct) {
-    // HOTP is disabled — return placeholder so UI can indicate it's unavailable.
-    return 'HOTP';
-  }
-
   // Implement Steam TOTP generation (5-character codes using Steam charset).
   // Reimplementation of the user's Steam TOTP generator example.
   // Usage: generateSteamTotp(sharedSecretBase64, forUnixTime: unixSeconds)
@@ -125,7 +105,7 @@ class OtpService {
 
       // 2) Compute time counter (step = 30s). Use forUnixTime if provided.
       final unixTime = forUnixTime ??
-          (DateTime.now().toUtc().millisecondsSinceEpoch ~/ 1000);
+          (clock.now().toUtc().millisecondsSinceEpoch ~/ 1000);
       final timeStep = 30;
       final counter = unixTime ~/ timeStep;
 
@@ -192,36 +172,4 @@ class OtpService {
     }
     return Uint8List.fromList(output);
   }
-
-  // // HOTP persistence helpers: store per-account counter in the encrypted Hive box
-  // static int? _getPersistedHotpCounter(
-  //     String accountId, SettingsStorage? storage) {
-  //   try {
-  //     if (storage == null) return null;
-  //     final box = storage.box;
-  //     final key = 'hotp_counter:$accountId';
-  //     final v = box.get(key);
-  //     if (v == null) return null;
-  //     if (v is int) return v;
-  //     return int.tryParse(v.toString());
-  //   } catch (_) {
-  //     return null;
-  //   }
-  // }
-
-  // // Public getter wrapper
-  // static int? getPersistedHotpCounter(
-  //         String accountId, SettingsStorage? storage) =>
-  //     _getPersistedHotpCounter(accountId, storage);
-
-  // static Future<int> incrementPersistedHotpCounter(
-  //     String accountId, SettingsStorage? storage) async {
-  //   if (storage == null) return Future.value(0);
-  //   final box = storage.box;
-  //   final key = 'hotp_counter:$accountId';
-  //   final cur = _getPersistedHotpCounter(accountId, storage) ?? 0;
-  //   final next = cur + 1;
-  //   await box.put(key, next);
-  //   return next;
-  // }
 }

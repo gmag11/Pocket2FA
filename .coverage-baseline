@@ -1,0 +1,29 @@
+# Coverage ratchet for `dart run tool/check_coverage.dart`.
+#
+# Overall coverage of every non-generated file under lib/ must not drop below
+# this number. Raise it deliberately as coverage grows; never lower it.
+# Once coverage reaches 70.0 it stays pinned there as the floor.
+#
+# The metric now counts files that no test executes as 0% (see
+# test/coverage/import_all_test.dart). The previous 70.0 was measured over
+# loaded files only, so it is not comparable with this value.
+#
+# Raised from 15.62 to 19.15 by unit-tests-entry-creation-otp.
+# Raised from 19.15 to 24.89 by unit-tests-sync-service.
+# Raised from 24.89 to 31.43 by unit-tests-account-tile-ui.
+# Raised from 31.43 to 35.34 by widget-tests-account-tile-behavior.
+# Raised from 35.34 to 38.65 by widget-tests-small-ui.
+# Raised from 38.65 to 42.33 by screen-tests-settings.
+# Raised from 42.33 to 44.16 by screen-tests-log.
+# Raised from 44.16 to 45.52 by screen-tests-new-code.
+# Raised from 45.52 to 48.17 by screen-tests-server-management.
+# Raised from 48.17 to 49.66 by screen-tests-account-list.
+# Raised from 49.66 to 51.48 by state-tests-home-manage-mode.
+# Raised from 51.48 to 55.03 by state-tests-home-server-manager.
+# Raised from 55.03 to 59.95 by screen-tests-advanced-form.
+# Raised from 59.95 to 61.94 by screen-tests-pin-dialogs.
+# Raised from 61.94 to 63.11 by service-tests-image.
+# Raised from 63.11 to 67.51 by screen-tests-pin-lock.
+# Raised from 67.51 to 68.65 by screen-tests-window-geometry.
+# Raised from 68.65 to 70.00 by service-tests-settings-storage; pinned at the target.
+70.0

@@ -22,4 +22,5 @@
 # Raised from 51.48 to 55.03 by state-tests-home-server-manager.
 # Raised from 55.03 to 59.95 by screen-tests-advanced-form.
 # Raised from 59.95 to 61.94 by screen-tests-pin-dialogs.
-61.94
+# Raised from 61.94 to 63.11 by service-tests-image.
+63.11

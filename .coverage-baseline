@@ -19,4 +19,5 @@
 # Raised from 45.52 to 48.17 by screen-tests-server-management.
 # Raised from 48.17 to 49.66 by screen-tests-account-list.
 # Raised from 49.66 to 51.48 by state-tests-home-manage-mode.
-51.48
+# Raised from 51.48 to 55.03 by state-tests-home-server-manager.
+55.03

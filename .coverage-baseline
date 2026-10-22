@@ -23,4 +23,5 @@
 # Raised from 55.03 to 59.95 by screen-tests-advanced-form.
 # Raised from 59.95 to 61.94 by screen-tests-pin-dialogs.
 # Raised from 61.94 to 63.11 by service-tests-image.
-63.11
+# Raised from 63.11 to 67.51 by screen-tests-pin-lock.
+67.51
